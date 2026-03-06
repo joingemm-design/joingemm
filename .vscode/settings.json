@@ -1,3 +1,5 @@
 {
-  "IDX.agenticWorkspace": true
+  "IDX.agenticWorkspace": true,
+  "css.lint.unknownAtRules": "ignore",
+  "git.ignoreLimitWarning": true
 }
