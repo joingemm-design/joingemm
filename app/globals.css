@@ -55,3 +55,55 @@ input[type="range"]::-moz-range-thumb {
   border: 2px solid var(--card, #fff);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
+/* ─── GEMM Mobile Responsive ─── */
+@media (max-width: 768px) {
+  /* Stack all 2-column grids */
+  [style*="gridTemplateColumns: \"1fr 1fr\""],
+  [style*="gridTemplateColumns:\"1fr 1fr\""] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stack 3-column grids */
+  [style*="repeat(3, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stack footer grid */
+  [style*="2fr 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+
+  /* Fix large paddings */
+  [style*="paddingTop: 128"] {
+    padding-top: 64px !important;
+  }
+
+  [style*="paddingBottom: 80"] {
+    padding-bottom: 40px !important;
+  }
+
+  [style*="gap: 96"] {
+    gap: 32px !important;
+  }
+
+  [style*="gap: 64"] {
+    gap: 24px !important;
+  }
+
+  [style*="gap: 48"] {
+    gap: 24px !important;
+  }
+
+  /* Reduce max-widths */
+  [style*="maxWidth: 1200"],
+  [style*="maxWidth: 1280"] {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Pricing cards stack */
+  [style*="repeat(auto-fill, minmax(200px"] {
+    grid-template-columns: 1fr !important;
+  }
+}
