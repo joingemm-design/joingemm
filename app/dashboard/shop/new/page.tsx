@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { createShop, updateShop, getShop, ShopData, Product } from "@/lib/shop";
@@ -25,8 +25,8 @@ const css = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@
 export default function CreateShopPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const editId = searchParams?.get("edit");
+  const [editId, setEditId] = useState<string|null>(null);
+useEffect(() => { const params = new URLSearchParams(window.location.search); setEditId(params.get("edit")); }, []);
   const isMobile = useIsMobile();
 
   const [title, setTitle] = useState("New Shop");
