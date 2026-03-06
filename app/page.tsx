@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import ClientRouter from "@/components/ClientRouter";
 
 // ── SVG Icons ───────────────────────────────────────────────────────────────
@@ -155,6 +156,7 @@ function LoadingScreen({ progress, visible }: { progress: number; visible: boole
 
 // ── Sales Simulator Card (matches Wavey with +$XX popup) ────────────────────
 function SalesSimulator() {
+  const isMobile = useIsMobile();
   const [amount, setAmount] = useState(1240);
   const [gain, setGain] = useState<number | null>(null);
   const [showGain, setShowGain] = useState(false);
@@ -328,7 +330,7 @@ function RevenueChart() {
       </div>
 
       {/* Interactive sliders */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.4, marginBottom: 6 }}>
             Products: <span style={{ opacity: 1, color: "var(--text)" }}>{products}</span>
@@ -784,7 +786,7 @@ export default function LandingPage() {
               HERO — matches Wavey exactly
           ════════════════════════════════════════════════════════════════════ */}
           <section style={{
-            position: "relative", paddingTop: 128, paddingBottom: 80, paddingLeft: 16, paddingRight: 16,
+            position: "relative", paddingTop: isMobile ? 64 : 128, paddingBottom: 80, paddingLeft: 16, paddingRight: 16,
             minHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
             maxWidth: 1280, margin: "0 auto",
           }}>
@@ -796,7 +798,7 @@ export default function LandingPage() {
             }}/>
 
             <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr", gap: 96, alignItems: "center", width: "100%",
+              display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 32 : 96, alignItems: "center", width: "100%",
               opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(30px)",
               transition: "all 0.8s ease 0.2s",
             }}>
@@ -949,7 +951,7 @@ export default function LandingPage() {
                 </div>
               </div>
               {/* Event cards — matches Wavey */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 48 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 48 }}>
                 {[
                   ["Equinox Energy: Pilates & Matcha","SOUL Studio"],
                   ["ABR Community Summit Spring &apos;26","Altgeld Community Center"],
@@ -973,7 +975,7 @@ export default function LandingPage() {
               COST / REVENUE SECTION — matches Wavey
           ════════════════════════════════════════════════════════════════════ */}
           <section style={{ padding: "128px 16px", background: "var(--bg)", transition: "background 0.5s" }}>
-            <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+            <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 64, alignItems: "center" }}>
               <div ref={addRevealRef} style={revealStyle}>
                 <div style={{
                   display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 12px",
@@ -1019,7 +1021,7 @@ export default function LandingPage() {
           ════════════════════════════════════════════════════════════════════ */}
           <section style={{ padding: "96px 16px", background: "var(--bg2)", color: "var(--text)", transition: "background 0.5s" }}>
             <div ref={addRevealRef} style={{ maxWidth: 1200, margin: "0 auto", ...revealStyle }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 48, alignItems: "center" }}>
                 {/* Left — Feature grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   <FeatureCard icon={<UsersIcon/>} title="Custom Pages" desc="Give every fan their own page that matches their style and brand."/>
@@ -1092,7 +1094,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, paddingTop: 16, alignItems: "stretch", ...revealStyle }}>
+              <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 24, paddingTop: 16, alignItems: "stretch", ...revealStyle }}>
                 {PLANS.map(plan => (
                   <div key={plan.key} style={{
                     position: "relative", padding: 32, borderRadius: 32,
@@ -1185,7 +1187,7 @@ export default function LandingPage() {
           ════════════════════════════════════════════════════════════════════ */}
           <footer style={{ padding: "96px 24px", borderTop: "1px solid var(--border)", background: "var(--bg)", transition: "background 0.5s" }}>
             <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-              <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 48, ...revealStyle }}>
+              <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr 1fr", gap: 48, ...revealStyle }}>
                 <div>
                   <div style={{ fontWeight: 900, letterSpacing: "-0.05em", fontSize: 24, marginBottom: 16 }}>GEMM</div>
                   <p style={{ opacity: 0.6, fontSize: 14, maxWidth: 320, marginBottom: 32, lineHeight: 1.5 }}>
