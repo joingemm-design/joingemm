@@ -157,6 +157,7 @@ function LoadingScreen({ progress, visible }: { progress: number; visible: boole
 // ── Sales Simulator Card (matches Wavey with +$XX popup) ────────────────────
 function SalesSimulator() {
   const isMobile = useIsMobile();
+  const isMobile = useIsMobile();
   const [amount, setAmount] = useState(1240);
   const [gain, setGain] = useState<number | null>(null);
   const [showGain, setShowGain] = useState(false);
