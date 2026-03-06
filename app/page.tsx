@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import ClientRouter from "@/components/ClientRouter";
 
 // ── SVG Icons ───────────────────────────────────────────────────────────────
 const ZapIcon = ({ size = 14, className = "" }: { size?: number; className?: string }) => (
@@ -691,575 +692,577 @@ export default function LandingPage() {
   };
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,700;0,9..40,900;1,9..40,700;1,9..40,900&family=DM+Mono:wght@400;500&display=swap');
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-        html{scroll-behavior:smooth;}
-        body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;}
-        ::selection{background:#a855f7;color:white;}
-        @keyframes ping{0%{transform:scale(1);opacity:.3}70%,100%{transform:scale(1.6);opacity:0}}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-        @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-        @keyframes shimmer{100%{transform:translateX(100%)}}
-        @keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        .marquee-track{display:flex;gap:40px;white-space:nowrap;animation:marquee 35s linear infinite;will-change:transform;}
-        .ping{animation:ping 2s ease infinite;}
-        .pulse{animation:pulse 1.5s ease infinite;}
-        .no-scrollbar::-webkit-scrollbar{display:none;}
-        .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
-        button:active{transform:scale(.97)!important;}
-      `}</style>
+    <ClientRouter>
+      <>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,700;0,9..40,900;1,9..40,700;1,9..40,900&family=DM+Mono:wght@400;500&display=swap');
+          *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+          html{scroll-behavior:smooth;}
+          body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;}
+          ::selection{background:#a855f7;color:white;}
+          @keyframes ping{0%{transform:scale(1);opacity:.3}70%,100%{transform:scale(1.6);opacity:0}}
+          @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+          @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+          @keyframes shimmer{100%{transform:translateX(100%)}}
+          @keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+          .marquee-track{display:flex;gap:40px;white-space:nowrap;animation:marquee 35s linear infinite;will-change:transform;}
+          .ping{animation:ping 2s ease infinite;}
+          .pulse{animation:pulse 1.5s ease infinite;}
+          .no-scrollbar::-webkit-scrollbar{display:none;}
+          .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
+          button:active{transform:scale(.97)!important;}
+        `}</style>
 
-      <LoadingScreen progress={loadProgress} visible={showLoading} />
+        <LoadingScreen progress={loadProgress} visible={showLoading} />
 
-      <div style={{ ...vars, background: "var(--bg)", color: "var(--text)", minHeight: "100vh", overflowX: "hidden", fontFamily: "'DM Sans',sans-serif", transition: "background .5s, color .5s" }}>
+        <div style={{ ...vars, background: "var(--bg)", color: "var(--text)", minHeight: "100vh", overflowX: "hidden", fontFamily: "'DM Sans',sans-serif", transition: "background .5s, color .5s" }}>
 
-        {/* ════════════════════════════════════════════════════════════════════
-            NAV — matches Wavey's glassmorphism pill nav
-        ════════════════════════════════════════════════════════════════════ */}
-        <nav style={{
-          position: "fixed", top: 0, width: "100%", zIndex: 100, padding: "16px 8px",
-          pointerEvents: "none",
-          opacity: loaded ? 1 : 0, transform: loaded ? "none" : "translateY(-50px)",
-          transition: "opacity .6s ease .3s, transform .6s ease .3s",
-        }}>
-          <div style={{
-            maxWidth: 1200, margin: "0 auto", width: "100%",
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            background: "var(--nav)", border: "1px solid var(--border)", borderRadius: 9999,
-            padding: "6px 8px 6px 12px", backdropFilter: "blur(12px)",
-            boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", pointerEvents: "auto",
+          {/* ════════════════════════════════════════════════════════════════════
+              NAV — matches Wavey's glassmorphism pill nav
+          ════════════════════════════════════════════════════════════════════ */}
+          <nav style={{
+            position: "fixed", top: 0, width: "100%", zIndex: 100, padding: "16px 8px",
+            pointerEvents: "none",
+            opacity: loaded ? 1 : 0, transform: loaded ? "none" : "translateY(-50px)",
+            transition: "opacity .6s ease .3s, transform .6s ease .3s",
           }}>
-            {/* Logo */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", flexShrink: 0 }}
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-              <div style={{
-                width: 36, height: 36, borderRadius: "50%",
-                background: "rgba(128,128,128,0.05)", border: "1px solid rgba(128,128,128,0.1)",
-                display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
-              }}>
-                <div className="ping" style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "var(--text)" }}/>
-                <div style={{ width: 12, height: 12, borderRadius: "50%", background: "var(--text)" }}/>
-              </div>
-              <span style={{ fontSize: "1.25rem", fontWeight: 900, letterSpacing: "-0.05em", color: "var(--text)", display: "none" }} className="nav-logo-text">GEMM</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 900, letterSpacing: "-0.05em", color: "var(--text)" }}>GEMM</span>
-            </div>
-
-            {/* Right side */}
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <a href="#events" style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "8px 16px", borderRadius: 9999, textDecoration: "none", color: "var(--text)",
-              }}>
-                <span style={{ position: "relative", display: "flex", width: 8, height: 8 }}>
-                  <span className="ping" style={{ position: "absolute", display: "inline-flex", width: "100%", height: "100%", borderRadius: "50%", background: "#f87171", opacity: 0.75 }}/>
-                  <span style={{ position: "relative", display: "inline-flex", borderRadius: "50%", width: 8, height: 8, background: "#ef4444" }}/>
-                </span>
-                <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                  <span>Upcoming </span>Events
-                </span>
-              </a>
-              <button onClick={handleDashboard} style={{
-                padding: "8px 20px", borderRadius: 9999,
-                fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-                display: "flex", alignItems: "center", gap: 8,
-                background: "var(--text)", color: "var(--bg)",
-                border: "2px solid var(--text)", cursor: "pointer",
-                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
-                transition: "transform .2s", overflow: "hidden", position: "relative",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
-              onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
-                {user ? "Dashboard" : "Dashboard"}
-                <ZapIcon size={12}/>
-              </button>
-            </div>
-          </div>
-        </nav>
-
-        {/* ════════════════════════════════════════════════════════════════════
-            HERO — matches Wavey exactly
-        ════════════════════════════════════════════════════════════════════ */}
-        <section style={{
-          position: "relative", paddingTop: 128, paddingBottom: 80, paddingLeft: 16, paddingRight: 16,
-          minHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          maxWidth: 1280, margin: "0 auto",
-        }}>
-          {/* Background glow */}
-          <div style={{
-            position: "absolute", top: "25%", left: "25%", width: 800, height: 800, borderRadius: "50%",
-            opacity: 0.04, zIndex: -1, pointerEvents: "none",
-            background: "radial-gradient(circle, var(--text) 0%, transparent 70%)",
-          }}/>
-
-          <div style={{
-            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 96, alignItems: "center", width: "100%",
-            opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(30px)",
-            transition: "all 0.8s ease 0.2s",
-          }}>
-            {/* ── LEFT SIDE ── */}
-            <div style={{ textAlign: "left", zIndex: 10 }}>
-              {/* Badge — matches Wavey's green pill */}
-              <div style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                background: "#dcfce7", color: "#166534",
-                padding: "6px 16px", borderRadius: 9999,
-                fontSize: 14, fontWeight: 700, marginBottom: 32,
-              }}>
-                <ZapIcon size={16}/> Start selling in 2 minutes
-              </div>
-
-              {/* Headline — matches Wavey */}
-              <h1 style={{
-                fontSize: "clamp(3.5rem, 8vw, 6rem)", fontWeight: 900,
-                letterSpacing: "-0.05em", lineHeight: 0.9, marginBottom: 32,
-              }}>
-                One Link. <br/>
-                <span style={{
-                  display: "inline-block", paddingRight: 16,
-                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  backgroundImage: "linear-gradient(to right, var(--text), var(--accent2, rgba(128,128,128,0.5)))",
+            <div style={{
+              maxWidth: 1200, margin: "0 auto", width: "100%",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              background: "var(--nav)", border: "1px solid var(--border)", borderRadius: 9999,
+              padding: "6px 8px 6px 12px", backdropFilter: "blur(12px)",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", pointerEvents: "auto",
+            }}>
+              {/* Logo */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", flexShrink: 0 }}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: "rgba(128,128,128,0.05)", border: "1px solid rgba(128,128,128,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
                 }}>
-                  Infinite Potential.
-                </span>
-              </h1>
-
-              {/* Subtitle — matches Wavey */}
-              <p style={{
-                fontSize: 20, opacity: 0.7, marginBottom: 40,
-                maxWidth: 480, lineHeight: 1.6, fontWeight: 500,
-              }}>
-                The operating system for creators. Sell products, host events, and customize your brand with a technology that feels alive.
-              </p>
-
-              {/* CTA + Stars + Sales Sim — matches Wavey layout */}
-              <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12 }}>
-                  <a href="#pricing" style={{
-                    padding: "16px 32px", borderRadius: 9999, fontWeight: 700, fontSize: 18,
-                    display: "flex", alignItems: "center", gap: 8,
-                    background: "var(--text)", color: "var(--bg)", textDecoration: "none",
-                    boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
-                    border: "2px solid var(--text)", transition: "transform 0.2s", cursor: "pointer",
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
-                  onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
-                    Get Started <ArrowRight size={20}/>
-                  </a>
-                  {/* Star ratings — matches Wavey */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, opacity: 0.6 }}>
-                    <div style={{ display: "flex", gap: 2 }}>
-                      {[1,2,3,4,5].map(i => <StarIcon key={i}/>)}
-                    </div>
-                    <span>Loved by top creators</span>
-                  </div>
+                  <div className="ping" style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "var(--text)" }}/>
+                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: "var(--text)" }}/>
                 </div>
-
-                {/* Sales Simulator — matches Wavey */}
-                <div style={{ display: "none" }} className="desktop-only">
-                  {/* Show on lg screens */}
-                </div>
-                <SalesSimulator />
+                <span style={{ fontSize: "1.25rem", fontWeight: 900, letterSpacing: "-0.05em", color: "var(--text)", display: "none" }} className="nav-logo-text">GEMM</span>
+                <span style={{ fontSize: "1.25rem", fontWeight: 900, letterSpacing: "-0.05em", color: "var(--text)" }}>GEMM</span>
               </div>
-            </div>
 
-            {/* ── RIGHT SIDE — Interactive Phone Carousel ── */}
-            <PhoneCarousel />
-          </div>
-        </section>
-
-        {/* ════════════════════════════════════════════════════════════════════
-            MARQUEE BANNER — matches Wavey
-        ════════════════════════════════════════════════════════════════════ */}
-        <div style={{
-          position: "relative", padding: "16px 0", overflow: "hidden",
-          transform: "rotate(-1deg)", cursor: "pointer",
-          borderTop: "2px solid rgba(0,0,0,0.1)", borderBottom: "2px solid rgba(0,0,0,0.1)",
-          margin: "32px 0",
-        }}>
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "linear-gradient(to right, var(--text), var(--accent2, #666), var(--text))",
-            backgroundSize: "200% 200%",
-          }}/>
-          <div style={{ display: "flex", position: "relative", overflow: "hidden" }}>
-            <div className="marquee-track">
-              {[...Array(3)].flatMap((_, setIdx) =>
-                ["SELL MERCH INSTANTLY","NO CODE REQUIRED","OWN YOUR AUDIENCE","UNLOCK YOUR CITY","EXCLUSIVE EVENTS","LIVE EXPERIENCES","CLICK TO FIND YOUR CITY","DISCOVER NOW","NO FOMO","START FOR FREE","MAXIMIZE ROI"].map((txt, j) => (
-                  <span key={`${setIdx}-${j}`} style={{
-                    display: "inline-flex", alignItems: "center", gap: 16,
-                    fontSize: "clamp(18px, 3vw, 28px)", fontWeight: 900, fontStyle: "italic",
-                    letterSpacing: "-0.03em", textTransform: "uppercase", color: "var(--bg)",
-                    textShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                  }}>
-                    {txt}
-                    {j % 2 === 0
-                      ? <ZapIcon size={20} className="pulse"/>
-                      : <span style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.6)", display: "inline-block" }}/>}
+              {/* Right side */}
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <a href="#events" style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "8px 16px", borderRadius: 9999, textDecoration: "none", color: "var(--text)",
+                }}>
+                  <span style={{ position: "relative", display: "flex", width: 8, height: 8 }}>
+                    <span className="ping" style={{ position: "absolute", display: "inline-flex", width: "100%", height: "100%", borderRadius: "50%", background: "#f87171", opacity: 0.75 }}/>
+                    <span style={{ position: "relative", display: "inline-flex", borderRadius: "50%", width: 8, height: 8, background: "#ef4444" }}/>
                   </span>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ════════════════════════════════════════════════════════════════════
-            EVENTS SECTION — matches Wavey
-        ════════════════════════════════════════════════════════════════════ */}
-        <section id="events" style={{
-          padding: "96px 16px", background: "var(--bg2)",
-          borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
-          transition: "background 0.5s",
-        }}>
-          <div ref={addRevealRef} style={{ maxWidth: 1200, margin: "0 auto", ...revealStyle }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 48, flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: 300 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: 16 }}>
-                  <CalendarIcon/> Live Experiences
-                </div>
-                <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", fontWeight: 900, marginBottom: 24 }}>
-                  Don&apos;t just watch. <br/>
-                  <span style={{ textDecoration: "underline", textDecorationColor: "var(--text)", textUnderlineOffset: 8, textDecorationThickness: 4 }}>Be there.</span>
-                </h2>
-                <p style={{ fontSize: 18, opacity: 0.7, marginBottom: 32, maxWidth: 480, lineHeight: 1.6, fontWeight: 500 }}>
-                  Browse concerts, workshops, and exclusive events. From Equinox Energy: Pilates & Matcha to ABR Community Summit Spring &apos;26.
-                </p>
-                <a href="#events" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 18, color: "var(--text)", textDecoration: "none", transition: "opacity 0.2s" }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = "0.6")}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
-                  Discover Upcoming Events <ArrowRight size={20}/>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    <span>Upcoming </span>Events
+                  </span>
                 </a>
-              </div>
-              {/* Featured event image — matches Wavey */}
-              <div style={{
-                position: "relative", flex: 1, minWidth: 300, maxWidth: 480,
-                aspectRatio: "16/9", borderRadius: 24, overflow: "hidden",
-                boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", cursor: "pointer",
-              }}>
-                <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)", minHeight: 240 }}/>
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)" }}/>
-                <div style={{ position: "absolute", bottom: 24, left: 24, zIndex: 20, color: "#fff" }}>
-                  <div style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", padding: "4px 12px", borderRadius: 9999, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 8, border: "1px solid rgba(255,255,255,0.3)" }}>Featured</div>
-                  <div style={{ fontSize: 24, fontWeight: 900 }}>Equinox Energy: Pilates & Matcha</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, opacity: 0.9, marginTop: 4 }}> • SOUL Studio</div>
-                </div>
-              </div>
-            </div>
-            {/* Event cards — matches Wavey */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 48 }}>
-              {[
-                ["Equinox Energy: Pilates & Matcha","SOUL Studio"],
-                ["ABR Community Summit Spring &apos;26","Altgeld Community Center"],
-              ].map(([name, loc]) => (
-                <a key={name} href="#" style={{
-                  padding: 16, borderRadius: 12, border: "1px solid var(--border)",
-                  background: "var(--card)", cursor: "pointer", textDecoration: "none", color: "var(--text)",
-                  transition: "transform 0.2s, box-shadow 0.2s",
+                <button onClick={handleDashboard} style={{
+                  padding: "8px 20px", borderRadius: 9999,
+                  fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+                  display: "flex", alignItems: "center", gap: 8,
+                  background: "var(--text)", color: "var(--bg)",
+                  border: "2px solid var(--text)", cursor: "pointer",
+                  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
+                  transition: "transform .2s", overflow: "hidden", position: "relative",
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.02)"; (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 12px 40px rgba(0,0,0,0.08)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; (e.currentTarget as HTMLAnchorElement).style.boxShadow = "none"; }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{name}</div>
-                  <div style={{ fontSize: 12, opacity: 0.7 }}>{loc}</div>
-                </a>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ════════════════════════════════════════════════════════════════════
-            COST / REVENUE SECTION — matches Wavey
-        ════════════════════════════════════════════════════════════════════ */}
-        <section style={{ padding: "128px 16px", background: "var(--bg)", transition: "background 0.5s" }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
-            <div ref={addRevealRef} style={revealStyle}>
-              <div style={{
-                display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 12px",
-                borderRadius: 6, marginBottom: 24,
-                border: "1px solid rgba(128,128,128,0.3)", background: "rgba(128,128,128,0.08)",
-                fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em",
-              }}>
-                ⚠️ The Cost of Doing Nothing
+                onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
+                onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
+                  {user ? "Dashboard" : "Dashboard"}
+                  <ZapIcon size={12}/>
+                </button>
               </div>
-              <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 3.8rem)", fontWeight: 900, marginBottom: 24, lineHeight: 1, letterSpacing: "-0.03em" }}>
-                Turn <span style={{ textDecoration: "underline", textDecorationColor: "#ef4444", textDecorationThickness: 4, textUnderlineOffset: 8 }}>$24</span> into<br/> an empire.
-              </h2>
-              <p style={{ fontSize: 20, marginBottom: 40, lineHeight: 1.6, fontWeight: 500, opacity: 0.7 }}>
-                You have the fans. Now, get paid. For less than $1 a day, get a shop, sell tickets, and share one link for everything. Watch your sales grow while your cost stays the same.
-              </p>
-              {/* Cost comparison cards — matches Wavey */}
-              <a href="#pricing" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, cursor: "pointer", textDecoration: "none", color: "var(--text)" }}>
-                <div style={{ padding: 24, borderRadius: 24, border: "1px solid var(--border)", background: "var(--bg2)", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", top: 0, right: 0, width: 64, height: 64, background: "rgba(239,68,68,0.1)", borderRadius: "0 0 0 100%" }}/>
-                  <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6, marginBottom: 8 }}>Your Monthly Cost</p>
-                  <p style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-0.05em" }}>$24</p>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "#ef4444", marginTop: 8 }}>Static Friction</p>
-                </div>
-                <div style={{ padding: 24, borderRadius: 24, border: "2px solid var(--text)", background: "var(--card)", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)", position: "relative", overflow: "hidden" }}>
-                  <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    Est. Total Sales
-                    <span className="pulse" style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", display: "inline-block", boxShadow: "0 0 10px rgba(34,197,94,0.6)" }}/>
-                  </p>
-                  <p style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-0.05em" }}>$5.4k<span style={{ fontSize: 24, opacity: 0.5 }}>+</span></p>
-                  <p style={{ fontSize: 12, fontWeight: 700, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>Kinetic Breakout <ArrowUpRight size={12}/></p>
-                </div>
-              </a>
             </div>
-            {/* Revenue simulator box — matches Wavey */}
-            <div ref={addRevealRef} style={revealStyle}>
-              <RevenueChart />
-            </div>
-          </div>
-        </section>
+          </nav>
 
-        {/* ════════════════════════════════════════════════════════════════════
-            TEAM SECTION — matches Wavey (THIS WAS MISSING)
-        ════════════════════════════════════════════════════════════════════ */}
-        <section style={{ padding: "96px 16px", background: "var(--bg2)", color: "var(--text)", transition: "background 0.5s" }}>
-          <div ref={addRevealRef} style={{ maxWidth: 1200, margin: "0 auto", ...revealStyle }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
-              {/* Left — Feature grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <FeatureCard icon={<UsersIcon/>} title="Custom Pages" desc="Give every fan their own page that matches their style and brand."/>
-                <FeatureCard icon={<StarIcon size={24}/>} title="Connect Your Apps" desc="It works perfectly with tools you love like Eventbrite and Posh."/>
-                <FeatureCard icon={<ChartIcon/>} title="Live Tracking" desc="See every sale happen across all your social apps in real time."/>
-                <FeatureCard icon={<ZapIcon size={24}/>} title="Easy Growth" desc="Fans can join your team in minutes and start selling for you."/>
-              </div>
+          {/* ════════════════════════════════════════════════════════════════════
+              HERO — matches Wavey exactly
+          ════════════════════════════════════════════════════════════════════ */}
+          <section style={{
+            position: "relative", paddingTop: 128, paddingBottom: 80, paddingLeft: 16, paddingRight: 16,
+            minHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            maxWidth: 1280, margin: "0 auto",
+          }}>
+            {/* Background glow */}
+            <div style={{
+              position: "absolute", top: "25%", left: "25%", width: 800, height: 800, borderRadius: "50%",
+              opacity: 0.04, zIndex: -1, pointerEvents: "none",
+              background: "radial-gradient(circle, var(--text) 0%, transparent 70%)",
+            }}/>
 
-              {/* Right — Copy */}
-              <div>
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr", gap: 96, alignItems: "center", width: "100%",
+              opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(30px)",
+              transition: "all 0.8s ease 0.2s",
+            }}>
+              {/* ── LEFT SIDE ── */}
+              <div style={{ textAlign: "left", zIndex: 10 }}>
+                {/* Badge — matches Wavey's green pill */}
                 <div style={{
                   display: "inline-flex", alignItems: "center", gap: 8,
-                  padding: "6px 12px", borderRadius: 9999, marginBottom: 24,
+                  background: "#dcfce7", color: "#166534",
+                  padding: "6px 16px", borderRadius: 9999,
+                  fontSize: 14, fontWeight: 700, marginBottom: 32,
+                }}>
+                  <ZapIcon size={16}/> Start selling in 2 minutes
+                </div>
+
+                {/* Headline — matches Wavey */}
+                <h1 style={{
+                  fontSize: "clamp(3.5rem, 8vw, 6rem)", fontWeight: 900,
+                  letterSpacing: "-0.05em", lineHeight: 0.9, marginBottom: 32,
+                }}>
+                  One Link. <br/>
+                  <span style={{
+                    display: "inline-block", paddingRight: 16,
+                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                    backgroundImage: "linear-gradient(to right, var(--text), var(--accent2, rgba(128,128,128,0.5)))",
+                  }}>
+                    Infinite Potential.
+                  </span>
+                </h1>
+
+                {/* Subtitle — matches Wavey */}
+                <p style={{
+                  fontSize: 20, opacity: 0.7, marginBottom: 40,
+                  maxWidth: 480, lineHeight: 1.6, fontWeight: 500,
+                }}>
+                  The operating system for creators. Sell products, host events, and customize your brand with a technology that feels alive.
+                </p>
+
+                {/* CTA + Stars + Sales Sim — matches Wavey layout */}
+                <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12 }}>
+                    <a href="#pricing" style={{
+                      padding: "16px 32px", borderRadius: 9999, fontWeight: 700, fontSize: 18,
+                      display: "flex", alignItems: "center", gap: 8,
+                      background: "var(--text)", color: "var(--bg)", textDecoration: "none",
+                      boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+                      border: "2px solid var(--text)", transition: "transform 0.2s", cursor: "pointer",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
+                    onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
+                      Get Started <ArrowRight size={20}/>
+                    </a>
+                    {/* Star ratings — matches Wavey */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, opacity: 0.6 }}>
+                      <div style={{ display: "flex", gap: 2 }}>
+                        {[1,2,3,4,5].map(i => <StarIcon key={i}/>)}
+                      </div>
+                      <span>Loved by top creators</span>
+                    </div>
+                  </div>
+
+                  {/* Sales Simulator — matches Wavey */}
+                  <div style={{ display: "none" }} className="desktop-only">
+                    {/* Show on lg screens */}
+                  </div>
+                  <SalesSimulator />
+                </div>
+              </div>
+
+              {/* ── RIGHT SIDE — Interactive Phone Carousel ── */}
+              <PhoneCarousel />
+            </div>
+          </section>
+
+          {/* ════════════════════════════════════════════════════════════════════
+              MARQUEE BANNER — matches Wavey
+          ════════════════════════════════════════════════════════════════════ */}
+          <div style={{
+            position: "relative", padding: "16px 0", overflow: "hidden",
+            transform: "rotate(-1deg)", cursor: "pointer",
+            borderTop: "2px solid rgba(0,0,0,0.1)", borderBottom: "2px solid rgba(0,0,0,0.1)",
+            margin: "32px 0",
+          }}>
+            <div style={{
+              position: "absolute", inset: 0,
+              background: "linear-gradient(to right, var(--text), var(--accent2, #666), var(--text))",
+              backgroundSize: "200% 200%",
+            }}/>
+            <div style={{ display: "flex", position: "relative", overflow: "hidden" }}>
+              <div className="marquee-track">
+                {[...Array(3)].flatMap((_, setIdx) =>
+                  ["SELL MERCH INSTANTLY","NO CODE REQUIRED","OWN YOUR AUDIENCE","UNLOCK YOUR CITY","EXCLUSIVE EVENTS","LIVE EXPERIENCES","CLICK TO FIND YOUR CITY","DISCOVER NOW","NO FOMO","START FOR FREE","MAXIMIZE ROI"].map((txt, j) => (
+                    <span key={`${setIdx}-${j}`} style={{
+                      display: "inline-flex", alignItems: "center", gap: 16,
+                      fontSize: "clamp(18px, 3vw, 28px)", fontWeight: 900, fontStyle: "italic",
+                      letterSpacing: "-0.03em", textTransform: "uppercase", color: "var(--bg)",
+                      textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                    }}>
+                      {txt}
+                      {j % 2 === 0
+                        ? <ZapIcon size={20} className="pulse"/>
+                        : <span style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.6)", display: "inline-block" }}/>}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ════════════════════════════════════════════════════════════════════
+              EVENTS SECTION — matches Wavey
+          ════════════════════════════════════════════════════════════════════ */}
+          <section id="events" style={{
+            padding: "96px 16px", background: "var(--bg2)",
+            borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
+            transition: "background 0.5s",
+          }}>
+            <div ref={addRevealRef} style={{ maxWidth: 1200, margin: "0 auto", ...revealStyle }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 48, flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 300 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: 16 }}>
+                    <CalendarIcon/> Live Experiences
+                  </div>
+                  <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", fontWeight: 900, marginBottom: 24 }}>
+                    Don&apos;t just watch. <br/>
+                    <span style={{ textDecoration: "underline", textDecorationColor: "var(--text)", textUnderlineOffset: 8, textDecorationThickness: 4 }}>Be there.</span>
+                  </h2>
+                  <p style={{ fontSize: 18, opacity: 0.7, marginBottom: 32, maxWidth: 480, lineHeight: 1.6, fontWeight: 500 }}>
+                    Browse concerts, workshops, and exclusive events. From Equinox Energy: Pilates & Matcha to ABR Community Summit Spring &apos;26.
+                  </p>
+                  <a href="#events" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 18, color: "var(--text)", textDecoration: "none", transition: "opacity 0.2s" }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = "0.6")}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
+                    Discover Upcoming Events <ArrowRight size={20}/>
+                  </a>
+                </div>
+                {/* Featured event image — matches Wavey */}
+                <div style={{
+                  position: "relative", flex: 1, minWidth: 300, maxWidth: 480,
+                  aspectRatio: "16/9", borderRadius: 24, overflow: "hidden",
+                  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", cursor: "pointer",
+                }}>
+                  <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)", minHeight: 240 }}/>
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)" }}/>
+                  <div style={{ position: "absolute", bottom: 24, left: 24, zIndex: 20, color: "#fff" }}>
+                    <div style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", padding: "4px 12px", borderRadius: 9999, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 8, border: "1px solid rgba(255,255,255,0.3)" }}>Featured</div>
+                    <div style={{ fontSize: 24, fontWeight: 900 }}>Equinox Energy: Pilates & Matcha</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, opacity: 0.9, marginTop: 4 }}> • SOUL Studio</div>
+                  </div>
+                </div>
+              </div>
+              {/* Event cards — matches Wavey */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 48 }}>
+                {[
+                  ["Equinox Energy: Pilates & Matcha","SOUL Studio"],
+                  ["ABR Community Summit Spring &apos;26","Altgeld Community Center"],
+                ].map(([name, loc]) => (
+                  <a key={name} href="#" style={{
+                    padding: 16, borderRadius: 12, border: "1px solid var(--border)",
+                    background: "var(--card)", cursor: "pointer", textDecoration: "none", color: "var(--text)",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.02)"; (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 12px 40px rgba(0,0,0,0.08)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; (e.currentTarget as HTMLAnchorElement).style.boxShadow = "none"; }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{name}</div>
+                    <div style={{ fontSize: 12, opacity: 0.7 }}>{loc}</div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ════════════════════════════════════════════════════════════════════
+              COST / REVENUE SECTION — matches Wavey
+          ════════════════════════════════════════════════════════════════════ */}
+          <section style={{ padding: "128px 16px", background: "var(--bg)", transition: "background 0.5s" }}>
+            <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+              <div ref={addRevealRef} style={revealStyle}>
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 12px",
+                  borderRadius: 6, marginBottom: 24,
                   border: "1px solid rgba(128,128,128,0.3)", background: "rgba(128,128,128,0.08)",
                   fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em",
                 }}>
-                  <UsersIcon size={14}/> Team Up for Success
+                  ⚠️ The Cost of Doing Nothing
                 </div>
-                <h2 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 900, marginBottom: 24, lineHeight: 1.1, letterSpacing: "-0.03em" }}>
-                  Get a team that <br/><span style={{ color: "var(--accent, var(--text))" }}>sells for you.</span>
+                <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 3.8rem)", fontWeight: 900, marginBottom: 24, lineHeight: 1, letterSpacing: "-0.03em" }}>
+                  Turn <span style={{ textDecoration: "underline", textDecorationColor: "#ef4444", textDecorationThickness: 4, textUnderlineOffset: 8 }}>$24</span> into<br/> an empire.
                 </h2>
-                <p style={{ fontSize: 20, lineHeight: 1.6, fontWeight: 500, opacity: 0.8, marginBottom: 32 }}>
-                  You don&apos;t have to grow alone. Let your biggest fans help sell your work. Build a team of helpers who share your link with the world. You make more money, and you can see exactly who is helping you grow on one simple page.
+                <p style={{ fontSize: 20, marginBottom: 40, lineHeight: 1.6, fontWeight: 500, opacity: 0.7 }}>
+                  You have the fans. Now, get paid. For less than $1 a day, get a shop, sell tickets, and share one link for everything. Watch your sales grow while your cost stays the same.
                 </p>
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <div style={{ display: "flex" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", border: "2px solid var(--text)", background: "var(--bg2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <UsersIcon size={20}/>
-                    </div>
+                {/* Cost comparison cards — matches Wavey */}
+                <a href="#pricing" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, cursor: "pointer", textDecoration: "none", color: "var(--text)" }}>
+                  <div style={{ padding: 24, borderRadius: 24, border: "1px solid var(--border)", background: "var(--bg2)", position: "relative", overflow: "hidden" }}>
+                    <div style={{ position: "absolute", top: 0, right: 0, width: 64, height: 64, background: "rgba(239,68,68,0.1)", borderRadius: "0 0 0 100%" }}/>
+                    <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6, marginBottom: 8 }}>Your Monthly Cost</p>
+                    <p style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-0.05em" }}>$24</p>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "#ef4444", marginTop: 8 }}>Static Friction</p>
                   </div>
-                  <p style={{ fontSize: 14, fontWeight: 700, opacity: 0.7 }}>Join 5,000+ creators building networks</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ════════════════════════════════════════════════════════════════════
-            PRICING — matches Wavey
-        ════════════════════════════════════════════════════════════════════ */}
-        <section id="pricing" style={{ padding: "96px 16px", background: "var(--bg2)", transition: "background 0.5s" }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-            <div ref={addRevealRef} style={{ textAlign: "center", marginBottom: 40, ...revealStyle }}>
-              <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", fontWeight: 900, letterSpacing: "-0.03em", marginBottom: 32 }}>
-                Focus on your creative universe.
-              </h2>
-              {/* Toggle — matches Wavey */}
-              <div style={{
-                display: "inline-flex", alignItems: "center", gap: 24,
-                padding: "8px 24px 8px 8px", borderRadius: 9999,
-                border: "1px solid var(--border)", background: "var(--card)",
-                backdropFilter: "blur(8px)", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-              }}>
-                <div style={{ display: "flex", background: "rgba(128,128,128,0.08)", borderRadius: 9999, padding: 4 }}>
-                  {["Monthly","Yearly"].map(label => (
-                    <button key={label} onClick={() => setYearly(label === "Yearly")}
-                      style={{
-                        position: "relative", zIndex: 10,
-                        padding: "10px 24px", fontSize: 12, fontWeight: 700, textTransform: "uppercase",
-                        border: "none", borderRadius: 9999, cursor: "pointer",
-                        fontFamily: "inherit", transition: "all 0.3s",
-                        background: (label === "Yearly") === yearly ? "var(--text)" : "transparent",
-                        color: (label === "Yearly") === yearly ? "var(--bg)" : "var(--text)",
-                      }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#22c55e" }}>Save 30%</span>
-              </div>
-            </div>
-
-            <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, paddingTop: 16, alignItems: "stretch", ...revealStyle }}>
-              {PLANS.map(plan => (
-                <div key={plan.key} style={{
-                  position: "relative", padding: 32, borderRadius: 32,
-                  border: plan.featured ? "1px solid var(--text)" : "1px solid var(--border)",
-                  display: "flex", flexDirection: "column",
-                  background: "var(--card)", color: "var(--text)",
-                  transition: "transform 0.3s", cursor: "pointer",
-                  boxShadow: plan.featured ? "0 25px 50px -12px rgba(0,0,0,0.25)" : "0 10px 15px -3px rgba(0,0,0,0.1)",
-                  transform: plan.featured ? "scale(1.05)" : "scale(1)",
-                  zIndex: plan.featured ? 10 : 1,
-                  ...(plan.featured ? { outline: `2px solid var(--text)` } : {}),
-                }}
-                onMouseEnter={e => (e.currentTarget.style.transform = plan.featured ? "scale(1.05) translateY(-4px)" : "translateY(-4px)")}
-                onMouseLeave={e => (e.currentTarget.style.transform = plan.featured ? "scale(1.05)" : "scale(1)")}>
-
-                  {plan.badge && (
-                    <div style={{
-                      position: "absolute", top: 0, left: "50%", transform: "translate(-50%, -50%)",
-                      padding: "6px 16px", borderRadius: 9999,
-                      fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-                      background: plan.badge.bg, color: plan.badge.fg,
-                      boxShadow: "0 10px 15px -3px rgba(0,0,0,0.2)", border: `2px solid ${plan.badge.bg}`,
-                    }}>
-                      {plan.badge.label}
-                    </div>
-                  )}
-
-                  <div style={{ marginBottom: 24 }}>
-                    <h3 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                      {plan.name} {plan.key === "empire" && <CrownIcon/>}
-                    </h3>
-                    <p style={{ fontSize: 12, opacity: 0.6, minHeight: 32, fontWeight: 500 }}>{plan.tagline}</p>
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: 4, marginBottom: 8 }}>
-                    <span style={{ fontSize: 48, fontWeight: 900, letterSpacing: "-0.05em" }}>${yearly ? plan.yearly : plan.monthly}</span>
-                    <span style={{ fontSize: 14, fontWeight: 500, opacity: 0.6, marginBottom: 8 }}>/mo</span>
-                  </div>
-
-                  {plan.monthly > 0 && yearly && (
-                    <p style={{ fontSize: 10, fontWeight: 700, color: "#22c55e", marginBottom: 24, display: "flex", alignItems: "center", gap: 4 }}>
-                      ↗ Save ${(plan.monthly - plan.yearly) * 12}/year
+                  <div style={{ padding: 24, borderRadius: 24, border: "2px solid var(--text)", background: "var(--card)", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)", position: "relative", overflow: "hidden" }}>
+                    <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      Est. Total Sales
+                      <span className="pulse" style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", display: "inline-block", boxShadow: "0 0 10px rgba(34,197,94,0.6)" }}/>
                     </p>
-                  )}
+                    <p style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-0.05em" }}>$5.4k<span style={{ fontSize: 24, opacity: 0.5 }}>+</span></p>
+                    <p style={{ fontSize: 12, fontWeight: 700, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>Kinetic Breakout <ArrowUpRight size={12}/></p>
+                  </div>
+                </a>
+              </div>
+              {/* Revenue simulator box — matches Wavey */}
+              <div ref={addRevealRef} style={revealStyle}>
+                <RevenueChart />
+              </div>
+            </div>
+          </section>
 
-                  <button onClick={() => router.push("/dashboard")} style={{
-                    width: "100%", padding: 16, borderRadius: 12,
-                    fontWeight: 700, fontSize: 14, marginBottom: 32,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                    fontFamily: "inherit", cursor: "pointer", transition: "transform 0.15s",
-                    border: plan.btnStyle === "outline" ? "1.5px solid var(--border)" : "none",
-                    background: plan.btnStyle === "solid" ? "var(--text)" : plan.btnStyle === "gold" ? "#fbbf24" : "transparent",
-                    color: plan.btnStyle === "solid" ? "var(--bg)" : plan.btnStyle === "gold" ? "#000" : "var(--text)",
+          {/* ════════════════════════════════════════════════════════════════════
+              TEAM SECTION — matches Wavey (THIS WAS MISSING)
+          ════════════════════════════════════════════════════════════════════ */}
+          <section style={{ padding: "96px 16px", background: "var(--bg2)", color: "var(--text)", transition: "background 0.5s" }}>
+            <div ref={addRevealRef} style={{ maxWidth: 1200, margin: "0 auto", ...revealStyle }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+                {/* Left — Feature grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <FeatureCard icon={<UsersIcon/>} title="Custom Pages" desc="Give every fan their own page that matches their style and brand."/>
+                  <FeatureCard icon={<StarIcon size={24}/>} title="Connect Your Apps" desc="It works perfectly with tools you love like Eventbrite and Posh."/>
+                  <FeatureCard icon={<ChartIcon/>} title="Live Tracking" desc="See every sale happen across all your social apps in real time."/>
+                  <FeatureCard icon={<ZapIcon size={24}/>} title="Easy Growth" desc="Fans can join your team in minutes and start selling for you."/>
+                </div>
+
+                {/* Right — Copy */}
+                <div>
+                  <div style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    padding: "6px 12px", borderRadius: 9999, marginBottom: 24,
+                    border: "1px solid rgba(128,128,128,0.3)", background: "rgba(128,128,128,0.08)",
+                    fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em",
                   }}>
-                    Get Started <ArrowRight size={16}/>
-                  </button>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
-                    {plan.features.map(f => (
-                      <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 12, fontSize: 14 }}>
-                        <CheckIcon size={16} color={plan.checkColor}/>
-                        <span style={{ opacity: 0.8, fontWeight: 500 }}>{f}</span>
+                    <UsersIcon size={14}/> Team Up for Success
+                  </div>
+                  <h2 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 900, marginBottom: 24, lineHeight: 1.1, letterSpacing: "-0.03em" }}>
+                    Get a team that <br/><span style={{ color: "var(--accent, var(--text))" }}>sells for you.</span>
+                  </h2>
+                  <p style={{ fontSize: 20, lineHeight: 1.6, fontWeight: 500, opacity: 0.8, marginBottom: 32 }}>
+                    You don&apos;t have to grow alone. Let your biggest fans help sell your work. Build a team of helpers who share your link with the world. You make more money, and you can see exactly who is helping you grow on one simple page.
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <div style={{ display: "flex" }}>
+                      <div style={{ width: 40, height: 40, borderRadius: "50%", border: "2px solid var(--text)", background: "var(--bg2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <UsersIcon size={20}/>
                       </div>
+                    </div>
+                    <p style={{ fontSize: 14, fontWeight: 700, opacity: 0.7 }}>Join 5,000+ creators building networks</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ════════════════════════════════════════════════════════════════════
+              PRICING — matches Wavey
+          ════════════════════════════════════════════════════════════════════ */}
+          <section id="pricing" style={{ padding: "96px 16px", background: "var(--bg2)", transition: "background 0.5s" }}>
+            <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+              <div ref={addRevealRef} style={{ textAlign: "center", marginBottom: 40, ...revealStyle }}>
+                <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", fontWeight: 900, letterSpacing: "-0.03em", marginBottom: 32 }}>
+                  Focus on your creative universe.
+                </h2>
+                {/* Toggle — matches Wavey */}
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 24,
+                  padding: "8px 24px 8px 8px", borderRadius: 9999,
+                  border: "1px solid var(--border)", background: "var(--card)",
+                  backdropFilter: "blur(8px)", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
+                }}>
+                  <div style={{ display: "flex", background: "rgba(128,128,128,0.08)", borderRadius: 9999, padding: 4 }}>
+                    {["Monthly","Yearly"].map(label => (
+                      <button key={label} onClick={() => setYearly(label === "Yearly")}
+                        style={{
+                          position: "relative", zIndex: 10,
+                          padding: "10px 24px", fontSize: 12, fontWeight: 700, textTransform: "uppercase",
+                          border: "none", borderRadius: 9999, cursor: "pointer",
+                          fontFamily: "inherit", transition: "all 0.3s",
+                          background: (label === "Yearly") === yearly ? "var(--text)" : "transparent",
+                          color: (label === "Yearly") === yearly ? "var(--bg)" : "var(--text)",
+                        }}>
+                        {label}
+                      </button>
                     ))}
                   </div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ marginTop: 48, textAlign: "center" }}>
-              <button onClick={() => router.push("/dashboard")} style={{
-                fontSize: 14, fontWeight: 500, opacity: 0.6,
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "12px 24px", borderRadius: 9999,
-                border: "none", background: "transparent", color: "var(--text)",
-                cursor: "pointer", fontFamily: "inherit",
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
-              onMouseLeave={e => (e.currentTarget.style.opacity = "0.6")}>
-                Start with <strong style={{ textDecoration: "underline", textUnderlineOffset: 4 }}>Spark</strong> (Free Forever) <ArrowRight size={16}/>
-              </button>
-              <p style={{ fontSize: 10, opacity: 0.6, marginTop: 4 }}>Limited features. Upgrade anytime.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* ════════════════════════════════════════════════════════════════════
-            FOOTER — matches Wavey
-        ════════════════════════════════════════════════════════════════════ */}
-        <footer style={{ padding: "96px 24px", borderTop: "1px solid var(--border)", background: "var(--bg)", transition: "background 0.5s" }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-            <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 48, ...revealStyle }}>
-              <div>
-                <div style={{ fontWeight: 900, letterSpacing: "-0.05em", fontSize: 24, marginBottom: 16 }}>GEMM</div>
-                <p style={{ opacity: 0.6, fontSize: 14, maxWidth: 320, marginBottom: 32, lineHeight: 1.5 }}>
-                  The complete operating system for the next generation of digital empires.
-                </p>
-                <div style={{ display: "flex", gap: 16 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(128,128,128,0.1)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.5 }}>🌐</div>
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#22c55e" }}>Save 30%</span>
                 </div>
               </div>
-              <div>
-                <h4 style={{ fontWeight: 700, marginBottom: 16 }}>Platform</h4>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, opacity: 0.6 }}>
-                  <a href="#pricing" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Login</a>
-                  <a href="#pricing" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Pricing</a>
-                  <a href="#events" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Explore Events</a>
-                </div>
-              </div>
-              <div>
-                <h4 style={{ fontWeight: 700, marginBottom: 16 }}>Support</h4>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, opacity: 0.6 }}>
-                  <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✉️ Contact Us</a>
-                  <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>💬 Community</a>
-                  <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>🛡️ Privacy Policy</a>
-                </div>
-              </div>
-            </div>
-            <div style={{
-              marginTop: 48, paddingTop: 32, borderTop: "1px solid var(--border)",
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              fontSize: 12, opacity: 0.4, fontWeight: 700, textTransform: "uppercase",
-            }}>
-              <div>© 2026 Gemm Inc.</div>
-              <div>All Systems Operational</div>
-            </div>
-          </div>
-        </footer>
 
-        {/* ════════════════════════════════════════════════════════════════════
-            THEME SWITCHER DOCK — matches Wavey
-        ════════════════════════════════════════════════════════════════════ */}
-        <div style={{
-          position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)",
-          zIndex: 100, display: "flex", alignItems: "center", gap: 6,
-          padding: "6px 8px", borderRadius: 40,
-          background: "var(--nav)", backdropFilter: "blur(16px)",
-          border: "1px solid var(--border)",
-          boxShadow: "0 30px 60px -15px rgba(0,0,0,0.25)",
-          opacity: loaded ? 1 : 0, transition: "opacity 0.6s ease 1s",
-        }}>
-          {SWATCHES.map(s => (
-            <button key={s.key} onClick={() => setTheme(s.key)}
-              title={s.key.charAt(0).toUpperCase() + s.key.slice(1)}
-              style={{
-                width: theme === s.key ? "auto" : 40, height: 40, borderRadius: 9999,
-                border: theme === s.key ? "1px solid var(--border)" : "1px solid transparent",
-                background: s.bg.includes("gradient") ? s.bg : s.bg,
-                cursor: "pointer", transition: "all 0.3s",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                padding: theme === s.key ? "0 16px 0 4px" : 0,
-                boxShadow: theme === s.key ? "0 4px 6px -1px rgba(0,0,0,0.1)" : "none",
-              }}>
+              <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, paddingTop: 16, alignItems: "stretch", ...revealStyle }}>
+                {PLANS.map(plan => (
+                  <div key={plan.key} style={{
+                    position: "relative", padding: 32, borderRadius: 32,
+                    border: plan.featured ? "1px solid var(--text)" : "1px solid var(--border)",
+                    display: "flex", flexDirection: "column",
+                    background: "var(--card)", color: "var(--text)",
+                    transition: "transform 0.3s", cursor: "pointer",
+                    boxShadow: plan.featured ? "0 25px 50px -12px rgba(0,0,0,0.25)" : "0 10px 15px -3px rgba(0,0,0,0.1)",
+                    transform: plan.featured ? "scale(1.05)" : "scale(1)",
+                    zIndex: plan.featured ? 10 : 1,
+                    ...(plan.featured ? { outline: `2px solid var(--text)` } : {}),
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.transform = plan.featured ? "scale(1.05) translateY(-4px)" : "translateY(-4px)")}
+                  onMouseLeave={e => (e.currentTarget.style.transform = plan.featured ? "scale(1.05)" : "scale(1)")}>
+
+                    {plan.badge && (
+                      <div style={{
+                        position: "absolute", top: 0, left: "50%", transform: "translate(-50%, -50%)",
+                        padding: "6px 16px", borderRadius: 9999,
+                        fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
+                        background: plan.badge.bg, color: plan.badge.fg,
+                        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.2)", border: `2px solid ${plan.badge.bg}`,
+                      }}>
+                        {plan.badge.label}
+                      </div>
+                    )}
+
+                    <div style={{ marginBottom: 24 }}>
+                      <h3 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                        {plan.name} {plan.key === "empire" && <CrownIcon/>}
+                      </h3>
+                      <p style={{ fontSize: 12, opacity: 0.6, minHeight: 32, fontWeight: 500 }}>{plan.tagline}</p>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: 4, marginBottom: 8 }}>
+                      <span style={{ fontSize: 48, fontWeight: 900, letterSpacing: "-0.05em" }}>${yearly ? plan.yearly : plan.monthly}</span>
+                      <span style={{ fontSize: 14, fontWeight: 500, opacity: 0.6, marginBottom: 8 }}>/mo</span>
+                    </div>
+
+                    {plan.monthly > 0 && yearly && (
+                      <p style={{ fontSize: 10, fontWeight: 700, color: "#22c55e", marginBottom: 24, display: "flex", alignItems: "center", gap: 4 }}>
+                        ↗ Save ${(plan.monthly - plan.yearly) * 12}/year
+                      </p>
+                    )}
+
+                    <button onClick={() => router.push("/dashboard")} style={{
+                      width: "100%", padding: 16, borderRadius: 12,
+                      fontWeight: 700, fontSize: 14, marginBottom: 32,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      fontFamily: "inherit", cursor: "pointer", transition: "transform 0.15s",
+                      border: plan.btnStyle === "outline" ? "1.5px solid var(--border)" : "none",
+                      background: plan.btnStyle === "solid" ? "var(--text)" : plan.btnStyle === "gold" ? "#fbbf24" : "transparent",
+                      color: plan.btnStyle === "solid" ? "var(--bg)" : plan.btnStyle === "gold" ? "#000" : "var(--text)",
+                    }}>
+                      Get Started <ArrowRight size={16}/>
+                    </button>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
+                      {plan.features.map(f => (
+                        <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 12, fontSize: 14 }}>
+                          <CheckIcon size={16} color={plan.checkColor}/>
+                          <span style={{ opacity: 0.8, fontWeight: 500 }}>{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 48, textAlign: "center" }}>
+                <button onClick={() => router.push("/dashboard")} style={{
+                  fontSize: 14, fontWeight: 500, opacity: 0.6,
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "12px 24px", borderRadius: 9999,
+                  border: "none", background: "transparent", color: "var(--text)",
+                  cursor: "pointer", fontFamily: "inherit",
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+                onMouseLeave={e => (e.currentTarget.style.opacity = "0.6")}>
+                  Start with <strong style={{ textDecoration: "underline", textUnderlineOffset: 4 }}>Spark</strong> (Free Forever) <ArrowRight size={16}/>
+                </button>
+                <p style={{ fontSize: 10, opacity: 0.6, marginTop: 4 }}>Limited features. Upgrade anytime.</p>
+              </div>
+            </div>
+          </section>
+
+          {/* ════════════════════════════════════════════════════════════════════
+              FOOTER — matches Wavey
+          ════════════════════════════════════════════════════════════════════ */}
+          <footer style={{ padding: "96px 24px", borderTop: "1px solid var(--border)", background: "var(--bg)", transition: "background 0.5s" }}>
+            <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+              <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 48, ...revealStyle }}>
+                <div>
+                  <div style={{ fontWeight: 900, letterSpacing: "-0.05em", fontSize: 24, marginBottom: 16 }}>GEMM</div>
+                  <p style={{ opacity: 0.6, fontSize: 14, maxWidth: 320, marginBottom: 32, lineHeight: 1.5 }}>
+                    The complete operating system for the next generation of digital empires.
+                  </p>
+                  <div style={{ display: "flex", gap: 16 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(128,128,128,0.1)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.5 }}>🌐</div>
+                  </div>
+                </div>
+                <div>
+                  <h4 style={{ fontWeight: 700, marginBottom: 16 }}>Platform</h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, opacity: 0.6 }}>
+                    <a href="#pricing" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Login</a>
+                    <a href="#pricing" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Pricing</a>
+                    <a href="#events" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Explore Events</a>
+                  </div>
+                </div>
+                <div>
+                  <h4 style={{ fontWeight: 700, marginBottom: 16 }}>Support</h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, opacity: 0.6 }}>
+                    <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✉️ Contact Us</a>
+                    <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>💬 Community</a>
+                    <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>🛡️ Privacy Policy</a>
+                  </div>
+                </div>
+              </div>
               <div style={{
-                width: theme === s.key ? 28 : 24, height: theme === s.key ? 28 : 24,
-                borderRadius: "50%", background: s.bg.includes("gradient") ? "rgba(255,255,255,0.3)" : s.bg === "#000000" ? "#000" : s.bg,
-                boxShadow: "inset 0 2px 4px rgba(0,0,0,0.1)",
-                transition: "all 0.3s",
-              }}/>
-              {theme === s.key && (
-                <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: "0.05em", color: "var(--text)", whiteSpace: "nowrap" }}>
-                  {s.key.charAt(0).toUpperCase() + s.key.slice(1)}
-                </span>
-              )}
-            </button>
-          ))}
+                marginTop: 48, paddingTop: 32, borderTop: "1px solid var(--border)",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                fontSize: 12, opacity: 0.4, fontWeight: 700, textTransform: "uppercase",
+              }}>
+                <div>© 2026 Gemm Inc.</div>
+                <div>All Systems Operational</div>
+              </div>
+            </div>
+          </footer>
+
+          {/* ════════════════════════════════════════════════════════════════════
+              THEME SWITCHER DOCK — matches Wavey
+          ════════════════════════════════════════════════════════════════════ */}
+          <div style={{
+            position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)",
+            zIndex: 100, display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 8px", borderRadius: 40,
+            background: "var(--nav)", backdropFilter: "blur(16px)",
+            border: "1px solid var(--border)",
+            boxShadow: "0 30px 60px -15px rgba(0,0,0,0.25)",
+            opacity: loaded ? 1 : 0, transition: "opacity 0.6s ease 1s",
+          }}>
+            {SWATCHES.map(s => (
+              <button key={s.key} onClick={() => setTheme(s.key)}
+                title={s.key.charAt(0).toUpperCase() + s.key.slice(1)}
+                style={{
+                  width: theme === s.key ? "auto" : 40, height: 40, borderRadius: 9999,
+                  border: theme === s.key ? "1px solid var(--border)" : "1px solid transparent",
+                  background: s.bg.includes("gradient") ? s.bg : s.bg,
+                  cursor: "pointer", transition: "all 0.3s",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: theme === s.key ? "0 16px 0 4px" : 0,
+                  boxShadow: theme === s.key ? "0 4px 6px -1px rgba(0,0,0,0.1)" : "none",
+                }}>
+                <div style={{
+                  width: theme === s.key ? 28 : 24, height: theme === s.key ? 28 : 24,
+                  borderRadius: "50%", background: s.bg.includes("gradient") ? "rgba(255,255,255,0.3)" : s.bg === "#000000" ? "#000" : s.bg,
+                  boxShadow: "inset 0 2px 4px rgba(0,0,0,0.1)",
+                  transition: "all 0.3s",
+                }}/>
+                {theme === s.key && (
+                  <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: "0.05em", color: "var(--text)", whiteSpace: "nowrap" }}>
+                    {s.key.charAt(0).toUpperCase() + s.key.slice(1)}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-    </>
+      </>
+    </ClientRouter>
   );
 }

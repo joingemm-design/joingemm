@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { createEvent, updateEvent, uploadEventImage, Ticket } from "@/lib/events";
 
 const css = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}::selection{background:#a855f7;color:#fff}button:active{transform:scale(.98)!important}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}input:focus,textarea:focus{outline:none;border-color:#7c3aed!important}input::placeholder,textarea::placeholder{color:#aaa}`;
@@ -23,6 +24,7 @@ const TicketIcon=()=>(<svg width={16} height={16} viewBox="0 0 24 24" fill="none
 export default function CreateEventPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   // Event fields
   const [title, setTitle] = useState("");
@@ -154,7 +156,7 @@ export default function CreateEventPage() {
       </div>
 
       {/* MAIN LAYOUT */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 380px", gap:0, maxWidth:1400, margin:"0 auto", minHeight:"calc(100vh - 61px)" }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":"1fr 380px", gap:0, maxWidth:1400, margin:"0 auto", minHeight:"calc(100vh - 61px)" }}>
 
         {/* ════ LEFT: EDITOR ════ */}
         <div style={{ padding:"24px 32px 120px", overflowY:"auto", maxHeight:"calc(100vh - 61px)" }}>
@@ -300,71 +302,73 @@ export default function CreateEventPage() {
         </div>
 
         {/* ════ RIGHT: LIVE PHONE PREVIEW ════ */}
-        <div style={{ background:"#e8e8ec", display:"flex", flexDirection:"column", alignItems:"center", paddingTop:24, position:"sticky", top:61, height:"calc(100vh - 61px)", overflow:"hidden" }}>
-          <div style={{ fontSize:10, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.15em", opacity:.4, marginBottom:12 }}>Live Preview</div>
-          <div style={{
-            width:280, minHeight:500, borderRadius:36, border:"8px solid #1a1a1a",
-            background:theme.bg, overflow:"hidden", boxShadow:"0 25px 60px rgba(0,0,0,0.3)",
-            display:"flex", flexDirection:"column", position:"relative", fontFamily:"'DM Sans',sans-serif",
-          }}>
-            {/* Notch */}
-            <div style={{ position:"absolute", top:8, left:"50%", transform:"translateX(-50%)", width:64, height:18, background:"#1a1a1a", borderRadius:99, zIndex:10 }}/>
+        {!isMobile && (
+          <div style={{ background:"#e8e8ec", display:"flex", flexDirection:"column", alignItems:"center", paddingTop:24, position:"sticky", top:61, height:"calc(100vh - 61px)", overflow:"hidden" }}>
+            <div style={{ fontSize:10, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.15em", opacity:.4, marginBottom:12 }}>Live Preview</div>
+            <div style={{
+              width:280, minHeight:500, borderRadius:36, border:"8px solid #1a1a1a",
+              background:theme.bg, overflow:"hidden", boxShadow:"0 25px 60px rgba(0,0,0,0.3)",
+              display:"flex", flexDirection:"column", position:"relative", fontFamily:"'DM Sans',sans-serif",
+            }}>
+              {/* Notch */}
+              <div style={{ position:"absolute", top:8, left:"50%", transform:"translateX(-50%)", width:64, height:18, background:"#1a1a1a", borderRadius:99, zIndex:10 }}/>
 
-            {/* Brand bar */}
-            <div style={{ padding:"36px 16px 8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <span style={{ fontSize:9, fontWeight:900, letterSpacing:"0.1em", color:theme.text, opacity:.4 }}>GEMM</span>
-            </div>
+              {/* Brand bar */}
+              <div style={{ padding:"36px 16px 8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:9, fontWeight:900, letterSpacing:"0.1em", color:theme.text, opacity:.4 }}>GEMM</span>
+              </div>
 
-            {/* Flyer */}
-            <div style={{ margin:"0 12px", borderRadius:12, overflow:"hidden", aspectRatio:"4/3", background:"#111", display:"flex", alignItems:"center", justifyContent:"center" }}>
-              {displayFlyer ? (
-                <img src={displayFlyer} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
-              ) : (
-                <div style={{ textAlign:"center", opacity:.3, color:theme.text }}><ImgIcon/><div style={{ fontSize:9, marginTop:4 }}>No Flyer</div></div>
+              {/* Flyer */}
+              <div style={{ margin:"0 12px", borderRadius:12, overflow:"hidden", aspectRatio:"4/3", background:"#111", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                {displayFlyer ? (
+                  <img src={displayFlyer} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+                ) : (
+                  <div style={{ textAlign:"center", opacity:.3, color:theme.text }}><ImgIcon/><div style={{ fontSize:9, marginTop:4 }}>No Flyer</div></div>
+                )}
+              </div>
+
+              {/* Event info */}
+              <div style={{ padding:"16px 16px 8px", color:theme.text }}>
+                <div style={{ fontSize:16, fontWeight:900, lineHeight:1.2, marginBottom:6 }}>{title || "Event Title"}</div>
+                <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:10, opacity:.6, marginBottom:2 }}>
+                  {displayDate && <><CalIcon/> {displayDate}</>}
+                  {venueName && <><span style={{margin:"0 4px"}}>•</span><MapPin/> {venueName}</>}
+                </div>
+                {shortDesc && <div style={{ fontSize:11, opacity:.5, marginTop:6, lineHeight:1.4 }}>{shortDesc}</div>}
+              </div>
+
+              {/* Tickets preview */}
+              {tickets.length > 0 && (
+                <div style={{ padding:"8px 16px 16px" }}>
+                  <div style={{ fontSize:9, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.1em", opacity:.3, color:theme.text, marginBottom:6 }}>Tickets</div>
+                  {tickets.map(t => (
+                    <div key={t.id} style={{
+                      padding:"8px 12px", borderRadius:8, border:`1px solid ${theme.text}20`,
+                      background:`${theme.text}08`, marginBottom:4,
+                      display:"flex", justifyContent:"space-between", alignItems:"center",
+                      fontSize:11, color:theme.text,
+                    }}>
+                      <span style={{ fontWeight:700 }}>{t.type}</span>
+                      <span style={{ fontWeight:800 }}>{t.price===0?"FREE":`$${t.price}`}</span>
+                    </div>
+                  ))}
+                </div>
               )}
-            </div>
 
-            {/* Event info */}
-            <div style={{ padding:"16px 16px 8px", color:theme.text }}>
-              <div style={{ fontSize:16, fontWeight:900, lineHeight:1.2, marginBottom:6 }}>{title || "Event Title"}</div>
-              <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:10, opacity:.6, marginBottom:2 }}>
-                {displayDate && <><CalIcon/> {displayDate}</>}
-                {venueName && <><span style={{margin:"0 4px"}}>•</span><MapPin/> {venueName}</>}
-              </div>
-              {shortDesc && <div style={{ fontSize:11, opacity:.5, marginTop:6, lineHeight:1.4 }}>{shortDesc}</div>}
-            </div>
-
-            {/* Tickets preview */}
-            {tickets.length > 0 && (
-              <div style={{ padding:"8px 16px 16px" }}>
-                <div style={{ fontSize:9, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.1em", opacity:.3, color:theme.text, marginBottom:6 }}>Tickets</div>
-                {tickets.map(t => (
-                  <div key={t.id} style={{
-                    padding:"8px 12px", borderRadius:8, border:`1px solid ${theme.text}20`,
-                    background:`${theme.text}08`, marginBottom:4,
-                    display:"flex", justifyContent:"space-between", alignItems:"center",
-                    fontSize:11, color:theme.text,
-                  }}>
-                    <span style={{ fontWeight:700 }}>{t.type}</span>
-                    <span style={{ fontWeight:800 }}>{t.price===0?"FREE":`$${t.price}`}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* CTA button */}
-            <div style={{ padding:"4px 16px 20px" }}>
-              <div style={{
-                padding:"10px", borderRadius:10, background:theme.accent,
-                color:theme.bg, fontSize:12, fontWeight:800, textAlign:"center",
-                border:`1px dashed ${theme.text}30`,
-              }}>
-                {tickets.length > 0 ? "Get Tickets" : "Add tickets to see preview"}
+              {/* CTA button */}
+              <div style={{ padding:"4px 16px 20px" }}>
+                <div style={{
+                  padding:"10px", borderRadius:10, background:theme.accent,
+                  color:theme.bg, fontSize:12, fontWeight:800, textAlign:"center",
+                  border:`1px dashed ${theme.text}30`,
+                }}>
+                  {tickets.length > 0 ? "Get Tickets" : "Add tickets to see preview"}
+                </div>
               </div>
             </div>
+            <div style={{ fontSize:9, opacity:.3, marginTop:8, textAlign:"center" }}>This is an approximation. Actual appearance may vary slightly by device.</div>
           </div>
-          <div style={{ fontSize:9, opacity:.3, marginTop:8, textAlign:"center" }}>This is an approximation. Actual appearance may vary slightly by device.</div>
-        </div>
+        )}
       </div>
     </div>
   );

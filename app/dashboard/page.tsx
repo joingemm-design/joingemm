@@ -7,7 +7,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
-import { getUserProfile, getUserLinks, updateUserProfile, addLink, updateLink, deleteLink, UserProfile, LinkItem } from "@/lib/db";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { getUserProfile, UserProfile } from "@/lib/db";
 
 // ── Icons ───────────────────────────────────────────────────────────────
 const SparkleIcon = () => (<svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>);
@@ -35,42 +36,51 @@ const CmdIcon = () => (<svg width={14} height={14} viewBox="0 0 24 24" fill="non
 
 const css = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;background:#030303;color:#e4e4e7}::selection{background:#a855f7;color:#fff}button:active{transform:scale(.98)!important}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,255,255,.05)}50%{box-shadow:0 0 40px rgba(255,255,255,.1)}}.fade{animation:fadeIn .6s ease forwards;opacity:0}input:focus{outline:none;box-shadow:0 0 0 2px rgba(255,255,255,0.1)!important}input::placeholder{color:rgba(255,255,255,0.2)}`;
 
-// ── Auth Screens (same as before) ───────────────────────────────────────
+// ── Auth Screens ────────────────────────────────────────────────────────
 function WorkspaceGateway({ onContinue }: { onContinue: () => void }) {
-  const [v,setV]=useState(false);useEffect(()=>{setTimeout(()=>setV(true),100)},[]);
-  return(<div style={{minHeight:"100vh",background:"#030303",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif",padding:24}}><style>{css}</style>
-    <div style={{width:"100%",maxWidth:480,padding:48,borderRadius:24,border:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.02)",backdropFilter:"blur(20px)",display:"flex",flexDirection:"column",alignItems:"center",gap:24,textAlign:"center",opacity:v?1:0,transform:v?"translateY(0)":"translateY(20px)",transition:"all .6s ease",animation:v?"glow 3s ease infinite":"none"}}>
-      <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center"}}><SparkleIcon/></div>
-      <div><h1 style={{fontSize:28,fontWeight:900,letterSpacing:"-0.03em",marginBottom:8}}>Workspace</h1><p style={{fontSize:15,color:"rgba(255,255,255,0.4)",fontWeight:500}}>Sign in to access your command center.</p></div>
-      <button onClick={onContinue} style={{width:"100%",padding:"18px 32px",borderRadius:14,background:"#fff",color:"#000",border:"none",fontSize:16,fontWeight:800,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"transform .2s",boxShadow:"0 4px 12px rgba(255,255,255,0.08)"}}
-        onMouseEnter={e=>e.currentTarget.style.transform="scale(1.02)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>Continue <ArrowRightIcon/></button>
-      <p style={{fontSize:11,color:"rgba(255,255,255,0.15)",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",marginTop:8}}>Powered by GEMM</p>
-    </div></div>);
+  const [v, setV] = useState(false);
+  useEffect(() => { setTimeout(() => setV(true), 100) }, []);
+  return (
+    <div style={{ minHeight: "100vh", background: "#030303", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", padding: 24 }}>
+      <style>{css}</style>
+      <div style={{ width: "100%", maxWidth: 480, padding: 48, borderRadius: 24, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", backdropFilter: "blur(20px)", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, textAlign: "center", opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(20px)", transition: "all .6s ease", animation: v ? "glow 3s ease infinite" : "none" }}>
+        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}><SparkleIcon /></div>
+        <div><h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.03em", marginBottom: 8 }}>Workspace</h1><p style={{ fontSize: 15, color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>Sign in to access your command center.</p></div>
+        <button onClick={onContinue} style={{ width: "100%", padding: "18px 32px", borderRadius: 14, background: "#fff", color: "#000", border: "none", fontSize: 16, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "transform .2s", boxShadow: "0 4px 12px rgba(255,255,255,0.08)" }}
+          onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>Continue <ArrowRightIcon /></button>
+        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.15)", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 8 }}>Powered by GEMM</p>
+      </div>
+    </div>
+  );
 }
 
-function AuthScreen({ onGoogle,onEmailSignIn,onEmailSignUp }:{onGoogle:()=>void;onEmailSignIn:(e:string,p:string)=>Promise<{error?:string}>;onEmailSignUp:(e:string,p:string,n?:string)=>Promise<{error?:string}>}) {
-  const [mode,setMode]=useState<"signin"|"signup">("signin");const[email,setEmail]=useState("");const[password,setPassword]=useState("");const[name,setName]=useState("");const[error,setError]=useState("");const[showPw,setShowPw]=useState(false);const[busy,setBusy]=useState(false);const[v,setV]=useState(false);
-  useEffect(()=>{setTimeout(()=>setV(true),100)},[]);
-  async function submit(){setError("");if(!email.trim()){setError("Please enter your email.");return}if(!password.trim()){setError("Please enter your password.");return}if(mode==="signup"&&password.length<6){setError("Password must be at least 6 characters.");return}setBusy(true);const r=mode==="signin"?await onEmailSignIn(email,password):await onEmailSignUp(email,password,name||undefined);if(r.error){setError(r.error);setBusy(false)}}
-  const inp:React.CSSProperties={width:"100%",padding:"14px 16px",borderRadius:10,border:"1px solid #ddd",fontSize:15,fontFamily:"inherit",fontWeight:500,color:"#000",background:"#fff",outline:"none"};
-  return(<div style={{minHeight:"100vh",background:"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif",padding:24}}><style>{css}{`body{background:#f5f5f5!important;color:#000!important}input:focus{box-shadow:0 0 0 2px #3b82f6!important}input::placeholder{color:rgba(0,0,0,0.35)}`}</style>
-    <div style={{width:"100%",maxWidth:420,padding:"48px 40px",borderRadius:20,background:"#fff",boxShadow:"0 8px 30px rgba(0,0,0,0.08)",border:"1px solid rgba(0,0,0,0.06)",display:"flex",flexDirection:"column",alignItems:"center",gap:20,opacity:v?1:0,transform:v?"translateY(0)":"translateY(20px)",transition:"all .5s ease"}}>
-      <div style={{width:56,height:56,borderRadius:16,background:"#000",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:18,height:18,borderRadius:"50%",background:"#fff"}}/></div>
-      <div style={{textAlign:"center"}}><h1 style={{fontSize:24,fontWeight:900,color:"#000",letterSpacing:"-0.03em"}}>Welcome</h1><p style={{fontSize:14,color:"#666",marginTop:4}}>{mode==="signin"?"Log in to GEMM to continue.":"Create your GEMM account."}</p></div>
-      <div style={{width:"100%",display:"flex",flexDirection:"column",gap:12}}>
-        {mode==="signup"&&<input type="text" placeholder="Full name" value={name} onChange={e=>setName(e.target.value)} style={inp}/>}
-        <input type="email" placeholder="Email address*" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()} style={inp}/>
-        <div style={{position:"relative"}}><input type={showPw?"text":"password"} placeholder="Password*" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()} style={{...inp,paddingRight:48}}/><button onClick={()=>setShowPw(!showPw)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#999",padding:4}}>{showPw?<EyeOffIcon/>:<EyeIcon/>}</button></div>
-        {error&&<p style={{fontSize:13,color:"#dc2626",fontWeight:600}}>{error}</p>}
-        <button onClick={submit} disabled={busy} style={{width:"100%",padding:14,borderRadius:10,background:"#2563eb",color:"#fff",border:"none",fontSize:16,fontWeight:800,cursor:busy?"wait":"pointer",fontFamily:"inherit",opacity:busy?.7:1}}>{busy?"Loading...":mode==="signin"?"Continue":"Sign Up"}</button>
+function AuthScreen({ onGoogle, onEmailSignIn, onEmailSignUp }: { onGoogle: () => void; onEmailSignIn: (e: string, p: string) => Promise<{ error?: string }>; onEmailSignUp: (e: string, p: string, n?: string) => Promise<{ error?: string }> }) {
+  const [mode, setMode] = useState<"signin" | "signup">("signin"); const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [name, setName] = useState(""); const [error, setError] = useState(""); const [showPw, setShowPw] = useState(false); const [busy, setBusy] = useState(false); const [v, setV] = useState(false);
+  useEffect(() => { setTimeout(() => setV(true), 100) }, []);
+  async function submit() { setError(""); if (!email.trim()) { setError("Please enter your email."); return } if (!password.trim()) { setError("Please enter your password."); return } if (mode === "signup" && password.length < 6) { setError("Password must be at least 6 characters."); return } setBusy(true); const r = mode === "signin" ? await onEmailSignIn(email, password) : await onEmailSignUp(email, password, name || undefined); if (r.error) { setError(r.error); setBusy(false) } }
+  const inp: React.CSSProperties = { width: "100%", padding: "14px 16px", borderRadius: 10, border: "1px solid #ddd", fontSize: 15, fontFamily: "inherit", fontWeight: 500, color: "#000", background: "#fff", outline: "none" };
+  return (
+    <div style={{ minHeight: "100vh", background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", padding: 24 }}>
+      <style>{css}{`body{background:#f5f5f5!important;color:#000!important}input:focus{box-shadow:0 0 0 2px #3b82f6!important}input::placeholder{color:rgba(0,0,0,0.35)}`}</style>
+      <div style={{ width: "100%", maxWidth: 420, padding: "48px 40px", borderRadius: 20, background: "#fff", boxShadow: "0 8px 30px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(20px)", transition: "all .5s ease" }}>
+        <div style={{ width: 56, height: 56, borderRadius: 16, background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff" }} /></div>
+        <div style={{ textAlign: "center" }}><h1 style={{ fontSize: 24, fontWeight: 900, color: "#000", letterSpacing: "-0.03em" }}>Welcome</h1><p style={{ fontSize: 14, color: "#666", marginTop: 4 }}>{mode === "signin" ? "Log in to GEMM to continue." : "Create your GEMM account."}</p></div>
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+          {mode === "signup" && <input type="text" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} style={inp} />}
+          <input type="email" placeholder="Email address*" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} style={inp} />
+          <div style={{ position: "relative" }}><input type={showPw ? "text" : "password"} placeholder="Password*" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} style={{ ...inp, paddingRight: 48 }} /><button onClick={() => setShowPw(!showPw)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#999", padding: 4 }}>{showPw ? <EyeOffIcon /> : <EyeIcon />}</button></div>
+          {error && <p style={{ fontSize: 13, color: "#dc2626", fontWeight: 600 }}>{error}</p>}
+          <button onClick={submit} disabled={busy} style={{ width: "100%", padding: 14, borderRadius: 10, background: "#2563eb", color: "#fff", border: "none", fontSize: 16, fontWeight: 800, cursor: busy ? "wait" : "pointer", fontFamily: "inherit", opacity: busy ? .7 : 1 }}>{busy ? "Loading..." : mode === "signin" ? "Continue" : "Sign Up"}</button>
+        </div>
+        <p style={{ fontSize: 14, color: "#666" }}>{mode === "signin" ? "Don't have an account? " : "Already have an account? "}<button onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError("") }} style={{ background: "none", border: "none", color: "#2563eb", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>{mode === "signin" ? "Sign up" : "Sign in"}</button></p>
+        <div style={{ width: "100%", display: "flex", alignItems: "center", gap: 16 }}><div style={{ flex: 1, height: 1, background: "#e5e5e5" }} /><span style={{ fontSize: 12, color: "#999", fontWeight: 600, textTransform: "uppercase" }}>OR</span><div style={{ flex: 1, height: 1, background: "#e5e5e5" }} /></div>
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={onGoogle} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "1px solid #ddd", background: "#fff", color: "#000", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 12 }} onMouseEnter={e => e.currentTarget.style.background = "#f9f9f9"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}><GoogleIcon /> Continue with Google</button>
+          <button onClick={() => alert("Stripe Connect functionality is not implemented yet.")} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "1px solid #ddd", background: "#fff", color: "#000", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 12 }} onMouseEnter={e => e.currentTarget.style.background = "#f9f9f9"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}><StripeIcon /> Continue with Stripe Connect</button>
+        </div>
       </div>
-      <p style={{fontSize:14,color:"#666"}}>{mode==="signin"?"Don't have an account? ":"Already have an account? "}<button onClick={()=>{setMode(mode==="signin"?"signup":"signin");setError("")}} style={{background:"none",border:"none",color:"#2563eb",fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:14}}>{mode==="signin"?"Sign up":"Sign in"}</button></p>
-      <div style={{width:"100%",display:"flex",alignItems:"center",gap:16}}><div style={{flex:1,height:1,background:"#e5e5e5"}}/><span style={{fontSize:12,color:"#999",fontWeight:600,textTransform:"uppercase"}}>OR</span><div style={{flex:1,height:1,background:"#e5e5e5"}}/></div>
-      <div style={{width:"100%",display:"flex",flexDirection:"column",gap:10}}>
-        <button onClick={onGoogle} style={{width:"100%",padding:"14px 16px",borderRadius:10,border:"1px solid #ddd",background:"#fff",color:"#000",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:12}} onMouseEnter={e=>e.currentTarget.style.background="#f9f9f9"} onMouseLeave={e=>e.currentTarget.style.background="#fff"}><GoogleIcon/> Continue with Google</button>
-        <button style={{width:"100%",padding:"14px 16px",borderRadius:10,border:"1px solid #ddd",background:"#fff",color:"#000",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:12}} onMouseEnter={e=>e.currentTarget.style.background="#f9f9f9"} onMouseLeave={e=>e.currentTarget.style.background="#fff"}><StripeIcon/> Continue with Stripe Connect</button>
-      </div>
-    </div></div>);
+    </div>
+  );
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -78,6 +88,7 @@ function AuthScreen({ onGoogle,onEmailSignIn,onEmailSignUp }:{onGoogle:()=>void;
 // ══════════════════════════════════════════════════════════════════════════
 function CommandCenter({ user, profile, signOut }: { user: any; profile: UserProfile | null; signOut: () => void }) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const dn = profile?.displayName || user.displayName || "Creator";
   const em = user.email || "";
   const pic = profile?.photoURL || user.photoURL;
@@ -85,22 +96,22 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
   const tier = "FREE TIER"; // placeholder
 
   const quickActions = [
-    { icon: <TicketIcon/>, label: "Find My Tickets", desc: "Locate your passes & QR", cols: 1 },
-    { icon: <WalletIcon/>, label: "Billing & Payouts", desc: "Manage billing and connect your bank account", cols: 1 },
-    { icon: <ChartIcon/>, label: "Data & Analytics", desc: "Platform traffic intelligence", cols: 1 },
+    { icon: <TicketIcon/>, label: "Find My Tickets", desc: "Locate your passes & QR", cols: 1, action: () => router.push("/dashboard/tickets") },
+    { icon: <WalletIcon/>, label: "Billing & Payouts", desc: "Manage billing and connect your bank account", cols: 1, action: () => router.push("/dashboard/billing") },
+    { icon: <ChartIcon/>, label: "Data & Analytics", desc: "Platform traffic intelligence", cols: 1, action: () => router.push("/dashboard/analytics") },
     { icon: <HomeIcon/>, label: "Go Home", desc: "Back to main site", cols: 1, action: () => router.push("/") },
-    { icon: <HelpIcon/>, label: "Help & Support", desc: "Activate Neural Base", cols: 1 },
+    { icon: <HelpIcon/>, label: "Help & Support", desc: "Activate Neural Base", cols: 1, action: () => router.push("/dashboard/help") },
   ];
 
   const modules = [
     { icon: <ZapIcon/>, label: "Link-in-Bio", desc: "Create public profile", action: () => router.push("/dashboard/links") },
     { icon: <CalendarPlusIcon/>, label: "Publish Event", desc: "Deploy events, affiliates and onboarding forms", action: () => router.push("/dashboard/events/new") },
     { icon: <CalendarCheckIcon/>, label: "Manage Events", desc: "Tickets, guestlists & scanners", action: () => router.push("/dashboard/events") },
-    { icon: <GlobeIcon/>, label: "Discover Events", desc: "Register to promote events" },
-    { icon: <ShopIcon/>, label: "Publish Shop", desc: "Deploy shops, products & affiliates" },
-    { icon: <ShoppingBagIcon/>, label: "Commerce", desc: "Manage Shops" },
-    { icon: <QrIcon/>, label: "QR Codes", desc: "Dynamic tracking codes" },
-    { icon: <UploadIcon/>, label: "Quick Media", desc: "Fast media upload tool" },
+    { icon: <GlobeIcon/>, label: "Discover Events", desc: "Register to promote events", action: () => router.push("/dashboard/discover") },
+    { icon: <ShopIcon/>, label: "Publish Shop", desc: "Deploy shops, products & affiliates", action: () => router.push("/dashboard/shop/new") },
+    { icon: <ShoppingBagIcon/>, label: "Commerce", desc: "Manage Shops", action: () => router.push("/dashboard/shop") },
+    { icon: <QrIcon/>, label: "QR Codes", desc: "Dynamic tracking codes", action: () => router.push("/dashboard/qr") },
+    { icon: <UploadIcon/>, label: "Quick Media", desc: "Fast media upload tool", action: () => router.push("/dashboard/media") },
   ];
 
   const cardStyle: React.CSSProperties = {
@@ -145,7 +156,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
           Command Center
         </h1>
         <p style={{ fontSize: 15, opacity: 0.35, fontWeight: 500 }}>
-          Welcome back. What&apos;s the focus today?
+          Welcome back. What's the focus today?
         </p>
       </div>
 
@@ -174,7 +185,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
           <span style={{ width: 16, height: 1, background: "rgba(255,255,255,0.2)", display: "inline-block" }}/>
           Quick Actions
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
           {quickActions.slice(0, 2).map(a => (
             <button key={a.label} onClick={a.action} style={{ ...cardStyle, textAlign: "left" } as any}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
@@ -190,7 +201,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
             </button>
           ))}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr 1fr", gap: 12 }}>
           {quickActions.slice(2).map(a => (
             <button key={a.label} onClick={a.action} style={{ ...cardStyle, textAlign: "left" } as any}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
@@ -214,7 +225,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
           <span style={{ width: 16, height: 1, background: "rgba(255,255,255,0.2)", display: "inline-block" }}/>
           Workspace Modules
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)", gap: 12 }}>
           {modules.map(m => (
             <button key={m.label} onClick={m.action} style={{ ...cardStyle, textAlign: "left", minHeight: 130 } as any}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
@@ -247,8 +258,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user && screen === "dashboard") {
       getUserProfile(user.uid).then(p => {
-        if (!p || !p.username) router.push("/onboarding");
-        else setProfile(p);
+        if (!p || !p.username) { setProfile(null); }
+        else { setProfile(p); }
         setProfileLoading(false);
       });
     }

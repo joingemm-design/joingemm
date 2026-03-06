@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { getUserProfile, getUserLinks, addLink, updateLink, deleteLink, updateUserProfile, UserProfile, LinkItem } from "@/lib/db";
 
 // ── Design Presets ──────────────────────────────────────────────────────
@@ -97,6 +98,7 @@ export default function LinksEditorPage() {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => { if (!loading && !user) router.push("/dashboard"); }, [user, loading, router]);
 
@@ -104,14 +106,23 @@ export default function LinksEditorPage() {
     if (!user) return;
     (async () => {
       const p = await getUserProfile(user.uid);
-      if (!p?.username) { router.push("/onboarding"); return; }
       setProfile(p);
-      setDisplayName(p.displayName || "");
-      setBio(p.bio || "");
-      setSocials(p.socials || {});
-      const d = p.design || {};
-      const preset = DESIGN_PRESETS.find(pr => pr.key === (d.preset || p.theme || "clean")) || DESIGN_PRESETS[0];
-      setDesign({ preset: preset.key, buttonShape: d.buttonShape||"rounded", buttonShadow: d.buttonShadow||"none", typography: d.typography||"sans", spacing: d.spacing||"normal", bgColor: d.bgColor||preset.bg, textColor: d.textColor||preset.text, buttonBg: d.buttonBg||preset.btn, buttonText: d.buttonText||preset.btnText });
+
+      if (p) {
+        setDisplayName(p.displayName || "");
+        setBio(p.bio || "");
+        setSocials(p.socials || {});
+        const d = p.design || {};
+        const preset = DESIGN_PRESETS.find(pr => pr.key === (d.preset || p.theme || "clean")) || DESIGN_PRESETS[0];
+        setDesign({ preset: preset.key, buttonShape: d.buttonShape||"rounded", buttonShadow: d.buttonShadow||"none", typography: d.typography||"sans", spacing: d.spacing||"normal", bgColor: d.bgColor||preset.bg, textColor: d.textColor||preset.text, buttonBg: d.buttonBg||preset.btn, buttonText: d.buttonText||preset.btnText });
+      } else {
+        setDisplayName(user.displayName || "");
+        setBio("");
+        setSocials({});
+        const preset = DESIGN_PRESETS[0];
+        setDesign({ preset: preset.key, buttonShape: "rounded", buttonShadow: "none", typography: "sans", spacing: "normal", bgColor: preset.bg, textColor: preset.text, buttonBg: preset.btn, buttonText: preset.btnText });
+      }
+
       const l = await getUserLinks(user.uid);
       setLinks(l);
       setReady(true);
@@ -203,7 +214,7 @@ export default function LinksEditorPage() {
       </div>
 
       {/* MAIN LAYOUT */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 380px", gap:0, maxWidth:1400, margin:"0 auto", minHeight:"calc(100vh - 61px)" }}>
+      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 380px", gap:0, maxWidth:1400, margin:"0 auto", minHeight:"calc(100vh - 61px)" }}>
 
         {/* ════ LEFT: EDITOR ════ */}
         <div style={{ padding:"24px 32px 120px", overflowY:"auto", maxHeight:"calc(100vh - 61px)" }}>
@@ -327,7 +338,8 @@ export default function LinksEditorPage() {
             {/* Spacing */}
             <div style={{ marginBottom:16 }}><span style={label}>Item Spacing</span>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:4 }}>
-                {["compact","normal","airy"].map(s=>(<button key={s} onClick={()=>setDesign(d=>({...d,spacing:s}))} style={{ padding:"8px", borderRadius:8, fontSize:12, fontWeight:700, textTransform:"capitalize" as const, border:design.spacing===s?"2px solid #000":"1px solid #ddd", background:design.spacing===s?"#000":"#fff", color:design.spacing===s?"#fff":"#666", cursor:"pointer", fontFamily:"inherit" }}>{s}</button>))}
+                {["compact","normal","airy"].map(s=>(<button key={s} onClick={()=>setDesign(d=>({...d,spacing:s}))} style={{ padding:"8px", borderRadius:8, fontSize:12, fontWeight:700, textTransform:"capitalize" as const, border:design.spacing===s?"2px solid #000":"1px solid #ddd", background:design.spacing===s?"#000":"#fff", color:design.spacing===s?"#fff":"#666", cursor:"pointer", fontFamily:"inherit" }}>{s}</button>))
+                }
               </div>
             </div>
 
@@ -347,21 +359,24 @@ export default function LinksEditorPage() {
             {/* Button shape */}
             <div style={{ marginBottom:16 }}><span style={label}>Button Shape</span>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:4 }}>
-                {[{k:"rounded",l:"Rounded"},{k:"square",l:"Square"},{k:"pill",l:"Pill"}].map(s=>(<button key={s.k} onClick={()=>setDesign(d=>({...d,buttonShape:s.k}))} style={{ padding:"8px", borderRadius:s.k==="pill"?999:s.k==="square"?4:8, fontSize:12, fontWeight:700, border:design.buttonShape===s.k?"2px solid #000":"1px solid #ddd", background:design.buttonShape===s.k?"#000":"#fff", color:design.buttonShape===s.k?"#fff":"#666", cursor:"pointer", fontFamily:"inherit" }}>{s.l}</button>))}
+                {[{k:"rounded",l:"Rounded"},{k:"square",l:"Square"},{k:"pill",l:"Pill"}].map(s=>(<button key={s.k} onClick={()=>setDesign(d=>({...d,buttonShape:s.k}))} style={{ padding:"8px", borderRadius:s.k==="pill"?999:s.k==="square"?4:8, fontSize:12, fontWeight:700, border:design.buttonShape===s.k?"2px solid #000":"1px solid #ddd", background:design.buttonShape===s.k?"#000":"#fff", color:design.buttonShape===s.k?"#fff":"#666", cursor:"pointer", fontFamily:"inherit" }}>{s.l}</button>))
+                }
               </div>
             </div>
 
             {/* Button shadow */}
             <div style={{ marginBottom:16 }}><span style={label}>Button Shadow</span>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:4 }}>
-                {[{k:"none",l:"None"},{k:"soft",l:"Soft Shadow"},{k:"hard",l:"Hard Shadow"}].map(s=>(<button key={s.k} onClick={()=>setDesign(d=>({...d,buttonShadow:s.k}))} style={{ padding:"8px", borderRadius:8, fontSize:11, fontWeight:700, border:design.buttonShadow===s.k?"2px solid #000":"1px solid #ddd", background:design.buttonShadow===s.k?"#000":"#fff", color:design.buttonShadow===s.k?"#fff":"#666", cursor:"pointer", fontFamily:"inherit" }}>{s.l}</button>))}
+                {[{k:"none",l:"None"},{k:"soft",l:"Soft Shadow"},{k:"hard",l:"Hard Shadow"}].map(s=>(<button key={s.k} onClick={()=>setDesign(d=>({...d,buttonShadow:s.k}))} style={{ padding:"8px", borderRadius:8, fontSize:11, fontWeight:700, border:design.buttonShadow===s.k?"2px solid #000":"1px solid #ddd", background:design.buttonShadow===s.k?"#000":"#fff", color:design.buttonShadow===s.k?"#fff":"#666", cursor:"pointer", fontFamily:"inherit" }}>{s.l}</button>))
+                }
               </div>
             </div>
 
             {/* Typography */}
             <div><span style={label}>Typography</span>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:4 }}>
-                {[{k:"sans",l:"Sans"},{k:"serif",l:"Serif"},{k:"mono",l:"Mono"}].map(s=>(<button key={s.k} onClick={()=>setDesign(d=>({...d,typography:s.k}))} style={{ padding:"8px", borderRadius:8, fontSize:12, fontWeight:700, fontFamily:s.k==="serif"?"Georgia,serif":s.k==="mono"?"'DM Mono',monospace":"inherit", border:design.typography===s.k?"2px solid #000":"1px solid #ddd", background:design.typography===s.k?"#000":"#fff", color:design.typography===s.k?"#fff":"#666", cursor:"pointer" }}>{s.l}</button>))}
+                {[{k:"sans",l:"Sans"},{k:"serif",l:"Serif"},{k:"mono",l:"Mono"}].map(s=>(<button key={s.k} onClick={()=>setDesign(d=>({...d,typography:s.k}))} style={{ padding:"8px", borderRadius:8, fontSize:12, fontWeight:700, fontFamily:s.k==="serif"?"Georgia,serif":s.k==="mono"?"'DM Mono',monospace":"inherit", border:design.typography===s.k?"2px solid #000":"1px solid #ddd", background:design.typography===s.k?"#000":"#fff", color:design.typography===s.k?"#fff":"#666", cursor:"pointer" }}>{s.l}</button>))
+                }
               </div>
             </div>
           </div>
@@ -409,75 +424,77 @@ export default function LinksEditorPage() {
         </div>
 
         {/* ════ RIGHT: LIVE PHONE PREVIEW ════ */}
-        <div style={{ background:"#e8e8ec", display:"flex", alignItems:"flex-start", justifyContent:"center", paddingTop:32, position:"sticky", top:61, height:"calc(100vh - 61px)", overflow:"hidden" }}>
-          <div style={{
-            width:300, minHeight:560, borderRadius:40, border:"8px solid #1a1a1a",
-            background:dBg, overflow:"hidden", boxShadow:"0 25px 60px rgba(0,0,0,0.3)",
-            display:"flex", flexDirection:"column", position:"relative", fontFamily,
-          }}>
-            {/* Notch */}
-            <div style={{ position:"absolute", top:8, left:"50%", transform:"translateX(-50%)", width:72, height:20, background:"#1a1a1a", borderRadius:99, zIndex:10 }}/>
+        {!isMobile && (
+          <div style={{ background:"#e8e8ec", display:"flex", alignItems:"flex-start", justifyContent:"center", paddingTop:32, position:"sticky", top:61, height:"calc(100vh - 61px)", overflow:"hidden" }}>
+            <div style={{
+              width:300, minHeight:560, borderRadius:40, border:"8px solid #1a1a1a",
+              background:dBg, overflow:"hidden", boxShadow:"0 25px 60px rgba(0,0,0,0.3)",
+              display:"flex", flexDirection:"column", position:"relative", fontFamily,
+            }}>
+              {/* Notch */}
+              <div style={{ position:"absolute", top:8, left:"50%", transform:"translateX(-50%)", width:72, height:20, background:"#1a1a1a", borderRadius:99, zIndex:10 }}/>
 
-            <div style={{ padding:"48px 20px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:design.spacing==="compact"?10:design.spacing==="airy"?22:16, color:dText }}>
-              {/* Avatar */}
-              <div style={{ width:72, height:72, borderRadius:"50%", border:`2px solid ${dText}33`, overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, fontWeight:900, background:`${dText}10` }}>
-                {profile?.photoURL ? <Image src={profile.photoURL} alt="" width="72" height="72" referrerPolicy="no-referrer" style={{objectFit:"cover"}}/> : (displayName?.[0]?.toUpperCase()||"?")}
-              </div>
-
-              {/* Name + bio */}
-              <div style={{ textAlign:"center" }}>
-                <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.02em" }}>{displayName||"Your Name"}</div>
-                {bio && <div style={{ fontSize:11, opacity:.6, marginTop:4, lineHeight:1.4, maxWidth:240 }}>{bio}</div>}
-              </div>
-
-              {/* Social icons */}
-              {Object.values(socials).some(v=>v) && (
-                <div style={{ display:"flex", gap:10 }}>
-                  {socials.instagram&&<div style={{opacity:.5}}><IgIcon/></div>}
-                  {socials.tiktok&&<div style={{opacity:.5}}><TtIcon/></div>}
-                  {socials.twitter&&<div style={{opacity:.5}}><TwIcon/></div>}
-                  {socials.youtube&&<div style={{opacity:.5}}><YtIcon/></div>}
-                  {socials.linkedin&&<div style={{opacity:.5}}><LiIcon/></div>}
-                  {socials.facebook&&<div style={{opacity:.5}}><FbIcon/></div>}
+              <div style={{ padding:"48px 20px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:design.spacing==="compact"?10:design.spacing==="airy"?22:16, color:dText }}>
+                {/* Avatar */}
+                <div style={{ width:72, height:72, borderRadius:"50%", border:`2px solid ${dText}33`, overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, fontWeight:900, background:`${dText}10` }}>
+                  {profile?.photoURL ? <Image src={profile.photoURL} alt="" width="72" height="72" referrerPolicy="no-referrer" style={{objectFit:"cover"}}/> : (displayName?.[0]?.toUpperCase()||"?")}
                 </div>
-              )}
 
-              {/* Headers + Links preview */}
-              <div style={{ width:"100%", display:"flex", flexDirection:"column", gap:design.spacing==="compact"?6:design.spacing==="airy"?14:10 }}>
-                {headers.map(h => (
-                  <div key={h.id} style={{ fontSize:12, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.08em", opacity:.5, padding:"8px 0 2px" }}>{h.text}</div>
-                ))}
-                {links.filter(l=>l.active).map(link => (
-                  <div key={link.id} style={{
-                    padding:"12px 16px", borderRadius:btnRadius,
-                    background:dBtn, color:dBtnText,
-                    fontSize:13, fontWeight:700, textAlign:"center",
-                    display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                    boxShadow:btnShadow,
-                  }}>
-                    {link.icon&&<span>{link.icon}</span>}
-                    {link.title}
+                {/* Name + bio */}
+                <div style={{ textAlign:"center" }}>
+                  <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.02em" }}>{displayName||"Your Name"}</div>
+                  {bio && <div style={{ fontSize:11, opacity:.6, marginTop:4, lineHeight:1.4, maxWidth:240 }}>{bio}</div>}
+                </div>
+
+                {/* Social icons */}
+                {Object.values(socials).some(v=>v) && (
+                  <div style={{ display:"flex", gap:10 }}>
+                    {socials.instagram&&<div style={{opacity:.5}}><IgIcon/></div>}
+                    {socials.tiktok&&<div style={{opacity:.5}}><TtIcon/></div>}
+                    {socials.twitter&&<div style={{opacity:.5}}><TwIcon/></div>}
+                    {socials.youtube&&<div style={{opacity:.5}}><YtIcon/></div>}
+                    {socials.linkedin&&<div style={{opacity:.5}}><LiIcon/></div>}
+                    {socials.facebook&&<div style={{opacity:.5}}><FbIcon/></div>}
                   </div>
-                ))}
-                {links.filter(l=>l.active).length===0 && headers.length===0 && (
-                  <div style={{ textAlign:"center", fontSize:12, opacity:.3, padding:16 }}>No active links</div>
                 )}
-              </div>
 
-              {/* Branding */}
-              <div style={{ marginTop:16, display:"flex", alignItems:"center", gap:6, opacity:.2, fontSize:10, fontWeight:700 }}>
-                <div style={{ width:12, height:12, borderRadius:"50%", background:dText, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                  <div style={{ width:4, height:4, borderRadius:"50%", background:dBg }}/>
+                {/* Headers + Links preview */}
+                <div style={{ width:"100%", display:"flex", flexDirection:"column", gap:design.spacing==="compact"?6:design.spacing==="airy"?14:10 }}>
+                  {headers.map(h => (
+                    <div key={h.id} style={{ fontSize:12, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.08em", opacity:.5, padding:"8px 0 2px" }}>{h.text}</div>
+                  ))}
+                  {links.filter(l=>l.active).map(link => (
+                    <div key={link.id} style={{
+                      padding:"12px 16px", borderRadius:btnRadius,
+                      background:dBtn, color:dBtnText,
+                      fontSize:13, fontWeight:700, textAlign:"center",
+                      display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                      boxShadow:btnShadow,
+                    }}>
+                      {link.icon&&<span>{link.icon}</span>}
+                      {link.title}
+                    </div>
+                  ))}
+                  {links.filter(l=>l.active).length===0 && headers.length===0 && (
+                    <div style={{ textAlign:"center", fontSize:12, opacity:.3, padding:16 }}>No active links</div>
+                  )}
                 </div>
-                GEMM
+
+                {/* Branding */}
+                <div style={{ marginTop:16, display:"flex", alignItems:"center", gap:6, opacity:.2, fontSize:10, fontWeight:700 }}>
+                  <div style={{ width:12, height:12, borderRadius:"50%", background:dText, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <div style={{ width:4, height:4, borderRadius:"50%", background:dBg }}/>
+                  </div>
+                  GEMM
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Bottom bar */}
-      <div style={{ position:"fixed", bottom:0, left:0, right:"380px", zIndex:50, background:"#fff", borderTop:"1px solid #eee", padding:"12px 24px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+      <div style={{ position:"fixed", bottom:0, left:0, right:isMobile?"0":"380px", zIndex:50, background:"#fff", borderTop:"1px solid #eee", padding:"12px 24px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <button onClick={()=>router.push("/dashboard")} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 16px", borderRadius:999, border:"1px solid #ddd", background:"#fff", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit", color:"#666" }}>← View Portal</button>
         <button onClick={handlePublish} disabled={publishing} style={{ padding:"10px 28px", borderRadius:999, background:"#000", color:"#fff", border:"none", fontSize:14, fontWeight:800, cursor:"pointer", fontFamily:"inherit", opacity:publishing?.6:1 }}>
           {publishing?"Publishing...":"Publish"}
