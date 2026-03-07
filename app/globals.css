@@ -107,3 +107,12 @@ input[type="range"]::-moz-range-thumb {
     grid-template-columns: 1fr !important;
   }
 }
+/* Mobile fixes */
+@media (max-width: 768px) {
+  body, html { overflow-x: hidden !important; width: 100% !important; }
+  * { max-width: 100vw; }
+  section { overflow: hidden !important; }
+  .perspective-1000, [style*="perspective"] { display: none !important; }
+  [style*="translateX(-110%)"], [style*="translateX(110%)"] { display: none !important; }
+  [style*="minHeight: \"90vh\""] { min-height: auto !important; padding-top: 80px !important; }
+}

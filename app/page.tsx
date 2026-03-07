@@ -157,7 +157,6 @@ function LoadingScreen({ progress, visible }: { progress: number; visible: boole
 // ── Sales Simulator Card (matches Wavey with +$XX popup) ────────────────────
 function SalesSimulator() {
   const isMobile = useIsMobile();
-  const isMobile = useIsMobile();
   const [amount, setAmount] = useState(1240);
   const [gain, setGain] = useState<number | null>(null);
   const [showGain, setShowGain] = useState(false);
@@ -241,6 +240,7 @@ function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: stri
 
 // ── Revenue Chart — Interactive Simulator (matches Wavey) ────────────────────
 function RevenueChart() {
+  const isMobile = useIsMobile();
   const [products, setProducts] = useState(3);
   const [avgPrice, setAvgPrice] = useState(45);
   const [followers, setFollowers] = useState(5000);
@@ -507,7 +507,7 @@ function PhoneCarousel() {
               </div>
               <ShoppingBagIcon/>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
               {[["PACK","$150"],["TEE","$45"],["HOODIE","$65"],["TEE 2","$50"]].map(([n,p]) => (
                 <div key={n} style={{
                   background: "var(--bg2)", borderRadius: 12, aspectRatio: "3/4",
@@ -627,6 +627,7 @@ function PhoneCarousel() {
 export default function LandingPage() {
   const { user, loading: authLoading, signIn } = useAuth();
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [theme, setTheme] = useState("clean");
   const [yearly, setYearly] = useState(true);
   const [loaded, setLoaded] = useState(false);
@@ -993,7 +994,7 @@ export default function LandingPage() {
                   You have the fans. Now, get paid. For less than $1 a day, get a shop, sell tickets, and share one link for everything. Watch your sales grow while your cost stays the same.
                 </p>
                 {/* Cost comparison cards — matches Wavey */}
-                <a href="#pricing" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, cursor: "pointer", textDecoration: "none", color: "var(--text)" }}>
+                <a href="#pricing" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, cursor: "pointer", textDecoration: "none", color: "var(--text)" }}>
                   <div style={{ padding: 24, borderRadius: 24, border: "1px solid var(--border)", background: "var(--bg2)", position: "relative", overflow: "hidden" }}>
                     <div style={{ position: "absolute", top: 0, right: 0, width: 64, height: 64, background: "rgba(239,68,68,0.1)", borderRadius: "0 0 0 100%" }}/>
                     <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6, marginBottom: 8 }}>Your Monthly Cost</p>
@@ -1024,7 +1025,7 @@ export default function LandingPage() {
             <div ref={addRevealRef} style={{ maxWidth: 1200, margin: "0 auto", ...revealStyle }}>
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 48, alignItems: "center" }}>
                 {/* Left — Feature grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
                   <FeatureCard icon={<UsersIcon/>} title="Custom Pages" desc="Give every fan their own page that matches their style and brand."/>
                   <FeatureCard icon={<StarIcon size={24}/>} title="Connect Your Apps" desc="It works perfectly with tools you love like Eventbrite and Posh."/>
                   <FeatureCard icon={<ChartIcon/>} title="Live Tracking" desc="See every sale happen across all your social apps in real time."/>
