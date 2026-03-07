@@ -94,6 +94,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
   const pic = profile?.photoURL || user.photoURL;
   const ini = dn.split(" ").map((n:string) => n[0]).join("").toUpperCase().slice(0, 2);
   const tier = "FREE TIER"; // placeholder
+  const [searchQuery, setSearchQuery] = useState("");
 
   const quickActions = [
     { icon: <TicketIcon/>, label: "Find My Tickets", desc: "Locate your passes & QR", cols: 1, action: () => router.push("/dashboard/tickets") },
@@ -113,6 +114,9 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
     { icon: <QrIcon/>, label: "QR Codes", desc: "Dynamic tracking codes", action: () => router.push("/dashboard/qr") },
     { icon: <UploadIcon/>, label: "Quick Media", desc: "Fast media upload tool", action: () => router.push("/dashboard/media") },
   ];
+
+  const filteredQuickActions = quickActions.filter(a => !searchQuery || a.label.toLowerCase().includes(searchQuery.toLowerCase()) || a.desc.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredModules = modules.filter(m => !searchQuery || m.label.toLowerCase().includes(searchQuery.toLowerCase()) || m.desc.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const cardStyle: React.CSSProperties = {
     padding: 20, borderRadius: 16,
@@ -169,10 +173,12 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
         }}>
           <CmdIcon/>
           <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search commands or ask AI..."
             style={{
               flex: 1, background: "transparent", border: "none", color: "#e4e4e7",
-              fontSize: 14, fontWeight: 500, fontFamily: "inherit",
+              fontSize: 14, fontWeight: 500, fontFamily: "inherit", outline: "none",
             }}
           />
           <SearchIcon/>
@@ -186,7 +192,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
           Quick Actions
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
-          {quickActions.slice(0, 2).map(a => (
+          {filteredQuickActions.slice(0, 2).map(a => (
             <button key={a.label} onClick={a.action} style={{ ...cardStyle, textAlign: "left" } as any}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}>
@@ -202,7 +208,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
           ))}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr 1fr", gap: 12 }}>
-          {quickActions.slice(2).map(a => (
+          {filteredQuickActions.slice(2).map(a => (
             <button key={a.label} onClick={a.action} style={{ ...cardStyle, textAlign: "left" } as any}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}>
@@ -226,7 +232,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
           Workspace Modules
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)", gap: 12 }}>
-          {modules.map(m => (
+          {filteredModules.map(m => (
             <button key={m.label} onClick={m.action} style={{ ...cardStyle, textAlign: "left", minHeight: 130 } as any}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}>
@@ -238,6 +244,11 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
             </button>
           ))}
         </div>
+        {searchQuery && filteredQuickActions.length === 0 && filteredModules.length === 0 && (
+          <div style={{ textAlign: "center", padding: 32, opacity: 0.3 }}>
+            <p style={{ fontSize: 14 }}>No commands match "{searchQuery}"</p>
+          </div>
+        )}
       </div>
     </div>
   );
