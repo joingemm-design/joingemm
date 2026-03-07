@@ -1143,7 +1143,7 @@ export default function LandingPage() {
                       </p>
                     )}
 
-                    <button onClick={() => router.push("/dashboard")} style={{
+                    <button onClick={() => { if (plan.key === "velocity") window.open("https://buy.stripe.com/test_dRm8wP1U60CHepfbmS1gs02", "_blank"); else if (plan.key === "empire") window.open("https://buy.stripe.com/test_7sY9AT42e1GL0yp8aG1gs01", "_blank"); else router.push("/dashboard"); }} style={{
                       width: "100%", padding: 16, borderRadius: 12,
                       fontWeight: 700, fontSize: 14, marginBottom: 32,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -1168,7 +1168,7 @@ export default function LandingPage() {
               </div>
 
               <div style={{ marginTop: 48, textAlign: "center" }}>
-                <button onClick={() => router.push("/dashboard")} style={{
+                <button onClick={() => { if (plan.key === "velocity") window.open("https://buy.stripe.com/test_dRm8wP1U60CHepfbmS1gs02", "_blank"); else if (plan.key === "empire") window.open("https://buy.stripe.com/test_7sY9AT42e1GL0yp8aG1gs01", "_blank"); else router.push("/dashboard"); }} style={{
                   fontSize: 14, fontWeight: 500, opacity: 0.6,
                   display: "inline-flex", alignItems: "center", gap: 8,
                   padding: "12px 24px", borderRadius: 9999,

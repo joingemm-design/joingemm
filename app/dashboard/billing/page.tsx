@@ -30,7 +30,7 @@ export default function BillingPage() {
             </div>
             <div style={{ fontSize:28,fontWeight:900 }}>$0<span style={{ fontSize:14,opacity:.5 }}>/mo</span></div>
           </div>
-          <button style={{ marginTop:16,width:"100%",padding:"14px",borderRadius:12,background:"#000",color:"#fff",border:"none",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"inherit" }}>Upgrade Plan</button>
+          <a href="https://buy.stripe.com/test_dRm8wP1U60CHepfbmS1gs02" target="_blank" rel="noopener noreferrer" style={{ marginTop:16,width:"100%",padding:"14px",borderRadius:12,background:"#000",color:"#fff",border:"none",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"inherit",textDecoration:"none",textAlign:"center",display:"block" }}>Upgrade to Velocity — $10/mo</a>
         </div>
 
         <div style={{ padding:24,borderRadius:16,border:"1px solid #eee",background:"#fff",marginBottom:16 }}>
