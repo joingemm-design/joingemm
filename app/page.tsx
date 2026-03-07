@@ -425,6 +425,7 @@ function RevenueChart() {
 
 // ── Phone Carousel (interactive — matches Wavey) ────────────────────────────
 function PhoneCarousel() {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<"shop"|"bio"|"event">("bio");
   const tabs: ("shop"|"bio"|"event")[] = ["shop","bio","event"];
 
