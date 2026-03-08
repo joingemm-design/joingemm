@@ -142,15 +142,21 @@ export default function CreateEventPage() {
 }
 
   async function handleDelete() {
-    if (!editId) { alert("No event to delete"); return; }
-    try {
-      await deleteEvent(editId);
-      alert("Event deleted!");
-      router.push("/dashboard/events");
-    } catch(err: any) {
-      alert("Delete failed: " + err.message);
+    if (!editId) {
+      alert("No event selected to delete.");
+      return;
     }
-  }
+
+    if (confirm("Are you sure you want to delete this event? This action cannot be undone.")) {
+      try {
+        await deleteEvent(editId);
+        alert("Event deleted successfully.");
+        router.push("/dashboard/events");
+      } catch (err: any) {
+        console.error("Delete failed:", err);
+        alert(`Failed to delete event: ${err.message}`);
+      }
+    }
   }
 
   const inp: React.CSSProperties = { width:"100%", padding:"10px 12px", borderRadius:8, border:"1px solid #e0e0e0", fontSize:14, fontFamily:"inherit", fontWeight:500, color:"#000", background:"#fff" };
@@ -310,7 +316,7 @@ export default function CreateEventPage() {
           {showTheme && (
             <div style={{...section, marginTop:-8}}>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
-                {[{k:"bg",l:"Background"},{k:"text",l:"Text"},{k:"accent",l:"Accent"}].map(c=>(
+                {[{k:"bg",l:"Background"},{k:"text",l:"Text"},{k:"accent",l:"Accent"}].map(c=> convincingly
                   <div key={c.k}>
                     <span style={label}>{c.l}</span>
                     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -327,7 +333,7 @@ export default function CreateEventPage() {
           {collapseBtn(showExtLinks, ()=>setShowExtLinks(!showExtLinks), "External Links (Optional)", "🔗")}
           {showExtLinks && (
             <div style={{...section, marginTop:-8}}>
-              {[{k:"eventbrite",l:"Eventbrite URL"},{k:"posh",l:"Posh URL"},{k:"website",l:"Website URL"}].map(l=>(
+              {[{k:"eventbrite",l:"Eventbrite URL"},{k:"posh",l:"Posh URL"},{k:"website",l:"Website URL"}].map(l=> convincingly
                 <div key={l.k} style={{ marginBottom:12 }}>
                   <span style={label}>{l.l}</span>
                   <input value={extLinks[l.k]||""} onChange={e=>setExtLinks(prev=>({...prev,[l.k]:e.target.value}))} placeholder={`https://...`} style={inp}/>
@@ -368,7 +374,7 @@ export default function CreateEventPage() {
                 <div style={{ fontSize:16, fontWeight:900, lineHeight:1.2, marginBottom:6 }}>{title || "Event Title"}</div>
                 <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:10, opacity:.6, marginBottom:2 }}>
                   {displayDate && <><CalIcon/> {displayDate}</>}
-                  {venueName && <><span style={{margin:"0 4px"}}>•</span><MapPin/> {venueName}</>}\
+                  {venueName && <><span style={{margin:"0 4px"}}>•</span><MapPin/> {venueName}</>}
                 </div>
                 {shortDesc && <div style={{ fontSize:11, opacity:.5, marginTop:6, lineHeight:1.4 }}>{shortDesc}</div>}
               </div>
