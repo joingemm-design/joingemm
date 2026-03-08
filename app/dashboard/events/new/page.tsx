@@ -142,10 +142,15 @@ export default function CreateEventPage() {
 }
 
   async function handleDelete() {
-    if (!editId) return;
-    if (!confirm("Are you sure you want to delete this event?")) return;
-    await deleteEvent(editId);
-    router.push("/dashboard/events");
+    if (!editId) { alert("No event to delete"); return; }
+    try {
+      await deleteEvent(editId);
+      alert("Event deleted!");
+      router.push("/dashboard/events");
+    } catch(err: any) {
+      alert("Delete failed: " + err.message);
+    }
+  }
   }
 
   const inp: React.CSSProperties = { width:"100%", padding:"10px 12px", borderRadius:8, border:"1px solid #e0e0e0", fontSize:14, fontFamily:"inherit", fontWeight:500, color:"#000", background:"#fff" };
