@@ -129,7 +129,7 @@ export default function EventPortalPage() {
             {filtered.map(event => {
               const status = getEventStatus(event);
               return (
-                <button key={event.id} onClick={() => router.push(`/dashboard/events/${event.id}`)}
+                <button key={event.id} onClick={() => router.push(`/dashboard/events/new?edit=${event.id}`)}
                   style={{
                     padding:16, borderRadius:16, border:"1px solid #e5e5e5", background:"#fff",
                     cursor:"pointer", textAlign:"left", fontFamily:"inherit", color:"#000",

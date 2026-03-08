@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { createEvent, updateEvent, uploadEventImage, Ticket } from "@/lib/events";
+import { createEvent, updateEvent, uploadEventImage, getEvent, deleteEvent, Ticket } from "@/lib/events";
 
 const css = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}::selection{background:#a855f7;color:#fff}button:active{transform:scale(.98)!important}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}input:focus,textarea:focus{outline:none;border-color:#7c3aed!important}input::placeholder,textarea::placeholder{color:#aaa}`;
 
@@ -25,6 +25,8 @@ export default function CreateEventPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const isMobile = useIsMobile();
+  const [editId, setEditId] = useState<string|null>(null);
+  const [eventId, setEventId] = useState<string|null>(null);
 
   // Event fields
   const [title, setTitle] = useState("");
@@ -57,6 +59,7 @@ export default function CreateEventPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => { if (!loading && !user) router.push("/dashboard"); }, [user, loading, router]);
+  useEffect(() => { const params = new URLSearchParams(window.location.search); const id = params.get("edit"); if (id) { setEditId(id); setEventId(id); getEvent(id).then(e => { if (!e) return; setTitle(e.title||""); setStartDate(e.startDate||""); setStartTime(e.startTime||""); setEndDate(e.endDate||""); setEndTime(e.endTime||""); setVenueName(e.venueName||""); setAddress(e.address||""); setShortDesc(e.shortDescription||""); setDetailedInfo(e.detailedInfo||""); setFlyerURL(e.flyerURL||""); setTickets(e.tickets||[]); setExtLinks(e.externalLinks||{}); if(e.theme) setTheme(e.theme); }); } }, []);
 
   function handleFlyerSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -87,35 +90,62 @@ export default function CreateEventPage() {
     if (!user || !title.trim()) return;
     setSaving(true);
 
-    let finalFlyerURL = flyerURL;
+    try {
+        let eid = editId;
+        let finalFlyerURL = flyerURL;
 
-    // Create event first to get ID
-    const eventId = await createEvent(user.uid, {
-      title: title.trim(),
-      startDate, startTime, endDate, endTime,
-      venueName: venueName.trim(), address: address.trim(),
-      shortDescription: shortDesc.trim(),
-      detailedInfo: detailedInfo.trim(),
-      flyerURL: "",
-      tickets,
-      externalLinks: extLinks,
-      theme,
-      published: publish,
-    });
+        // Common data for both create and update
+        const eventData = {
+            title: title.trim(),
+            startDate, startTime, endDate, endTime,
+            venueName: venueName.trim(), address: address.trim(),
+            shortDescription: shortDesc.trim(),
+            detailedInfo: detailedInfo.trim(),
+            tickets,
+            externalLinks: extLinks,
+            theme,
+            published: publish,
+        };
 
-    // Upload flyer if selected
-    if (flyerFile) {
-      try {
-        finalFlyerURL = await uploadEventImage(user.uid, eventId, flyerFile, "flyer");
-        await updateEvent(eventId, { flyerURL: finalFlyerURL });
-      } catch (err) {
-        console.error("Flyer upload failed:", err);
-      }
+        if (eid) { // Logic for updating an existing event
+            if (flyerFile) {
+                // If a new flyer is provided, upload it first to get the URL
+                finalFlyerURL = await uploadEventImage(user.uid, eid, flyerFile, "flyer");
+            }
+            // Perform a single update with all the latest data
+            await updateEvent(eid, { ...eventData, flyerURL: finalFlyerURL });
+
+        } else { // Logic for creating a new event
+            // Create the event first to get an eventId for the flyer path.
+            // If a flyer is being uploaded, we'll use an empty string for now.
+            const newEventData = { ...eventData, flyerURL: flyerFile ? '' : flyerURL };
+            eid = await createEvent(user.uid, newEventData);
+            setEventId(eid);
+            setEditId(eid);
+
+            if (flyerFile) {
+                // After creating the event, upload the flyer
+                finalFlyerURL = await uploadEventImage(user.uid, eid, flyerFile, "flyer");
+                // And then update the event with the flyer's URL
+                await updateEvent(eid, { flyerURL: finalFlyerURL });
+            }
+        }
+
+        setSaved(true);
+        setTimeout(() => router.push("/dashboard/events"), 1000);
+    } catch (error) {
+        console.error("Failed to save event:", error);
+        // You could also show an error message to the user here
+    } finally {
+        setSaving(false);
     }
+}
 
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => router.push("/dashboard/events"), 1000);
+  async function handleDelete() {
+    if (!editId) return;
+    if (!confirm("Are you sure you want to delete this event?")) return;
+    await deleteEvent(editId);
+    router.push("/dashboard/events");
   }
 
   const inp: React.CSSProperties = { width:"100%", padding:"10px 12px", borderRadius:8, border:"1px solid #e0e0e0", fontSize:14, fontFamily:"inherit", fontWeight:500, color:"#000", background:"#fff" };
@@ -148,6 +178,7 @@ export default function CreateEventPage() {
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           {saved && <span style={{ fontSize:12, fontWeight:700, color:"#22c55e" }}>✓ Saved!</span>}
+          {editId && <button onClick={handleDelete} style={{ padding:"10px 16px", borderRadius:999, background:"transparent", color:"#ef4444", border:"1px solid #ef4444", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Delete</button>}
           <button onClick={()=>handleSave(false)} disabled={saving||!title.trim()} style={{ padding:"10px 20px", borderRadius:999, background:"#fff", color:"#000", border:"1px solid #ddd", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Save Draft</button>
           <button onClick={()=>handleSave(true)} disabled={saving||!title.trim()} style={{ padding:"10px 20px", borderRadius:999, background:"#000", color:"#fff", border:"none", fontSize:13, fontWeight:800, cursor:"pointer", fontFamily:"inherit", opacity:saving?.6:1 }}>
             {saving ? "Saving..." : "Save Changes"}
@@ -332,7 +363,7 @@ export default function CreateEventPage() {
                 <div style={{ fontSize:16, fontWeight:900, lineHeight:1.2, marginBottom:6 }}>{title || "Event Title"}</div>
                 <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:10, opacity:.6, marginBottom:2 }}>
                   {displayDate && <><CalIcon/> {displayDate}</>}
-                  {venueName && <><span style={{margin:"0 4px"}}>•</span><MapPin/> {venueName}</>}
+                  {venueName && <><span style={{margin:"0 4px"}}>•</span><MapPin/> {venueName}</>}\
                 </div>
                 {shortDesc && <div style={{ fontSize:11, opacity:.5, marginTop:6, lineHeight:1.4 }}>{shortDesc}</div>}
               </div>
