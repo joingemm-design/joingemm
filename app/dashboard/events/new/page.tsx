@@ -113,12 +113,12 @@ export default function CreateEventPage() {
                 finalFlyerURL = await uploadEventImage(user.uid, eid, flyerFile, "flyer");
             }
             // Perform a single update with all the latest data
-            await updateEvent(eid, { ...eventData, flyerURL: finalFlyerURL });
+            const cleanData = JSON.parse(JSON.stringify({ ...eventData, flyerURL: finalFlyerURL })); await updateEvent(eid, cleanData);
 
         } else { // Logic for creating a new event
             // Create the event first to get an eventId for the flyer path.
             // If a flyer is being uploaded, we'll use an empty string for now.
-            const newEventData = { ...eventData, flyerURL: flyerFile ? '' : flyerURL };
+            const newEventData = JSON.parse(JSON.stringify({ ...eventData, flyerURL: flyerFile ? '' : flyerURL }));
             eid = await createEvent(user.uid, newEventData);
             setEventId(eid);
             setEditId(eid);
