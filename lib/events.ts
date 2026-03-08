@@ -110,7 +110,7 @@ export async function getUserEvents(uid: string): Promise<EventData[]> {
 }
 
 export async function getPublishedEvents(): Promise<EventData[]> {
-  const q = query(collection(firestore, "events"), where("published", "==", true), where("active", "==", true), orderBy("createdAt", "desc"));
+  const q = query(collection(firestore, "events"), where("published", "==", true));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as EventData));
 }
