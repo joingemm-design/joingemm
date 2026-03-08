@@ -1,4 +1,5 @@
 "use client";
+import { getPublishedEvents, EventData } from "@/lib/events";
 
 // app/page.tsx — GEMM Landing Page
 // 100% structural match to wavey.live
@@ -581,7 +582,7 @@ function PhoneCarousel() {
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #000 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }}/>
             <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, color: "#fff", zIndex: 3 }}>
               <span style={{ background: "#dc2626", padding: "2px 8px", fontSize: 9, fontWeight: 700, textTransform: "uppercase", borderRadius: 99, display: "inline-block", marginBottom: 4 }}>Upcoming</span>
-              <h3 style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1, marginBottom: 4 }}>Equinox Energy: Pilates & Matcha</h3>
+              <h3 style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1, marginBottom: 4 }}>{ liveEvents[0]?.title || "Coming Soon" }</h3>
               <p style={{ fontSize: 10, opacity: 0.8 }}>SOUL Studio</p>
             </div>
           </div>
@@ -629,6 +630,8 @@ export default function LandingPage() {
   const { user, loading: authLoading, signIn } = useAuth();
   const router = useRouter();
   const isMobile = useIsMobile();
+  const [liveEvents, setLiveEvents] = useState<EventData[]>([]);
+  useEffect(() => { getPublishedEvents().then(e => setLiveEvents(e.slice(0, 4))).catch(() => {}); }, []);
   const [theme, setTheme] = useState("clean");
   const [yearly, setYearly] = useState(true);
   const [loaded, setLoaded] = useState(false);
@@ -930,7 +933,7 @@ export default function LandingPage() {
                     <span style={{ textDecoration: "underline", textDecorationColor: "var(--text)", textUnderlineOffset: 8, textDecorationThickness: 4 }}>Be there.</span>
                   </h2>
                   <p style={{ fontSize: 18, opacity: 0.7, marginBottom: 32, maxWidth: 480, lineHeight: 1.6, fontWeight: 500 }}>
-                    Browse concerts, workshops, and exclusive events. From Equinox Energy: Pilates & Matcha to ABR Community Summit Spring &apos;26.
+                    Browse concerts, workshops, and exclusive events happening on GEMM.
                   </p>
                   <a href="#events" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 18, color: "var(--text)", textDecoration: "none", transition: "opacity 0.2s" }}
                     onMouseEnter={e => (e.currentTarget.style.opacity = "0.6")}
@@ -948,16 +951,15 @@ export default function LandingPage() {
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)" }}/>
                   <div style={{ position: "absolute", bottom: 24, left: 24, zIndex: 20, color: "#fff" }}>
                     <div style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", padding: "4px 12px", borderRadius: 9999, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 8, border: "1px solid rgba(255,255,255,0.3)" }}>Featured</div>
-                    <div style={{ fontSize: 24, fontWeight: 900 }}>Equinox Energy: Pilates & Matcha</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, opacity: 0.9, marginTop: 4 }}> • SOUL Studio</div>
+                    <div style={{ fontSize: 24, fontWeight: 900 }}>{ liveEvents[0]?.title || "Coming Soon" }</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, opacity: 0.9, marginTop: 4 }}>{ liveEvents[0]?.venueName ? ` • ${liveEvents[0].venueName}` : "" }</div>
                   </div>
                 </div>
               </div>
               {/* Event cards — matches Wavey */}
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 48 }}>
                 {[
-                  ["Equinox Energy: Pilates & Matcha","SOUL Studio"],
-                  ["ABR Community Summit Spring &apos;26","Altgeld Community Center"],
+                  ...(liveEvents.length > 0 ? liveEvents.map(e => [e.title, e.venueName||""]) : [["No events yet","Publish your first event"]]),
                 ].map(([name, loc]) => (
                   <a key={name} href="#" style={{
                     padding: 16, borderRadius: 12, border: "1px solid var(--border)",
