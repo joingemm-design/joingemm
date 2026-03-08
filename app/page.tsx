@@ -946,7 +946,7 @@ export default function LandingPage() {
                   position: "relative", flex: 1, minWidth: 300, maxWidth: 480,
                   aspectRatio: "16/9", borderRadius: 24, overflow: "hidden",
                   boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", cursor: "pointer",
-                }}>
+                }} onClick={() => { if(liveEvents[0]?.id) router.push(`/event/${liveEvents[0].id}`); }}>
                   <div style={{ width: "100%", height: "100%", background: liveEvents[0]?.flyerURL ? `url(${liveEvents[0].flyerURL}) center/cover no-repeat` : "linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)", minHeight: 240 }}/>
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)" }}/>
                   <div style={{ position: "absolute", bottom: 24, left: 24, zIndex: 20, color: "#fff" }}>
