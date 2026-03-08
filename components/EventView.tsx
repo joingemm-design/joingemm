@@ -30,7 +30,7 @@ export default function EventView({ eventId }: { eventId: string }) {
     getEvent(eventId).then(e => {
       if (!e) { setNotFound(true); setLoading(false); return; }
       setEvent(e);
-      if (e.tickets?.length > 0) setSelectedTicket(e.tickets[0].id);
+      if (e.tickets && e.tickets.length > 0) setSelectedTicket(e.tickets[0].id);
       getEventRSVPCount(eventId).then(c => setRsvpCount(c));
       setLoading(false);
     }).catch(() => { setNotFound(true); setLoading(false); });
@@ -39,7 +39,7 @@ export default function EventView({ eventId }: { eventId: string }) {
   async function handleRegister() {
     if (!event || !selectedTicket || !rsvpName.trim() || !rsvpEmail.trim()) return;
     setRegistering(true);
-    const ticket = event.tickets.find(t => t.id === selectedTicket);
+    const ticket = event.tickets?.find(t => t.id === selectedTicket);
     await registerForEvent(event.id, user?.uid || "anonymous", rsvpName.trim(), rsvpEmail.trim(), ticket?.type || "", ticket?.price || 0);
     setRegistered(true); setRegistering(false);
   }
@@ -89,11 +89,11 @@ export default function EventView({ eventId }: { eventId: string }) {
         {event.shortDescription && <p style={{fontSize:16,lineHeight:1.6,marginBottom:16,opacity:.8}}>{event.shortDescription}</p>}
         {event.detailedInfo && <div style={{fontSize:14,lineHeight:1.7,opacity:.6,marginBottom:32,whiteSpace:"pre-wrap"}}>{event.detailedInfo}</div>}
 
-        {event.tickets?.length > 0 && !registered && (
+        {(event.tickets ?? []).length > 0 && !registered && (
           <div style={{padding:24,borderRadius:20,border:`1px solid ${text}15`,background:`${text}05`,marginBottom:24}}>
             <div style={{fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",opacity:.4,marginBottom:16,display:"flex",alignItems:"center",gap:6}}><TicketIcon/> Tickets</div>
             <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
-              {event.tickets.map(t => (
+              {event.tickets?.map(t => (
                 <button key={t.id} onClick={()=>setSelectedTicket(t.id)} style={{padding:"14px 16px",borderRadius:12,border:selectedTicket===t.id?`2px solid ${accent}`:`1px solid ${text}15`,background:selectedTicket===t.id?`${accent}15`:"transparent",color:text,cursor:"pointer",fontFamily:"inherit",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div><div style={{fontSize:14,fontWeight:700}}>{t.type}</div>{t.description&&<div style={{fontSize:12,opacity:.4,marginTop:2}}>{t.description}</div>}</div>
                   <div style={{fontSize:16,fontWeight:900}}>{t.price===0?"FREE":`$${t.price}`}</div>
@@ -118,7 +118,7 @@ export default function EventView({ eventId }: { eventId: string }) {
             <p style={{fontSize:14,opacity:.5}}>Check your email for confirmation details.</p>
           </div>
         )}
-        {(!event.tickets||event.tickets.length===0)&&(
+        {(!event.tickets||(event.tickets ?? []).length===0)&&(
           <div style={{padding:24,borderRadius:16,border:`1px dashed ${text}20`,textAlign:"center",opacity:.3}}><p style={{fontSize:14,fontWeight:600}}>No tickets available yet.</p></div>
         )}
         <div style={{marginTop:48,display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:.15,fontSize:10,fontWeight:700}}>

@@ -18,27 +18,55 @@ export interface Ticket {
 
 export interface EventData {
   id: string;
-  uid: string;
+  uid?: string;
   title: string;
-  startDate: string;
+  startDate?: string;
+  date?: string;
   startTime: string;
-  endDate: string;
+  endDate?: string;
   endTime: string;
-  venueName: string;
+  venueName?: string;
+  location?: string;
   address: string;
-  shortDescription: string;
-  detailedInfo: string;
-  flyerURL: string;
-  galleryURLs: string[];
-  tickets: Ticket[];
-  externalLinks: { eventbrite?: string; posh?: string; website?: string };
-  theme: { bg: string; text: string; accent: string };
-  published: boolean;
-  active: boolean;
-  soldout: boolean;
-  createdAt: any;
-  updatedAt: any;
+  shortDescription?: string;
+  description?: string;
+  detailedInfo?: string;
+  flyerURL?: string;
+  imageUrl?: string;
+  galleryURLs?: string[];
+  tickets?: Ticket[];
+  externalLinks?: { eventbrite?: string; posh?: string; website?: string };
+  sourceUrl?: string;
+  venueWebsite?: string;
+  category?: string;
+  tags?: string[];
+  theme?: { bg: string; text: string; accent: string };
+  published?: boolean;
+  active?: boolean;
+  soldout?: boolean;
+  createdAt?: any;
+  updatedAt?: any;
 }
+
+export const STATIC_EVENTS: EventData[] = [
+  {
+    id: "brock-seals-whole-order-314",
+    title: 'Brock Seals Presents "Whole Order," A 314 Day Pop-Up Exhibition',
+    date: "2026-03-14",
+    startTime: "5:00 PM",
+    endTime: "9:00 PM",
+    location: "Legends' Gallery",
+    address: "3318 Washington Ave., St. Louis, MO 63103",
+    description:
+      'Renowned St. Louis artist Brock Seals celebrates 314 Day with a one-night-only pop-up exhibition titled "Whole Order," featuring works by Brock Seals, A-Ron Johnson, Erica Green, Malik Fabian-Mahmud, Jaidah Michelle Kirksey, Kenneth Randle, and Jeru Battle. The multi-medium show includes photography, paintings, sculptural installations, and video — all tied to St. Louis culture. The evening also includes music, light refreshments, and a special STL capsule merchandise drop.',
+    category: "Art / Exhibition",
+    tags: ["314Day", "art", "St. Louis", "pop-up"],
+    sourceUrl:
+      "https://thestl.com/314dayevent/brock-seals-presents-whole-order-a-314-day-pop-up-exhibition/",
+    imageUrl: "https://thestl.com/wp-content/uploads/2026/03/Brock-Seals-scaled.jpg",
+    venueWebsite: "https://www.xhbt.org/gallery/legends-gallery-st-louis",
+  },
+];
 
 export async function uploadEventImage(uid: string, eventId: string, file: File, path: string): Promise<string> {
   const ext = file.name.split(".").pop() || "jpg";
@@ -51,7 +79,7 @@ export async function uploadEventImage(uid: string, eventId: string, file: File,
 export async function createEvent(uid: string, data: Partial<EventData>): Promise<string> {
   const docRef = doc(collection(firestore, "events"));
   await setDoc(docRef, {
-    ...data, id: docRef.id, uid, published: false, active: true, soldout: false,
+    id: docRef.id, uid, published: false, ...data, active: true, soldout: false,
     galleryURLs: data.galleryURLs || [], tickets: data.tickets || [],
     externalLinks: data.externalLinks || {},
     theme: data.theme || { bg: "#000000", text: "#ffffff", accent: "#ffffff" },
