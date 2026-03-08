@@ -190,8 +190,8 @@ export default function CreateEventPage() {
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           {saved && <span style={{ fontSize:12, fontWeight:700, color:"#22c55e" }}>✓ Saved!</span>}
           {editId && <button onClick={handleDelete} style={{ padding:"10px 16px", borderRadius:999, background:"transparent", color:"#ef4444", border:"1px solid #ef4444", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Delete</button>}
-          <button onClick={()=>handleSave(false)} disabled={saving||!title.trim()} style={{ padding:"10px 20px", borderRadius:999, background:"#fff", color:"#000", border:"1px solid #ddd", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Save Draft</button>
-          <button onClick={()=>handleSave(true)} disabled={saving||!title.trim()} style={{ padding:"10px 20px", borderRadius:999, background:"#000", color:"#fff", border:"none", fontSize:13, fontWeight:800, cursor:"pointer", fontFamily:"inherit", opacity:saving?.6:1 }}>
+          <button onClick={()=>handleSave(false)} disabled={saving} style={{ padding:"10px 20px", borderRadius:999, background:"#fff", color:"#000", border:"1px solid #ddd", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Save Draft</button>
+          <button onClick={()=>handleSave(true)} disabled={saving} style={{ padding:"10px 20px", borderRadius:999, background:"#000", color:"#fff", border:"none", fontSize:13, fontWeight:800, cursor:"pointer", fontFamily:"inherit", opacity:saving?.6:1 }}>
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
@@ -316,7 +316,7 @@ export default function CreateEventPage() {
           {showTheme && (
             <div style={{...section, marginTop:-8}}>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
-                {[{k:"bg",l:"Background"},{k:"text",l:"Text"},{k:"accent",l:"Accent"}].map(c=> convincingly
+                {[{k:"bg",l:"Background"},{k:"text",l:"Text"},{k:"accent",l:"Accent"}].map(c=>(
                   <div key={c.k}>
                     <span style={label}>{c.l}</span>
                     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -333,7 +333,7 @@ export default function CreateEventPage() {
           {collapseBtn(showExtLinks, ()=>setShowExtLinks(!showExtLinks), "External Links (Optional)", "🔗")}
           {showExtLinks && (
             <div style={{...section, marginTop:-8}}>
-              {[{k:"eventbrite",l:"Eventbrite URL"},{k:"posh",l:"Posh URL"},{k:"website",l:"Website URL"}].map(l=> convincingly
+              {[{k:"eventbrite",l:"Eventbrite URL"},{k:"posh",l:"Posh URL"},{k:"website",l:"Website URL"}].map(l=>(
                 <div key={l.k} style={{ marginBottom:12 }}>
                   <span style={label}>{l.l}</span>
                   <input value={extLinks[l.k]||""} onChange={e=>setExtLinks(prev=>({...prev,[l.k]:e.target.value}))} placeholder={`https://...`} style={inp}/>
