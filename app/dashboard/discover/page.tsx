@@ -52,7 +52,7 @@ export default function DiscoverEventsPage() {
         ) : (
           <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(250px, 1fr))",gap:16 }}>
             {filtered.map(event => (
-              <div key={event.id} onClick={()=>window.open(`/event/${event.id}`,"_blank")}
+              <div key={event.id} onClick={()=>router.push(`/dashboard/events/new?edit=${event.id}`)}
                 style={{ padding:0,borderRadius:16,border:"1px solid #e5e5e5",background:"#fff",cursor:"pointer",overflow:"hidden",transition:"all .2s" }}
                 onMouseEnter={e=>{(e.currentTarget as HTMLDivElement).style.transform="translateY(-2px)";(e.currentTarget as HTMLDivElement).style.boxShadow="0 8px 24px rgba(0,0,0,0.08)"}}
                 onMouseLeave={e=>{(e.currentTarget as HTMLDivElement).style.transform="none";(e.currentTarget as HTMLDivElement).style.boxShadow="none"}}>
