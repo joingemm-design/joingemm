@@ -582,7 +582,7 @@ function PhoneCarousel() {
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #000 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }}/>
             <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, color: "#fff", zIndex: 3 }}>
               <span style={{ background: "#dc2626", padding: "2px 8px", fontSize: 9, fontWeight: 700, textTransform: "uppercase", borderRadius: 99, display: "inline-block", marginBottom: 4 }}>Upcoming</span>
-              <h3 style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1, marginBottom: 4 }}>{ liveEvents[0]?.title || "Coming Soon" }</h3>
+              <h3 style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1, marginBottom: 4 }}>Equinox Energy: Pilates & Matcha</h3>
               <p style={{ fontSize: 10, opacity: 0.8 }}>SOUL Studio</p>
             </div>
           </div>
@@ -947,11 +947,11 @@ export default function LandingPage() {
                   aspectRatio: "16/9", borderRadius: 24, overflow: "hidden",
                   boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", cursor: "pointer",
                 }}>
-                  <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)", minHeight: 240 }}/>
+                  <div style={{ width: "100%", height: "100%", background: liveEvents[0]?.flyerURL ? `url(${liveEvents[0].flyerURL}) center/cover no-repeat` : "linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)", minHeight: 240 }}/>
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)" }}/>
                   <div style={{ position: "absolute", bottom: 24, left: 24, zIndex: 20, color: "#fff" }}>
                     <div style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", padding: "4px 12px", borderRadius: 9999, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 8, border: "1px solid rgba(255,255,255,0.3)" }}>Featured</div>
-                    <div style={{ fontSize: 24, fontWeight: 900 }}>{ liveEvents[0]?.title || "Coming Soon" }</div>
+                    <div style={{ fontSize: 24, fontWeight: 900 }}>{ liveEvents[0]?.title || "Featured Event" }</div>
                     <div style={{ fontSize: 14, fontWeight: 500, opacity: 0.9, marginTop: 4 }}>{ liveEvents[0]?.venueName ? ` • ${liveEvents[0].venueName}` : "" }</div>
                   </div>
                 </div>
@@ -961,7 +961,7 @@ export default function LandingPage() {
                 {[
                   ...(liveEvents.length > 0 ? liveEvents.map(e => [e.title, e.venueName||""]) : [["No events yet","Publish your first event"]]),
                 ].map(([name, loc]) => (
-                  <a key={name} href="#" style={{
+                  <a key={name} href={liveEvents.find(e => e.title === name) ? `/event/${liveEvents.find(e => e.title === name)?.id}` : "#"} style={{
                     padding: 16, borderRadius: 12, border: "1px solid var(--border)",
                     background: "var(--card)", cursor: "pointer", textDecoration: "none", color: "var(--text)",
                     transition: "transform 0.2s, box-shadow 0.2s",
