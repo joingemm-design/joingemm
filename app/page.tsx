@@ -2,7 +2,7 @@
 import { getPublishedEvents, EventData } from "@/lib/events";
 
 // app/page.tsx — GEMM Landing Page
-// 100% structural match to wavey.live
+
 // ─────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from "react";
@@ -100,7 +100,7 @@ const PLANS = [
     key: "spark", name: "Spark", tagline: "Free forever.",
     monthly: 0, yearly: 0,
     badge: null, featured: false, btnStyle: "outline",
-    features: ["Unlimited Event Publishing","1 Link-in-Bio Page","1 Dynamic QR Code","Basic Analytics","Watermark"],
+    features: ["Unlimited Event Publishing","1 Link-in-Bio Page","Up to 5 Links","1 Dynamic QR Code","Basic Analytics","GEMM Watermark"],
     checkColor: "currentColor",
   },
   {
@@ -108,7 +108,7 @@ const PLANS = [
     monthly: 15, yearly: 10,
     badge: { label: "Most Popular", bg: "var(--text)", fg: "var(--bg)" },
     featured: true, btnStyle: "solid",
-    features: ["Everything in Spark","Business Analytics","5 Link-in-Bio Pages","1 E-commerce Shop","10 Dynamic QR Codes","No Watermark"],
+    features: ["Everything in Spark","No Watermark","Unlimited Links","5 Link-in-Bio Pages","1 E-commerce Shop (10 products)","Portfolio","Services & Quote Requests","CRM — 500 Contacts","Business Analytics","10 Dynamic QR Codes"],
     checkColor: "currentColor",
   },
   {
@@ -116,7 +116,7 @@ const PLANS = [
     monthly: 35, yearly: 24,
     badge: { label: "Best Value", bg: "#fbbf24", fg: "#000" },
     featured: true, btnStyle: "gold",
-    features: ["Everything in Velocity","Advanced Affiliate Network","10 Link-in-Bio Pages","5 E-commerce Shops","Unlimited QR Codes","Priority Support"],
+    features: ["Everything in Velocity","Custom Branding","Custom Domain","Press Section","5 E-commerce Shops","Unlimited Products","Full CRM (Unlimited + Export)","Advanced Analytics","Unlimited QR Codes","Advanced Affiliate Network","10 Link-in-Bio Pages","Priority Support"],
     checkColor: "#fbbf24",
   },
 ];
@@ -582,8 +582,8 @@ function PhoneCarousel() {
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #000 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }}/>
             <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, color: "#fff", zIndex: 3 }}>
               <span style={{ background: "#dc2626", padding: "2px 8px", fontSize: 9, fontWeight: 700, textTransform: "uppercase", borderRadius: 99, display: "inline-block", marginBottom: 4 }}>Upcoming</span>
-              <h3 style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1, marginBottom: 4 }}>Equinox Energy: Pilates & Matcha</h3>
-              <p style={{ fontSize: 10, opacity: 0.8 }}>SOUL Studio</p>
+              <h3 style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1, marginBottom: 4 }}>Brock Seals Presents "Whole Order"</h3>
+              <p style={{ fontSize: 10, opacity: 0.8 }}>Legends' Gallery · St. Louis, MO</p>
             </div>
           </div>
           <div style={{ flex: 1, padding: 12, background: "#000", color: "#fff" }}>
@@ -591,8 +591,8 @@ function PhoneCarousel() {
             <div style={{ display: "flex", gap: 12, alignItems: "center", padding: 8, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
               <div style={{ width: 40, height: 40, borderRadius: 4, background: "rgba(255,255,255,0.1)", flexShrink: 0 }}/>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>ABR Community Summit Spring &apos;26</h4>
-                <p style={{ fontSize: 9, opacity: 0.5, marginTop: 2 }}>March 28th, 2026</p>
+                <h4 style={{ fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Whole Order — 314 Day Pop-Up Exhibition</h4>
+                <p style={{ fontSize: 9, opacity: 0.5, marginTop: 2 }}>Saturday, March 14, 2026</p>
               </div>
               <ArrowRight size={12}/>
             </div>
@@ -746,7 +746,7 @@ export default function LandingPage() {
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
                 <div style={{
                   width: 36, height: 36, borderRadius: "50%",
-                  background: "rgba(128,128,128,0.05)", border: "1px solid rgba(128,128,128,0.1)",
+                  background: "rgba(128,128,128,0.05)", border: "1px solid rgba(128,128,0.1)",
                   display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
                 }}>
                   <div className="ping" style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "var(--text)" }}/>
@@ -842,6 +842,26 @@ export default function LandingPage() {
                 }}>
                   The operating system for creators. Sell products, host events, and customize your brand with a technology that feels alive.
                 </p>
+
+                {/* Stats Strip */}
+                <div style={{display:"flex",gap:40,flexWrap:"wrap",margin:"32px 0 8px",padding:"24px 0",borderTop:"1px solid rgba(255,255,255,.08)",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
+                  {[["3+","Creators"],["1","Event Live"],["STL","Based"],["Free","To Start"]].map(([num,label])=>(
+                    <div key={label}>
+                      <div style={{fontSize:28,fontWeight:900,letterSpacing:"-.02em",lineHeight:1}}>{num}</div>
+                      <div style={{fontSize:12,fontWeight:700,opacity:.4,letterSpacing:".08em",textTransform:"uppercase" as const,marginTop:4}}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Stats Strip */}
+                <div style={{display:"flex",gap:40,flexWrap:"wrap",margin:"32px 0 8px",padding:"24px 0",borderTop:"1px solid rgba(255,255,255,.08)",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
+                  {[["3+","Creators"],["1","Event live"],["STL","Based"],["Free","To start"]].map(([num,label])=>(
+                    <div key={label}>
+                      <div style={{fontSize:28,fontWeight:900,letterSpacing:"-.02em",lineHeight:1}}>{num}</div>
+                      <div style={{fontSize:12,fontWeight:700,opacity:.4,letterSpacing:".08em",textTransform:"uppercase",marginTop:4}}>{label}</div>
+                    </div>
+                  ))}
+                </div>
 
                 {/* CTA + Stars + Sales Sim — matches Wavey layout */}
                 <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
@@ -958,20 +978,36 @@ export default function LandingPage() {
               </div>
               {/* Event cards — matches Wavey */}
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 48 }}>
-                {[
-                  ...(liveEvents.length > 0 ? liveEvents.map(e => [e.title, e.venueName||""]) : [["No events yet","Publish your first event"]]),
-                ].map(([name, loc]) => (
-                  <a key={name} href={liveEvents.find(e => e.title === name) ? `/event/${liveEvents.find(e => e.title === name)?.id}` : "#"} style={{
-                    padding: 16, borderRadius: 12, border: "1px solid var(--border)",
-                    background: "var(--card)", cursor: "pointer", textDecoration: "none", color: "var(--text)",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.02)"; (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 12px 40px rgba(0,0,0,0.08)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; (e.currentTarget as HTMLAnchorElement).style.boxShadow = "none"; }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{name}</div>
-                    <div style={{ fontSize: 12, opacity: 0.7 }}>{loc}</div>
-                  </a>
-                ))}
+                {liveEvents.length > 0 ? liveEvents.map(e => (
+                  <div
+                    key={e.id}
+                    onClick={() => window.location.href = `/event/${e.id}`}
+                    style={{
+                      padding: 16, borderRadius: 12, border: "1px solid var(--border)",
+                      background: "var(--card)", cursor: "pointer", color: "var(--text)",
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                    }}
+                    onMouseEnter={el => { (el.currentTarget as HTMLDivElement).style.transform = "scale(1.02)"; (el.currentTarget as HTMLDivElement).style.boxShadow = "0 12px 40px rgba(0,0,0,0.08)"; }}
+                    onMouseLeave={el => { (el.currentTarget as HTMLDivElement).style.transform = "scale(1)"; (el.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
+                  >
+                    {e.flyerURL && (
+                      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
+                        <img src={e.flyerURL} alt={e.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                    )}
+                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{e.title}</div>
+                    <div style={{ fontSize: 12, opacity: 0.5, marginBottom: 4 }}>{e.venueName || ""}</div>
+                    {e.startDate && (
+                      <div style={{ fontSize: 11, opacity: 0.4, fontWeight: 600 }}>
+                        {new Date(e.startDate + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </div>
+                    )}
+                  </div>
+                )) : (
+                  <div style={{ padding: 16, borderRadius: 12, border: "1px dashed var(--border)", opacity: 0.4, fontSize: 14, fontWeight: 600 }}>
+                    No events yet — publish your first event
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -1145,7 +1181,7 @@ export default function LandingPage() {
                       </p>
                     )}
 
-                    <button onClick={() => { if (plan.key === "velocity") window.open("https://buy.stripe.com/test_dRm8wP1U60CHepfbmS1gs02", "_blank"); else if (plan.key === "empire") window.open("https://buy.stripe.com/test_7sY9AT42e1GL0yp8aG1gs01", "_blank"); else router.push("/dashboard"); }} style={{
+                    <button onClick={() => { if (plan.key === "velocity") window.open(yearly ? "https://buy.stripe.com/8x2aEXdEZ1IB7Zi4Kz4gg01" : "https://buy.stripe.com/9B65kD30l72VenGdh54gg03", "_blank"); else if (plan.key === "empire") window.open(yearly ? "https://buy.stripe.com/8x28wP58taf793m90P4gg02" : "https://buy.stripe.com/3cIbJ1gRb0Ex6Ve1yn4gg04", "_blank"); else router.push("/dashboard"); }} style={{
                       width: "100%", padding: 16, borderRadius: 12,
                       fontWeight: 700, fontSize: 14, marginBottom: 32,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -1213,9 +1249,9 @@ export default function LandingPage() {
                 <div>
                   <h4 style={{ fontWeight: 700, marginBottom: 16 }}>Support</h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, opacity: 0.6 }}>
-                    <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✉️ Contact Us</a>
+                    <a href="/contact" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✉️ Contact Us</a>
                     <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>💬 Community</a>
-                    <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>🛡️ Privacy Policy</a>
+                    <a href="/privacy" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>🛡️ Privacy Policy</a>
                   </div>
                 </div>
               </div>

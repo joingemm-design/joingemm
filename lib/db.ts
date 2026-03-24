@@ -40,6 +40,20 @@ export interface UserProfile {
     typography?: string;
     spacing?: string;
   };
+  aboutPage?: string;
+  heroBanner?: string;
+  marqueeText?: string;
+  brandLogos?: string[];
+  eventBannerEnabled?: boolean;
+  pressItems?: {
+    publication: string;
+    headline: string;
+    excerpt?: string;
+    url?: string;
+    date?: string;
+  }[];
+  plan?: string;
+  suspended?: boolean;
   createdAt: any;
   updatedAt: any;
 }
@@ -51,6 +65,8 @@ export interface LinkItem {
   icon: string;
   order: number;
   active: boolean;
+  plan?: string;
+  suspended?: boolean;
   createdAt: any;
 }
 
@@ -61,7 +77,17 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
   if (reserved.includes(username.toLowerCase())) return false;
   const ref = doc(firestore, "usernames", username.toLowerCase());
   const snap = await getDoc(ref);
-  return !snap.exists();
+  if (!snap.exists()) return true;
+  const data = snap.data();
+  // Allow if it's a 30-day hold that has expired
+  if (data.reserved && data.expiresAt) {
+    const expires = data.expiresAt.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+    if (new Date() > expires) {
+      await deleteDoc(ref); // clean up expired hold
+      return true;
+    }
+  }
+  return false;
 }
 
 export function isValidUsername(username: string): { valid: boolean; error?: string } {
@@ -110,7 +136,7 @@ export async function getUserByUsername(username: string): Promise<UserProfile |
 
 export async function updateUserProfile(
   uid: string,
-  data: Partial<Pick<UserProfile, "displayName" | "bio" | "photoURL" | "theme" | "socials" | "design">>
+  data: Partial<Pick<UserProfile, "displayName" | "bio" | "photoURL" | "theme" | "socials" | "design" | "aboutPage" | "pressItems">> & Record<string, any>
 ): Promise<void> {
   const ref = doc(firestore, "users", uid);
   await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
@@ -169,4 +195,65 @@ export async function uploadProfilePhoto(uid: string, file: File): Promise<strin
   await updateUserProfile(uid, { photoURL });
   
   return photoURL;
+}
+
+// ── Change username ─────────────────────────────────────────────────────
+export async function changeUsername(uid: string, oldUsername: string, newUsername: string): Promise<{ error?: string }> {
+  const lower = newUsername.toLowerCase();
+  const valid = isValidUsername(lower);
+  if (!valid.valid) return { error: valid.error };
+
+  // Check availability (respects 30-day holds)
+  const available = await isUsernameAvailable(lower);
+  if (!available) return { error: "Username is already taken." };
+
+  const batch = writeBatch(firestore);
+
+  // Release old username
+  if (oldUsername) {
+    batch.delete(doc(firestore, "usernames", oldUsername.toLowerCase()));
+  }
+
+  // Claim new username
+  batch.set(doc(firestore, "usernames", lower), { uid, claimedAt: serverTimestamp() });
+
+  // Update user profile
+  batch.update(doc(firestore, "users", uid), { username: lower, updatedAt: serverTimestamp() });
+
+  await batch.commit();
+  return {};
+}
+
+// ── Delete account (keeps username reserved for 30 days) ────────────────
+export async function deleteUserAccount(uid: string, username: string): Promise<void> {
+  const batch = writeBatch(firestore);
+
+  // Mark username as reserved (30-day hold) instead of deleting
+  if (username) {
+    // Update username doc to mark as reserved for 30 days
+    batch.update(doc(firestore, "usernames", username.toLowerCase()), {
+      reserved: true,
+      deletedAt: serverTimestamp(),
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+  }
+
+  // Delete user profile
+  batch.delete(doc(firestore, "users", uid));
+
+  // Delete links
+  const linksSnap = await getDocs(collection(firestore, "users", uid, "links"));
+  linksSnap.docs.forEach(d => batch.delete(d.ref));
+
+  await batch.commit();
+
+  // Unpublish events and shops (don't delete, just unpublish)
+  const eventsSnap = await getDocs(query(collection(firestore, "events"), where("uid", "==", uid)));
+  for (const d of eventsSnap.docs) {
+    await updateDoc(d.ref, { active: false, published: false });
+  }
+  const shopsSnap = await getDocs(query(collection(firestore, "shops"), where("uid", "==", uid)));
+  for (const d of shopsSnap.docs) {
+    await updateDoc(d.ref, { isPublic: false });
+  }
 }

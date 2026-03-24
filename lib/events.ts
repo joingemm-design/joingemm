@@ -44,6 +44,7 @@ export interface EventData {
   published?: boolean;
   active?: boolean;
   soldout?: boolean;
+  staffPin?: string;
   createdAt?: any;
   updatedAt?: any;
 }
@@ -78,8 +79,9 @@ export async function uploadEventImage(uid: string, eventId: string, file: File,
 
 export async function createEvent(uid: string, data: Partial<EventData>): Promise<string> {
   const docRef = doc(collection(firestore, "events"));
+  const staffPin = Math.floor(100000 + Math.random() * 900000).toString();
   await setDoc(docRef, {
-    id: docRef.id, uid, published: false, ...data, active: true, soldout: false,
+    id: docRef.id, uid, published: false, ...data, active: true, soldout: false, staffPin,
     galleryURLs: data.galleryURLs || [], tickets: data.tickets || [],
     externalLinks: data.externalLinks || {},
     theme: data.theme || { bg: "#000000", text: "#ffffff", accent: "#ffffff" },
@@ -141,4 +143,85 @@ export async function getEventRSVPs(eventId: string): Promise<RSVP[]> {
 export async function getEventRSVPCount(eventId: string): Promise<number> {
   const snap = await getDocs(collection(firestore, "events", eventId, "rsvps"));
   return snap.size;
+}
+export interface OrderTicket {
+  id: string;
+  type: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+export async function createOrder(params: {
+  eventId: string;
+  eventName: string;
+  customerName: string;
+  customerEmail: string;
+  ticketType: string;
+  ticketPrice: number;
+  rsvpId: string;
+  startDate?: string;
+  startTime?: string;
+  endTime?: string;
+  venueName?: string;
+  address?: string;
+}): Promise<string> {
+  const orderRef = doc(collection(firestore, "orders"));
+  await setDoc(orderRef, {
+    id: orderRef.id,
+    eventId: params.eventId,
+    eventName: params.eventName,
+    customerName: params.customerName,
+    customerEmail: params.customerEmail,
+    total: params.ticketPrice,
+    tickets: [
+      {
+        id: `${orderRef.id}-1`,
+        type: params.ticketType,
+        name: params.customerName,
+        email: params.customerEmail,
+        phone: "",
+      },
+    ],
+    rsvpId: params.rsvpId,
+    startDate: params.startDate || "",
+    startTime: params.startTime || "",
+    endTime: params.endTime || "",
+    venueName: params.venueName || "",
+    address: params.address || "",
+    createdAt: serverTimestamp(),
+  });
+  await sendOrderConfirmationEmail({ customerEmail: params.customerEmail, customerName: params.customerName, eventName: params.eventName, ticketType: params.ticketType, orderId: orderRef.id });
+  return orderRef.id;
+}
+
+// ── Send confirmation email via Resend (handled by Cloud Function) ───────────
+export async function sendOrderConfirmationEmail(params: {
+  customerEmail: string;
+  customerName: string;
+  eventName: string;
+  ticketType: string;
+  orderId: string;
+}): Promise<void> {
+  // Email is sent server-side via Firebase Cloud Function
+  return;
+}
+
+// ── Debug wrapper to test Resend ─────────────────────────────────────────────
+export async function testResend(email: string): Promise<void> {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.NEXT_PUBLIC_RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "GEMM <hello@joingemm.com>",
+      to: email,
+      subject: "GEMM Test Email",
+      html: "<p>Test email from GEMM</p>",
+    }),
+  });
+  const data = await res.json();
+  console.log("Resend response:", JSON.stringify(data));
 }

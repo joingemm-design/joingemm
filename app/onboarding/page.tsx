@@ -113,7 +113,7 @@ export default function OnboardingPage() {
         <div>
           <label style={{ fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",opacity:.5,marginBottom:8,display:"block" }}>Username</label>
           <div style={{ display:"flex",alignItems:"center",border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,background:"rgba(255,255,255,0.05)",overflow:"hidden",transition:"border-color .3s",borderColor:status==="available"?"rgba(34,197,94,0.4)":status==="taken"||status==="invalid"?"rgba(239,68,68,0.4)":"rgba(255,255,255,0.12)" }}>
-            <span style={{ padding:"0 0 0 16px",fontSize:15,fontWeight:700,opacity:.3,whiteSpace:"nowrap",fontFamily:"'DM Mono',monospace" }}>gemm.live/</span>
+            <span style={{ padding:"0 0 0 16px",fontSize:15,fontWeight:700,opacity:.3,whiteSpace:"nowrap",fontFamily:"'DM Mono',monospace" }}>joingemm.com/</span>
             <input
               value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
               placeholder="yourname"
@@ -156,7 +156,7 @@ export default function OnboardingPage() {
             display:"flex",alignItems:"center",justifyContent:"center",gap:8,
           }}
         >
-          {status === "saving" ? "Claiming..." : "Claim gemm.live/" + (username || "...")}
+          {status === "saving" ? "Claiming..." : "Claim joingemm.com/" + (username || "...")}
           {status !== "saving" && <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>}
         </button>
 

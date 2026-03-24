@@ -215,14 +215,14 @@ export default function CreateEventPage() {
                 <span style={label}>Start Date & Time</span>
                 <div style={{ display:"flex", gap:8 }}>
                   <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={{...inp, flex:1}}/>
-                  <input type="time" value={startTime} onChange={e=>setStartTime(e.target.value)} style={{...inp, width:120}}/>
+                  <input type="time" value={startTime} onChange={e=>setStartTime(e.target.value)} style={{...inp, width:120}}/><span style={{fontSize:11,opacity:0.4,alignSelf:"center",whiteSpace:"nowrap"}}>CST</span>
                 </div>
               </div>
               <div>
                 <span style={label}>End Date & Time</span>
                 <div style={{ display:"flex", gap:8 }}>
                   <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} style={{...inp, flex:1}}/>
-                  <input type="time" value={endTime} onChange={e=>setEndTime(e.target.value)} style={{...inp, width:120}}/>
+                  <input type="time" value={endTime} onChange={e=>setEndTime(e.target.value)} style={{...inp, width:120}}/><span style={{fontSize:11,opacity:0.4,alignSelf:"center",whiteSpace:"nowrap"}}>CST</span>
                 </div>
               </div>
             </div>

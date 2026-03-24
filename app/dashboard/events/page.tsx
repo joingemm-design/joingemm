@@ -171,6 +171,12 @@ export default function EventPortalPage() {
                   }}>
                     {status === "passed" ? "Event Passed" : status === "active" ? "Live" : event.published ? "Published" : "Draft"}
                   </div>
+                  {event.staffPin && (
+                    <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 10, marginTop: 4 }} onClick={e => e.stopPropagation()}>
+                      <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", opacity: 0.4, marginBottom: 4 }}>STAFF CHECK-IN PIN</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: "0.15em", fontVariantNumeric: "tabular-nums" }}>{event.staffPin}</div>
+                    </div>
+                  )}
                 </button>
               );
             })}

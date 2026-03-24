@@ -9,6 +9,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   signOut as firebaseSignOut,
+  sendPasswordResetEmail,
   User,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
@@ -20,6 +21,7 @@ interface AuthState {
   signInWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
   signUpWithEmail: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error?: string }>;
 }
 
 export function useAuth(): AuthState {
@@ -65,6 +67,7 @@ export function useAuth(): AuthState {
       setLoading(true);
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (name && cred.user) await updateProfile(cred.user, { displayName: name });
+      setUser(cred.user);
       return {};
     } catch (error: any) {
       const code = error.code;
@@ -81,5 +84,17 @@ export function useAuth(): AuthState {
     try { await firebaseSignOut(auth); setUser(null); } catch (error) { console.error("Sign-out error:", error); }
   }, []);
 
-  return { user, loading, signIn, signInWithEmail, signUpWithEmail, signOut };
+  const resetPassword = useCallback(async (email: string): Promise<{ error?: string }> => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return {};
+    } catch (error: any) {
+      const code = error.code;
+      if (code === "auth/user-not-found") return { error: "No account found with that email." };
+      if (code === "auth/invalid-email") return { error: "Please enter a valid email address." };
+      return { error: "Something went wrong. Please try again." };
+    }
+  }, []);
+
+  return { user, loading, signIn, signInWithEmail, signUpWithEmail, signOut, resetPassword };
 }

@@ -1,10 +1,18 @@
 "use client";
 
 // components/EventView.tsx
+
+function formatTime(t?: string): string {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
+}
 // Renders public event page for /event/id routes
 
 import { useState, useEffect } from "react";
-import { getEvent, registerForEvent, getEventRSVPCount, EventData } from "@/lib/events";
+import { getEvent, registerForEvent, createOrder, getEventRSVPCount, EventData } from "@/lib/events";
 import { useAuth } from "@/hooks/useAuth";
 
 const CalIcon=()=>(<svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>);
@@ -39,9 +47,40 @@ export default function EventView({ eventId }: { eventId: string }) {
   async function handleRegister() {
     if (!event || !selectedTicket || !rsvpName.trim() || !rsvpEmail.trim()) return;
     setRegistering(true);
-    const ticket = event.tickets?.find(t => t.id === selectedTicket);
-    await registerForEvent(event.id, user?.uid || "anonymous", rsvpName.trim(), rsvpEmail.trim(), ticket?.type || "", ticket?.price || 0);
-    setRegistered(true); setRegistering(false);
+    try {
+      const ticket = event.tickets?.find(t => t.id === selectedTicket);
+
+      // 1. Save RSVP (existing behaviour — keeps your rsvps subcollection intact)
+      const rsvpId = await registerForEvent(
+        event.id,
+        user?.uid || "anonymous",
+        rsvpName.trim(),
+        rsvpEmail.trim(),
+        ticket?.type || "",
+        ticket?.price || 0
+      );
+
+      // 2. Create an order doc so /event-success can fetch it
+      const orderId = await createOrder({
+        eventId: event.id,
+        eventName: event.title,
+        customerName: rsvpName.trim(),
+        customerEmail: rsvpEmail.trim(),
+        ticketType: ticket?.type || "GENERAL ADMISSION",
+        ticketPrice: ticket?.price || 0,
+        rsvpId,
+        startDate: event.startDate || "",
+        startTime: event.startTime || "",
+        endTime: event.endTime || "",
+        venueName: event.venueName || "",
+        address: event.address || "",
+      });
+
+      // 3. Redirect to the confirmation + ticket page
+      window.location.href = `/event-success?orderId=${orderId}`;
+    } catch (err) {
+      setRegistering(false);
+    }
   }
 
   if (loading) return (
@@ -83,7 +122,7 @@ export default function EventView({ eventId }: { eventId: string }) {
         <h1 style={{fontSize:"clamp(2rem,5vw,3rem)",fontWeight:900,letterSpacing:"-0.03em",lineHeight:1.1,marginBottom:16}}>{event.title}</h1>
         <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24,opacity:.6}}>
           {displayDate && <div style={{display:"flex",alignItems:"center",gap:8,fontSize:14,fontWeight:600}}><CalIcon/> {displayDate}</div>}
-          {(event.startTime||event.endTime) && <div style={{display:"flex",alignItems:"center",gap:8,fontSize:14,fontWeight:600}}><ClockIcon/> {event.startTime}{event.endTime?` – ${event.endTime}`:""}</div>}
+          {(event.startTime||event.endTime) && <div style={{display:"flex",alignItems:"center",gap:8,fontSize:14,fontWeight:600}}><ClockIcon/> {formatTime(event.startTime)}{event.endTime?` – ${formatTime(event.endTime)} CST`:` CST`}</div>}
           {(event.venueName||event.address) && <div style={{display:"flex",alignItems:"center",gap:8,fontSize:14,fontWeight:600}}><MapPin/> {event.venueName}{event.address?` • ${event.address}`:""}</div>}
         </div>
         {event.shortDescription && <p style={{fontSize:16,lineHeight:1.6,marginBottom:16,opacity:.8}}>{event.shortDescription}</p>}
@@ -94,7 +133,7 @@ export default function EventView({ eventId }: { eventId: string }) {
             <div style={{fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",opacity:.4,marginBottom:16,display:"flex",alignItems:"center",gap:6}}><TicketIcon/> Tickets</div>
             <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
               {event.tickets?.map(t => (
-                <button key={t.id} onClick={()=>setSelectedTicket(t.id)} style={{padding:"14px 16px",borderRadius:12,border:selectedTicket===t.id?`2px solid ${accent}`:`1px solid ${text}15`,background:selectedTicket===t.id?`${accent}15`:"transparent",color:text,cursor:"pointer",fontFamily:"inherit",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <button key={t.id} onClick={()=>setSelectedTicket(t.id)} style={{padding:"14px 16px",borderRadius:12,border:selectedTicket===t.id?`2px solid ${accent}`:`1px solid ${text}15`,background:selectedTicket===t.id?`${accent}15`:`transparent`,color:text,cursor:"pointer",fontFamily:"inherit",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div><div style={{fontSize:14,fontWeight:700}}>{t.type}</div>{t.description&&<div style={{fontSize:12,opacity:.4,marginTop:2}}>{t.description}</div>}</div>
                   <div style={{fontSize:16,fontWeight:900}}>{t.price===0?"FREE":`$${t.price}`}</div>
                 </button>
@@ -105,12 +144,13 @@ export default function EventView({ eventId }: { eventId: string }) {
               <input value={rsvpEmail} onChange={e=>setRsvpEmail(e.target.value)} placeholder="Your email" type="email" style={inp}/>
               <button onClick={handleRegister} disabled={registering||!rsvpName.trim()||!rsvpEmail.trim()||!selectedTicket}
                 style={{padding:"14px",borderRadius:12,background:accent,color:bg,border:"none",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"inherit",opacity:registering?.6:1}}>
-                {registering?"Registering...":"Get Tickets"}
+                {registering ? "Registering..." : "Get Tickets"}
               </button>
             </div>
             {rsvpCount>0&&<div style={{textAlign:"center",fontSize:11,opacity:.3,marginTop:12}}>{rsvpCount} registered</div>}
           </div>
         )}
+
         {registered && (
           <div style={{padding:32,borderRadius:20,border:`1px solid ${accent}40`,background:`${accent}10`,textAlign:"center"}}>
             <div style={{display:"flex",justifyContent:"center",marginBottom:12,color:accent}}><CheckIcon/></div>
@@ -118,6 +158,7 @@ export default function EventView({ eventId }: { eventId: string }) {
             <p style={{fontSize:14,opacity:.5}}>Check your email for confirmation details.</p>
           </div>
         )}
+
         {(!event.tickets||(event.tickets ?? []).length===0)&&(
           <div style={{padding:24,borderRadius:16,border:`1px dashed ${text}20`,textAlign:"center",opacity:.3}}><p style={{fontSize:14,fontWeight:600}}>No tickets available yet.</p></div>
         )}

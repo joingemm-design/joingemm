@@ -15,7 +15,7 @@ const faqs = [
   { q: "How do I set up a shop?", a: "Go to Dashboard → 'Publish Shop' → Add your shop title, products, and customize the design." },
   { q: "Is GEMM free?", a: "Yes! The Spark plan is free forever and includes unlimited event publishing, 1 Link-in-Bio page, and 1 dynamic QR code." },
   { q: "How do I upgrade my plan?", a: "Go to Dashboard → 'Billing & Payouts' → Click 'Upgrade Plan' to see available options." },
-  { q: "Can I use a custom domain?", a: "Custom domains are coming soon. For now, your page is available at gemm.live/yourusername." },
+  { q: "Can I use a custom domain?", a: "Custom domains are coming soon. For now, your page is available at joingemm.com/yourusername." },
 ];
 
 export default function HelpPage() {

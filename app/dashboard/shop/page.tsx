@@ -1,4 +1,6 @@
 "use client";
+import { usePlan } from "@/hooks/usePlan";
+import UpgradeGate from "@/components/UpgradeGate";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";

@@ -202,7 +202,7 @@ export default function LinksEditorPage() {
           <button onClick={()=>router.push("/dashboard")} style={{ display:"flex", alignItems:"center", justifyContent:"center", width:36, height:36, borderRadius:10, border:"1px solid #eee", background:"#fff", cursor:"pointer", color:"#000" }}><ArrowLeft/></button>
           <div>
             <div style={{ fontSize:16, fontWeight:900 }}>Editing /{profile?.username}</div>
-            <a href={`/${profile?.username}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:12, color:"#7c3aed", fontWeight:600, textDecoration:"none", display:"flex", alignItems:"center", gap:4 }}>gemm.live/{profile?.username} <ExtLink/></a>
+            <a href={`/${profile?.username}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:12, color:"#7c3aed", fontWeight:600, textDecoration:"none", display:"flex", alignItems:"center", gap:4 }}>joingemm.com/{profile?.username} <ExtLink/></a>
           </div>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -485,7 +485,7 @@ export default function LinksEditorPage() {
                   <div style={{ width:12, height:12, borderRadius:"50%", background:dText, display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <div style={{ width:4, height:4, borderRadius:"50%", background:dBg }}/>
                   </div>
-                  GEMM
+                  Powered by GEMM
                 </div>
               </div>
             </div>

@@ -154,3 +154,77 @@ export async function getEventRSVPCount(eventId: string): Promise<number> {
   const snap = await getDocs(collection(firestore, "events", eventId, "rsvps"));
   return snap.size;
 }
+
+// ── Email sending ──────────────────────────────────────────────────────────
+interface OrderConfirmationEmail {
+  customerEmail: string;
+  customerName: string;
+  eventName: string;
+  ticketType: string;
+  orderId: string;
+}
+
+export async function sendOrderConfirmationEmail(params: OrderConfirmationEmail): Promise<void> {
+  const mailRef = doc(collection(firestore, "mail"));
+  await setDoc(mailRef, {
+    to: params.customerEmail,
+    message: {
+      subject: `Your ticket for ${params.eventName}`,
+      html: `
+        <h1>You're in!</h1>
+        <p>Hi ${params.customerName},</p>
+        <p>This email confirms your order for ${params.eventName}.</p>
+        <p><b>Ticket:</b> ${params.ticketType}</p>
+        <p>You can view your ticket and order details here:</p>
+        <a href="https://joingemm.com/event-success?orderId=${params.orderId}">View your ticket</a>
+        <br/><br/>
+        <p>See you there!</p>
+      `,
+    },
+  });
+}
+
+// ── Order creation ──────────────────────────────────────────────────────────
+export interface CreateOrderData {
+  eventId: string;
+  eventName: string;
+  customerName: string;
+  customerEmail: string;
+  ticketType: string;
+  ticketPrice: number;
+  rsvpId: string;
+}
+
+export async function createOrder(data: CreateOrderData): Promise<string> {
+  const docRef = doc(collection(firestore, "orders"));
+
+  const ticket = {
+    id: `${docRef.id}-1`,
+    type: data.ticketType,
+    name: data.customerName,
+    email: data.customerEmail,
+    phone: "",
+  };
+
+  await setDoc(docRef, {
+    id: docRef.id,
+    eventId: data.eventId,
+    eventName: data.eventName,
+    customerName: data.customerName,
+    customerEmail: data.customerEmail,
+    total: data.ticketPrice,
+    tickets: [ticket],
+    rsvpId: data.rsvpId,
+    createdAt: serverTimestamp(),
+  });
+
+  await sendOrderConfirmationEmail({ 
+    customerEmail: data.customerEmail, 
+    customerName: data.customerName, 
+    eventName: data.eventName, 
+    ticketType: data.ticketType, 
+    orderId: docRef.id 
+  });
+
+  return docRef.id;
+}

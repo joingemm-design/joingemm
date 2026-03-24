@@ -9,6 +9,8 @@ import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { getUserProfile, UserProfile } from "@/lib/db";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 // ── Icons ───────────────────────────────────────────────────────────────
 const SparkleIcon = () => (<svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>);
@@ -43,6 +45,7 @@ function WorkspaceGateway({ onContinue }: { onContinue: () => void }) {
   return (
     <div style={{ minHeight: "100vh", background: "#030303", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", padding: 24 }}>
       <style>{css}</style>
+
       <div style={{ width: "100%", maxWidth: 480, padding: 48, borderRadius: 24, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", backdropFilter: "blur(20px)", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, textAlign: "center", opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(20px)", transition: "all .6s ease", animation: v ? "glow 3s ease infinite" : "none" }}>
         <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}><SparkleIcon /></div>
         <div><h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.03em", marginBottom: 8 }}>Workspace</h1><p style={{ fontSize: 15, color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>Sign in to access your command center.</p></div>
@@ -54,10 +57,27 @@ function WorkspaceGateway({ onContinue }: { onContinue: () => void }) {
   );
 }
 
-function AuthScreen({ onGoogle, onEmailSignIn, onEmailSignUp }: { onGoogle: () => void; onEmailSignIn: (e: string, p: string) => Promise<{ error?: string }>; onEmailSignUp: (e: string, p: string, n?: string) => Promise<{ error?: string }> }) {
-  const [mode, setMode] = useState<"signin" | "signup">("signin"); const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [name, setName] = useState(""); const [error, setError] = useState(""); const [showPw, setShowPw] = useState(false); const [busy, setBusy] = useState(false); const [v, setV] = useState(false);
+function AuthScreen({ onGoogle, onEmailSignIn, onEmailSignUp, onResetPassword }: { onGoogle: () => void; onEmailSignIn: (e: string, p: string) => Promise<{ error?: string }>; onEmailSignUp: (e: string, p: string, n?: string) => Promise<{ error?: string }>; onResetPassword: (e: string) => Promise<{ error?: string }> }) {
+  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin"); const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [name, setName] = useState(""); const [error, setError] = useState(""); const [resetSent, setResetSent] = useState(false); const [showPw, setShowPw] = useState(false); const [busy, setBusy] = useState(false); const [v, setV] = useState(false);
   useEffect(() => { setTimeout(() => setV(true), 100) }, []);
-  async function submit() { setError(""); if (!email.trim()) { setError("Please enter your email."); return } if (!password.trim()) { setError("Please enter your password."); return } if (mode === "signup" && password.length < 6) { setError("Password must be at least 6 characters."); return } setBusy(true); const r = mode === "signin" ? await onEmailSignIn(email, password) : await onEmailSignUp(email, password, name || undefined); if (r.error) { setError(r.error); setBusy(false) } }
+  async function submit() {
+    setError("");
+    if (!email.trim()) { setError("Please enter your email."); return; }
+    if (!password.trim()) { setError("Please enter your password."); return; }
+    if (mode === "signup" && password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    setBusy(true);
+    try {
+      const r = mode === "signin"
+        ? await onEmailSignIn(email, password)
+        : await onEmailSignUp(email, password, name || undefined);
+      if (r.error) { setError(r.error); setBusy(false); }
+      else if (mode === "signup") { window.location.href = "/onboarding"; }
+    } catch(e: any) {
+      setError(e.message || "Something went wrong.");
+      setBusy(false);
+    }
+  }
+  async function submitReset() { setError(""); if (!email.trim()) { setError("Please enter your email."); return; } setBusy(true); const r = await onResetPassword(email); setBusy(false); if (r.error) { setError(r.error); } else { setResetSent(true); } }
   const inp: React.CSSProperties = { width: "100%", padding: "14px 16px", borderRadius: 10, border: "1px solid #ddd", fontSize: 15, fontFamily: "inherit", fontWeight: 500, color: "#000", background: "#fff", outline: "none" };
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", padding: 24 }}>
@@ -68,11 +88,30 @@ function AuthScreen({ onGoogle, onEmailSignIn, onEmailSignUp }: { onGoogle: () =
         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
           {mode === "signup" && <input type="text" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} style={inp} />}
           <input type="email" placeholder="Email address*" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} style={inp} />
-          <div style={{ position: "relative" }}><input type={showPw ? "text" : "password"} placeholder="Password*" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} style={{ ...inp, paddingRight: 48 }} /><button onClick={() => setShowPw(!showPw)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#999", padding: 4 }}>{showPw ? <EyeOffIcon /> : <EyeIcon />}</button></div>
+          <div style={{ position: "relative" }}><input type={showPw ? "text" : "password"} placeholder="Password*" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} style={{ ...inp, paddingRight: 48 }} /><button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPw(!showPw); }} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#999", padding: 4 }}>{showPw ? <EyeOffIcon /> : <EyeIcon />}</button></div>
           {error && <p style={{ fontSize: 13, color: "#dc2626", fontWeight: 600 }}>{error}</p>}
           <button onClick={submit} disabled={busy} style={{ width: "100%", padding: 14, borderRadius: 10, background: "#2563eb", color: "#fff", border: "none", fontSize: 16, fontWeight: 800, cursor: busy ? "wait" : "pointer", fontFamily: "inherit", opacity: busy ? .7 : 1 }}>{busy ? "Loading..." : mode === "signin" ? "Continue" : "Sign Up"}</button>
         </div>
-        <p style={{ fontSize: 14, color: "#666" }}>{mode === "signin" ? "Don't have an account? " : "Already have an account? "}<button onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError("") }} style={{ background: "none", border: "none", color: "#2563eb", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>{mode === "signin" ? "Sign up" : "Sign in"}</button></p>
+        {mode === "reset" ? (
+          resetSent ? (
+            <div style={{textAlign:"center",padding:"8px 0"}}>
+              <div style={{fontSize:32,marginBottom:8}}>📬</div>
+              <p style={{fontSize:14,color:"#22c55e",fontWeight:700,marginBottom:4}}>Reset email sent!</p>
+              <p style={{fontSize:13,color:"#666",marginBottom:12}}>Check your inbox for a password reset link.</p>
+              <button onClick={()=>{setMode("signin");setResetSent(false);setError("");}} style={{background:"none",border:"none",color:"#2563eb",fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:14}}>Back to sign in</button>
+            </div>
+          ) : (
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <input type="email" placeholder="Your email address" value={email} onChange={e=>setEmail(e.target.value)} style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"1.5px solid #e5e5e5",fontSize:15,fontFamily:"inherit",color:"#000"}}/>
+              {error && <p style={{fontSize:13,color:"#ef4444",fontWeight:600}}>{error}</p>}
+              <button onClick={submitReset} disabled={busy} style={{width:"100%",padding:14,borderRadius:10,background:"#2563eb",color:"#fff",border:"none",fontSize:15,fontWeight:800,cursor:busy?"wait":"pointer",fontFamily:"inherit",opacity:busy?.7:1}}>{busy?"Sending...":"Send Reset Email"}</button>
+              <button onClick={()=>{setMode("signin");setError("");}} style={{background:"none",border:"none",color:"#666",cursor:"pointer",fontFamily:"inherit",fontSize:14}}>← Back to sign in</button>
+            </div>
+          )
+        ) : (
+          <p style={{ fontSize: 14, color: "#666" }}>{mode === "signin" ? "Don't have an account? " : "Already have an account? "}<button onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError("") }} style={{ background: "none", border: "none", color: "#2563eb", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>{mode === "signin" ? "Sign up" : "Sign in"}</button></p>
+        )}
+        {mode === "signin" && !resetSent && <button onClick={()=>{setMode("reset");setError("");}} style={{background:"none",border:"none",color:"#aaa",cursor:"pointer",fontFamily:"inherit",fontSize:13,marginTop:4}}>Forgot password?</button>}
         <div style={{ width: "100%", display: "flex", alignItems: "center", gap: 16 }}><div style={{ flex: 1, height: 1, background: "#e5e5e5" }} /><span style={{ fontSize: 12, color: "#999", fontWeight: 600, textTransform: "uppercase" }}>OR</span><div style={{ flex: 1, height: 1, background: "#e5e5e5" }} /></div>
         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
           <button onClick={onGoogle} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "1px solid #ddd", background: "#fff", color: "#000", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 12 }} onMouseEnter={e => e.currentTarget.style.background = "#f9f9f9"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}><GoogleIcon /> Continue with Google</button>
@@ -89,6 +128,19 @@ function AuthScreen({ onGoogle, onEmailSignIn, onEmailSignUp }: { onGoogle: () =
 function CommandCenter({ user, profile, signOut }: { user: any; profile: UserProfile | null; signOut: () => void }) {
   const router = useRouter();
   const isMobile = useIsMobile();
+  const searchParams = useSearchParams();
+  const [upgradeBanner, setUpgradeBanner] = useState<string|null>(null);
+
+  useEffect(() => {
+    const upgraded = searchParams.get("upgraded");
+    const plan = searchParams.get("plan");
+    if (upgraded === "true") {
+      setUpgradeBanner(plan || "Velocity");
+      setTimeout(() => setUpgradeBanner(null), 6000);
+      // Clean URL
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, [searchParams]);
   const dn = profile?.displayName || user.displayName || "Creator";
   const em = user.email || "";
   const pic = profile?.photoURL || user.photoURL;
@@ -102,6 +154,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
     { icon: <ChartIcon/>, label: "Data & Analytics", desc: "Platform traffic intelligence", cols: 1, action: () => router.push("/dashboard/analytics") },
     { icon: <HomeIcon/>, label: "Go Home", desc: "Back to main site", cols: 1, action: () => router.push("/") },
     { icon: <HelpIcon/>, label: "Help & Support", desc: "Activate Neural Base", cols: 1, action: () => router.push("/dashboard/help") },
+    { icon: <SparkleIcon/>, label: "Settings", desc: "Username, account & deletion", cols: 1, action: () => router.push("/dashboard/settings") },
   ];
 
   const modules = [
@@ -113,9 +166,24 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
     { icon: <ShoppingBagIcon/>, label: "Commerce", desc: "Manage Shops", action: () => router.push("/dashboard/shop") },
     { icon: <QrIcon/>, label: "QR Codes", desc: "Dynamic tracking codes", action: () => router.push("/dashboard/qr") },
     { icon: <UploadIcon/>, label: "Quick Media", desc: "Fast media upload tool", action: () => router.push("/dashboard/media") },
+    { icon: <ShopIcon/>, label: "Portfolio", desc: "Showcase your work", action: () => router.push("/dashboard/portfolio") },
+    { icon: <ZapIcon/>, label: "Services", desc: "Offer services & get quotes", action: () => router.push("/dashboard/services") },
+    { icon: <ZapIcon/>, label: "Inquiries", desc: "View quote requests", action: () => router.push("/dashboard/inquiries") },
+    { icon: <GlobeIcon/>, label: "Pages", desc: "About & Press pages", action: () => router.push("/dashboard/pages") },
+    { icon: <SparkleIcon/>, label: "Branding", desc: "Colors, fonts & style", action: () => router.push("/dashboard/branding") },
   ];
 
   const filteredQuickActions = quickActions.filter(a => !searchQuery || a.label.toLowerCase().includes(searchQuery.toLowerCase()) || a.desc.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const ClaimUsernameBanner = () => !profile?.username ? (
+    <div style={{width:"100%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",borderRadius:16,padding:"20px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap",marginBottom:8}}>
+      <div>
+        <div style={{fontWeight:800,fontSize:15,color:"#fff"}}>🔗 Claim your username</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>Set up your Link in Bio at joingemm.com/@you</div>
+      </div>
+      <button onClick={() => router.push("/onboarding")} style={{background:"#fff",color:"#6366f1",border:"none",borderRadius:999,padding:"10px 20px",fontWeight:800,fontSize:13,cursor:"pointer",whiteSpace:"nowrap"}}>Claim Now →</button>
+    </div>
+  ) : null;
   const filteredModules = modules.filter(m => !searchQuery || m.label.toLowerCase().includes(searchQuery.toLowerCase()) || m.desc.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const cardStyle: React.CSSProperties = {
@@ -131,6 +199,15 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
   return (
     <div className="fade" style={{ minHeight: "100vh", background: "#030303", color: "#e4e4e7", fontFamily: "'DM Sans',sans-serif", padding: "0 24px 64px" }}>
       <style>{css}</style>
+
+      {upgradeBanner && (
+        <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:1000,background:"linear-gradient(135deg,#22c55e,#16a34a)",color:"#fff",padding:"14px 28px",borderRadius:999,fontSize:14,fontWeight:800,display:"flex",alignItems:"center",gap:10,boxShadow:"0 8px 32px rgba(34,197,94,0.4)",animation:"fadeIn .4s ease forwards",whiteSpace:"nowrap"}}>
+          <span style={{fontSize:20}}>🎉</span>
+          Welcome to {upgradeBanner}! You're all set.
+          <button onClick={()=>setUpgradeBanner(null)} style={{marginLeft:8,background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:20,height:20,color:"#fff",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>✕</button>
+        </div>
+      )}
+      <div style={{maxWidth:1000,margin:"0 auto",paddingTop:20}}><ClaimUsernameBanner/></div>
 
       {/* Top bar */}
       <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0" }}>
@@ -278,19 +355,25 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
 // ══════════════════════════════════════════════════════════════════════════
 // MAIN — orchestrates Gateway → Auth → Command Center
 // ══════════════════════════════════════════════════════════════════════════
-export default function DashboardPage() {
-  const { user, loading, signIn, signInWithEmail, signUpWithEmail, signOut } = useAuth();
+function DashboardContent() {
+  const { user, loading, signIn, signInWithEmail, signUpWithEmail, signOut, resetPassword } = useAuth();
   const router = useRouter();
   const [screen, setScreen] = useState<"gateway"|"auth"|"dashboard">("gateway");
   const [profile, setProfile] = useState<UserProfile|null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
-  useEffect(() => { if (!loading && user) setScreen("dashboard"); }, [user, loading]);
+  useEffect(() => { if (user) setScreen("dashboard"); }, [user]);
 
   useEffect(() => {
     if (user && screen === "dashboard") {
       getUserProfile(user.uid).then(p => {
-        if (!p || !p.username) { setProfile(null); }
+        if (!p) {
+          // No profile at all — new user, send to onboarding
+          setProfileLoading(false);
+          router.push("/onboarding");
+          return;
+        }
+        if (!p.username) { setProfile(null); }
         else { setProfile(p); }
         setProfileLoading(false);
       });
@@ -300,13 +383,21 @@ export default function DashboardPage() {
   if (loading || (screen === "dashboard" && profileLoading)) return (
     <div style={{ minHeight:"100vh",background:"#030303",display:"flex",alignItems:"center",justifyContent:"center" }}>
       <style>{css}</style>
-      <div style={{ width:24,height:24,borderRadius:"50%",background:"#fff",boxShadow:"0 0 20px rgba(255,255,255,0.3)",animation:"pulse 1.5s ease infinite" }}/>
     </div>
   );
 
   if (screen === "gateway" && !user) return <WorkspaceGateway onContinue={() => setScreen("auth")}/>;
-  if (screen === "auth" && !user) return <AuthScreen onGoogle={signIn} onEmailSignIn={signInWithEmail} onEmailSignUp={signUpWithEmail}/>;
+  if (screen === "auth" && !user) return <AuthScreen onGoogle={signIn} onEmailSignIn={signInWithEmail} onEmailSignUp={signUpWithEmail} onResetPassword={resetPassword}/>;
   if (!user) return <WorkspaceGateway onContinue={() => setScreen("auth")}/>;
 
   return <CommandCenter user={user} profile={profile} signOut={signOut}/>;
+}
+
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div style={{minHeight:"100vh",background:"#030303"}}/>}>
+      <DashboardContent />
+    </Suspense>
+  );
 }

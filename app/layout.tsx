@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  icons: { icon: "/favicon.svg" },
   title: "GEMM | The Operating System for Creators",
   description:
     "Sell products, host events, and customize your brand with a technology that feels alive.",
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     title: "GEMM | The Operating System for Creators",
     description:
       "Sell products, host events, and customize your brand with a technology that feels alive.",
-    url: "https://gemm.live",
+    url: "https://joingemm.com",
     siteName: "GEMM",
     locale: "en_US",
     type: "website",

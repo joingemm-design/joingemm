@@ -1,0 +1,455 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { firestore } from "@/lib/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import QRCode from "react-qr-code";
+
+function formatTime(t?: string): string {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
+}
+// ─── Icons ─────────────────────────────────────────────────────────────────────
+const TicketIcon = () => (
+  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+  </svg>
+);
+const CheckIcon = () => (
+  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+  </svg>
+);
+const ScanIcon = () => (
+  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+  </svg>
+);
+const ChevronIcon = ({ open }: { open: boolean }) => (
+  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+    style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+  </svg>
+);
+const XIcon = () => (
+  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
+interface Ticket {
+  id: string;
+  type: string;
+  name: string;
+  email: string;
+  phone?: string;
+}
+
+interface Order {
+  id: string;
+  event: string;
+  date: string;
+  total: number;
+  startDate?: string;
+  startTime?: string;
+  endTime?: string;
+  venueName?: string;
+  address?: string;
+  customer: { name: string; email: string };
+  tickets: Ticket[];
+}
+
+// ─── Attendee Form Modal ───────────────────────────────────────────────────────
+function AttendeeFormModal({ order, onClose, onSave }: {
+  order: Order;
+  onClose: () => void;
+  onSave: (tickets: Ticket[]) => void;
+}) {
+  const [tickets, setTickets] = useState<Ticket[]>(order.tickets.map(t => ({ ...t })));
+  const [openIdx, setOpenIdx] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const updateTicket = (idx: number, field: keyof Ticket, val: string) => {
+    setTickets(prev => prev.map((t, i) => i === idx ? { ...t, [field]: val } : t));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateDoc(doc(firestore, "orders", order.id), { tickets });
+      setSaved(true);
+      setTimeout(() => { onSave(tickets); onClose(); }, 700);
+    } catch (err) {
+      console.error("Failed to save attendee info:", err);
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={styles.overlay}>
+      <div style={styles.modal}>
+        <div style={styles.modalHeader}>
+          <div>
+            <div style={styles.modalTitle}>Order Information</div>
+            <div style={styles.modalSubtitle}>Assign tickets and fill out requested details.</div>
+          </div>
+          <button onClick={onClose} style={styles.closeBtn}><XIcon /></button>
+        </div>
+
+        <div style={styles.sectionLabel}>Ticket Details</div>
+
+        {tickets.map((ticket, idx) => (
+          <div key={ticket.id}
+            style={{ ...styles.ticketCard, border: openIdx === idx ? "1px solid #6c63ff" : "1px solid rgba(255,255,255,0.08)" }}>
+            <button style={styles.ticketHeader} onClick={() => setOpenIdx(openIdx === idx ? -1 : idx)}>
+              <div style={styles.ticketHeaderLeft}>
+                <div style={styles.ticketIconBadge}><TicketIcon /></div>
+                <div>
+                  <div style={styles.ticketName}>Ticket {idx + 1}</div>
+                  <div style={styles.ticketType}>{ticket.type} · {ticket.name || "Guest"}</div>
+                </div>
+              </div>
+              <ChevronIcon open={openIdx === idx} />
+            </button>
+
+            {openIdx === idx && (
+              <div style={styles.ticketFields}>
+                <div style={styles.field}>
+                  <label style={styles.label}>Full Name <span style={{ color: "#ff6b6b" }}>*</span></label>
+                  <input style={styles.input} value={ticket.name}
+                    onChange={e => updateTicket(idx, "name", e.target.value)} placeholder="Enter full name" />
+                </div>
+                <div style={styles.field}>
+                  <label style={styles.label}>Email Address <span style={{ color: "#ff6b6b" }}>*</span></label>
+                  <input style={styles.input} value={ticket.email}
+                    onChange={e => updateTicket(idx, "email", e.target.value)} placeholder="Enter email" />
+                </div>
+                <div style={styles.field}>
+                  <label style={styles.label}>Phone Number</label>
+                  <input style={styles.input} value={ticket.phone || ""}
+                    onChange={e => updateTicket(idx, "phone", e.target.value)} placeholder="Enter phone number" />
+                </div>
+                <div style={styles.ticketFooter}>
+                  <span style={styles.allReviewed}>ALL TICKETS REVIEWED</span>
+                  <button style={styles.completeBtn} onClick={() => setOpenIdx(-1)}>Complete Form</button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+
+        <button
+          style={{ ...styles.saveBtn, background: saved ? "#22c55e" : saving ? "#4a42cc" : "#6c63ff" }}
+          onClick={handleSave}
+          disabled={saving}>
+          {saved ? <><CheckIcon /> Saved!</> : saving ? "Saving..." : "Save Changes"}
+        </button>
+        <button style={styles.closeTextBtn} onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Ticket Card ───────────────────────────────────────────────────────────────
+function TicketCard({ ticket, orderId }: { ticket: Ticket; orderId: string }) {
+  const qrValue = `https://joingemm.com/staff/checkin?orderId=${orderId}&ticketId=${ticket.id}`;
+
+  return (
+    <div style={styles.ticketWrapper}>
+      <div style={styles.ticketTop}>
+        <div style={styles.readyBadge}>
+          <ScanIcon />
+          <span style={{ color: "#6c63ff", fontWeight: 600, fontSize: 13 }}>Ready to Scan</span>
+        </div>
+        <div style={styles.ticketBody}>
+          <div style={styles.qrWrapper}>
+            <QRCode value={qrValue} size={90} bgColor="#ffffff" fgColor="#000000" level="M" />
+          </div>
+          <div style={styles.ticketInfo}>
+            <div style={styles.ticketTypeLabel}>{ticket.type}</div>
+            <div style={styles.ticketAttendee}>{ticket.name || "Guest"}</div>
+            <div style={styles.ticketEmail}>{ticket.email}</div>
+            {ticket.phone && <div style={styles.ticketPhone}>{ticket.phone}</div>}
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.tearLine}>
+        <div style={styles.notchLeft} />
+        <div style={styles.dashLine} />
+        <div style={styles.notchRight} />
+      </div>
+
+      <div style={styles.ticketBottom}>
+        <a href={`/staff/checkin?orderId=${orderId}&ticketId=${ticket.id}`} style={styles.staffBtn}>
+          Staff Check-in
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// ─── Loading / Error ──────────────────────────────────────────────────────────
+const LoadingScreen = () => (
+  <div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+    <div style={styles.spinner} />
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>Loading your order...</div>
+  </div>
+);
+
+const ErrorScreen = ({ message }: { message: string }) => (
+  <div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 24 }}>
+    <div style={{ fontSize: 40 }}>⚠️</div>
+    <div style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>Order Not Found</div>
+    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, textAlign: "center" }}>{message}</div>
+    <a href="/" style={{ ...styles.staffBtn, display: "inline-block", marginTop: 8, textDecoration: "none", padding: "12px 24px", width: "auto" }}>Go Home</a>
+  </div>
+);
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+export default function EventSuccess() {
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [animIn, setAnimIn] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("orderId");
+
+    if (!orderId) {
+      setError("No order ID found. Please check your confirmation email for the correct link.");
+      setLoading(false);
+      return;
+    }
+
+    const fetchOrder = async () => {
+      try {
+        const snap = await getDoc(doc(firestore, "orders", orderId));
+
+        if (!snap.exists()) {
+          setError("This order doesn't exist or may have been removed.");
+          setLoading(false);
+          return;
+        }
+
+        const data = snap.data();
+
+        setOrder({
+          id: snap.id,
+          event: data.eventName || data.event || "Your Event",
+          date: data.createdAt?.toDate
+            ? data.createdAt.toDate().toLocaleString("en-US", {
+                month: "short", day: "numeric",
+                hour: "numeric", minute: "2-digit", hour12: true,
+              })
+            : new Date().toLocaleString("en-US", {
+                month: "short", day: "numeric",
+                hour: "numeric", minute: "2-digit", hour12: true,
+              }),
+          total: data.total ?? 0,
+          customer: {
+            name: data.customerName || data.customer?.name || "Guest",
+            email: data.customerEmail || data.customer?.email || "",
+          },
+          startDate: data.startDate || "",
+          startTime: data.startTime || "",
+          endTime: data.endTime || "",
+          venueName: data.venueName || "",
+          address: data.address || "",
+          tickets: data.tickets ?? [{
+            id: `${snap.id}-1`,
+            type: data.ticketType || "GENERAL ADMISSION",
+            name: data.customerName || "Guest",
+            email: data.customerEmail || "",
+            phone: data.customerPhone || "",
+          }],
+        });
+
+        setLoading(false);
+        requestAnimationFrame(() => setAnimIn(true));
+      } catch (err) {
+        console.error("Error fetching order:", err);
+        setError("Something went wrong loading your order. Please try again.");
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, []);
+
+  if (loading) return <LoadingScreen />;
+  if (error) return <ErrorScreen message={error} />;
+  if (!order) return null;
+
+  return (
+    <div style={styles.root}>
+      <div style={{
+        ...styles.page,
+        opacity: animIn ? 1 : 0,
+        transform: animIn ? "translateY(0)" : "translateY(16px)",
+        transition: "all 0.4s ease",
+      }}>
+        {/* Header */}
+        <div style={styles.confirmedHeader}>
+          <div style={styles.confirmedEmoji}>🎉</div>
+          <h1 style={styles.confirmedTitle}>
+            Your Order is <span style={styles.confirmedTitleAccent}>Confirmed!</span>
+          </h1>
+          <div style={styles.confirmedEvent}>{order.event}</div>
+        </div>
+
+        {/* Event Details */}
+        {(order.startDate || order.venueName) && (
+          <div style={styles.infoCard}>
+            <div style={styles.infoCardTitle}>Event Details</div>
+            {order.startDate && (
+              <div style={styles.infoRow}>
+                <span style={styles.infoKey}>Date</span>
+                <span style={styles.infoVal}>{new Date(order.startDate + "T00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</span>
+              </div>
+            )}
+            {order.startTime && (
+              <div style={styles.infoRow}>
+                <span style={styles.infoKey}>Time</span>
+                <span style={styles.infoVal}>{formatTime(order.startTime)}{order.endTime ? ` – ${formatTime(order.endTime)}` : ""} CST</span>
+              </div>
+            )}
+            {order.venueName && (
+              <div style={styles.infoRow}>
+                <span style={styles.infoKey}>Venue</span>
+                <span style={styles.infoVal}>{order.venueName}{order.address ? ` · ${order.address}` : ""}</span>
+              </div>
+            )}
+          </div>
+        )}
+        {/* Tickets */}
+        <div style={styles.sectionHeader}>Tickets</div>
+        {order.tickets.map(ticket => (
+          <TicketCard key={ticket.id} ticket={ticket} orderId={order.id} />
+        ))}
+
+        {/* Order Details */}
+        <div style={styles.infoCard}>
+          <div style={styles.infoCardTitle}>Order Details</div>
+          <div style={styles.infoRow}>
+            <span style={styles.infoKey}>Order ID</span>
+            <span style={styles.infoVal}>{order.id}</span>
+          </div>
+          <div style={styles.infoRow}>
+            <span style={styles.infoKey}>Date</span>
+            <span style={styles.infoVal}>{order.date}</span>
+          </div>
+          <div style={styles.infoRow}>
+            <span style={styles.infoKey}>Total</span>
+            <span style={{ ...styles.infoVal, fontWeight: 700, color: "#fff" }}>
+              {order.total === 0 ? "Free" : `$${order.total.toFixed(2)}`}
+            </span>
+          </div>
+        </div>
+
+        {/* Customer Info */}
+        <div style={styles.infoCard}>
+          <div style={styles.infoCardTitle}>Customer Information</div>
+          <div style={styles.infoRow}>
+            <span style={styles.infoKey}>Name</span>
+            <span style={styles.infoVal}>{order.customer.name}</span>
+          </div>
+          <div style={styles.infoRow}>
+            <span style={styles.infoKey}>Email</span>
+            <span style={styles.infoVal}>{order.customer.email}</span>
+          </div>
+        </div>
+
+        {/* Complete Order Form CTA */}
+        <button style={styles.completeOrderCard} onClick={() => setShowForm(true)}>
+          <div style={styles.completeOrderIcon}><TicketIcon /></div>
+          <div style={styles.completeOrderTitle}>Complete Order Form</div>
+          <div style={styles.completeOrderSubtitle}>Provide attendee names and answer requested details.</div>
+        </button>
+      </div>
+
+      {showForm && (
+        <AttendeeFormModal
+          order={order}
+          onClose={() => setShowForm(false)}
+          onSave={(updatedTickets) => {
+            setOrder(prev => prev ? {
+              ...prev,
+              tickets: updatedTickets,
+              customer: { ...prev.customer, name: updatedTickets[0].name, email: updatedTickets[0].email },
+            } : prev);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Styles ────────────────────────────────────────────────────────────────────
+const styles: Record<string, React.CSSProperties> = {
+  root: { minHeight: "100vh", background: "#0a0a0f", color: "#fff", fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", paddingBottom: 48 },
+  page: { maxWidth: 420, margin: "0 auto", padding: "24px 16px" },
+  confirmedHeader: { textAlign: "center", marginBottom: 28 },
+  confirmedEmoji: { fontSize: 40, marginBottom: 8 },
+  confirmedTitle: { fontSize: 28, fontWeight: 700, lineHeight: 1.2, margin: "0 0 6px", color: "#fff" },
+  confirmedTitleAccent: { color: "#a29bfe" },
+  confirmedEvent: { fontSize: 14, color: "rgba(255,255,255,0.45)", marginTop: 4 },
+  sectionHeader: { fontSize: 20, fontWeight: 700, marginBottom: 12, color: "#fff" },
+  sectionLabel: { fontSize: 15, fontWeight: 700, marginBottom: 12, color: "#fff", padding: "0 16px" },
+  ticketWrapper: { borderRadius: 16, overflow: "hidden", marginBottom: 24, border: "1px solid rgba(255,255,255,0.1)" },
+  ticketTop: { background: "#12131f", padding: "4px 0 0" },
+  readyBadge: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+  ticketBody: { display: "flex", alignItems: "flex-start", gap: 16, padding: "16px" },
+  qrWrapper: { background: "#fff", borderRadius: 8, padding: 6, flexShrink: 0 },
+  ticketInfo: { flex: 1 },
+  ticketTypeLabel: { fontSize: 16, fontWeight: 700, color: "#fff", letterSpacing: "0.04em", marginBottom: 4 },
+  ticketAttendee: { fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 2 },
+  ticketEmail: { fontSize: 12, color: "rgba(255,255,255,0.45)", marginBottom: 2 },
+  ticketPhone: { fontSize: 12, color: "rgba(255,255,255,0.3)" },
+  tearLine: { background: "#0f1018", display: "flex", alignItems: "center", height: 28 },
+  notchLeft: { width: 20, height: 20, borderRadius: "50%", background: "#0a0a0f", marginLeft: -10, flexShrink: 0 },
+  notchRight: { width: 20, height: 20, borderRadius: "50%", background: "#0a0a0f", marginRight: -10, flexShrink: 0 },
+  dashLine: { flex: 1, borderTop: "2px dashed rgba(255,255,255,0.12)", margin: "0 8px" },
+  ticketBottom: { background: "#12131f", padding: "14px 16px" },
+  staffBtn: { display: "block", width: "100%", padding: "14px", background: "#6c63ff", border: "none", borderRadius: 10, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", letterSpacing: "0.02em", textAlign: "center", boxSizing: "border-box" },
+  infoCard: { background: "#12131f", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "18px 16px", marginBottom: 12 },
+  infoCardTitle: { fontSize: 17, fontWeight: 700, color: "#fff", marginBottom: 14 },
+  infoRow: { display: "flex", flexDirection: "column", marginBottom: 12 },
+  infoKey: { fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 2, letterSpacing: "0.03em" },
+  infoVal: { fontSize: 13, color: "rgba(255,255,255,0.75)", wordBreak: "break-all" },
+  completeOrderCard: { width: "100%", background: "linear-gradient(135deg, #6c63ff, #9b59b6)", border: "none", borderRadius: 16, padding: "24px 20px", textAlign: "center", cursor: "pointer", marginBottom: 12 },
+  completeOrderIcon: { width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#fff" },
+  completeOrderTitle: { fontSize: 17, fontWeight: 700, color: "#fff", marginBottom: 6 },
+  completeOrderSubtitle: { fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.4 },
+  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" },
+  modal: { width: "100%", maxWidth: 460, background: "#111218", borderRadius: "20px 20px 0 0", padding: "0 0 24px", maxHeight: "90vh", overflowY: "auto" },
+  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 16px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 16 },
+  modalTitle: { fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 },
+  modalSubtitle: { fontSize: 13, color: "rgba(255,255,255,0.45)" },
+  closeBtn: { background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.6)", flexShrink: 0 },
+  ticketCard: { borderRadius: 12, marginBottom: 10, overflow: "hidden", margin: "0 16px 10px" },
+  ticketHeader: { width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px", background: "#1a1b2a", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)" },
+  ticketHeaderLeft: { display: "flex", alignItems: "center", gap: 10 },
+  ticketIconBadge: { width: 36, height: 36, borderRadius: 8, background: "#2d2a5e", display: "flex", alignItems: "center", justifyContent: "center", color: "#a29bfe" },
+  ticketName: { fontSize: 14, fontWeight: 600, color: "#fff", textAlign: "left" },
+  ticketType: { fontSize: 11, color: "rgba(255,255,255,0.4)", textAlign: "left" },
+  ticketFields: { background: "#15162a", padding: "14px", borderTop: "1px solid rgba(255,255,255,0.06)" },
+  field: { marginBottom: 14 },
+  label: { display: "block", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 6, letterSpacing: "0.02em" },
+  input: { width: "100%", padding: "11px 12px", background: "#0f1018", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" },
+  ticketFooter: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 },
+  allReviewed: { fontSize: 10, color: "rgba(255,255,255,0.25)", letterSpacing: "0.08em" },
+  completeBtn: { padding: "9px 16px", background: "#6c63ff", border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  saveBtn: { width: "calc(100% - 32px)", margin: "16px 16px 8px", padding: "14px", border: "none", borderRadius: 10, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.3s" },
+  closeTextBtn: { width: "calc(100% - 32px)", margin: "0 16px", padding: "14px", background: "rgba(255,255,255,0.07)", border: "none", borderRadius: 10, color: "rgba(255,255,255,0.6)", fontSize: 15, fontWeight: 600, cursor: "pointer" },
+  spinner: { width: 36, height: 36, borderRadius: "50%", border: "3px solid rgba(108,99,255,0.2)", borderTopColor: "#6c63ff", animation: "spin 0.8s linear infinite" },
+};
