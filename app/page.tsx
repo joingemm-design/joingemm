@@ -842,27 +842,6 @@ export default function LandingPage() {
                 }}>
                   The operating system for creators. Sell products, host events, and customize your brand with a technology that feels alive.
                 </p>
-
-                {/* Stats Strip */}
-                <div style={{display:"flex",gap:40,flexWrap:"wrap",margin:"32px 0 8px",padding:"24px 0",borderTop:"1px solid rgba(255,255,255,.08)",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
-                  {[["3+","Creators"],["1","Event Live"],["STL","Based"],["Free","To Start"]].map(([num,label])=>(
-                    <div key={label}>
-                      <div style={{fontSize:28,fontWeight:900,letterSpacing:"-.02em",lineHeight:1}}>{num}</div>
-                      <div style={{fontSize:12,fontWeight:700,opacity:.4,letterSpacing:".08em",textTransform:"uppercase" as const,marginTop:4}}>{label}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Stats Strip */}
-                <div style={{display:"flex",gap:40,flexWrap:"wrap",margin:"32px 0 8px",padding:"24px 0",borderTop:"1px solid rgba(255,255,255,.08)",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
-                  {[["3+","Creators"],["1","Event live"],["STL","Based"],["Free","To start"]].map(([num,label])=>(
-                    <div key={label}>
-                      <div style={{fontSize:28,fontWeight:900,letterSpacing:"-.02em",lineHeight:1}}>{num}</div>
-                      <div style={{fontSize:12,fontWeight:700,opacity:.4,letterSpacing:".08em",textTransform:"uppercase",marginTop:4}}>{label}</div>
-                    </div>
-                  ))}
-                </div>
-
                 {/* CTA + Stars + Sales Sim — matches Wavey layout */}
                 <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12 }}>
