@@ -39,6 +39,7 @@ export default function ProfileView({ username }: { username: string }) {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [latestEvent, setLatestEvent] = useState<any>(null);
+  const [colorTheme, setColorTheme] = useState("noir");
 
   async function handleCheckout() {
     if (!emailModal || !emailInput.includes("@")) return;
@@ -121,6 +122,315 @@ export default function ProfileView({ username }: { username: string }) {
   const socials = profile.socials || {};
   const initials = profile.displayName?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2) || "?";
 
+
+  // LANDING PAGE LAYOUT
+  if ((profile as any).profileStyle === "landing") {
+    const bg = (profile as any).colorBg || "#ffffff";
+    const text = (profile as any).colorText || "#000000";
+    const btn = (profile as any).colorBtn || "#000000";
+    const btnText = (profile as any).colorBtnText || "#ffffff";
+    const fontFamily = (profile as any).fontFamily || "'DM Sans',sans-serif";
+    const isBrock = profile.uid === "9ppSAQTMFchFf8JrACZg0S3OFXj1";
+    const themeBg = colorTheme==="noir"?"#0a0a0a":colorTheme==="gold"?"#0a0a0a":bg;
+    const themeText = colorTheme==="noir"?"#ffffff":colorTheme==="gold"?"#ffffff":text;
+    const themeBtn = colorTheme==="noir"?"#ffffff":colorTheme==="gold"?"#c9a84c":btn;
+    const themeBtnText = colorTheme==="noir"?"#000000":colorTheme==="gold"?"#000000":btnText;
+    const activeBg = themeBg; const activeText = themeText; const activeBtn = themeBtn; const activeBtnText = themeBtnText;
+    return (
+      <>
+      {latestEvent && (()=>{
+        const now = new Date(); now.setHours(0,0,0,0);
+        const eventDateStr = latestEvent.startDate || latestEvent.date;
+        if (eventDateStr) {
+          const [y,m,d] = eventDateStr.split("-").map(Number);
+          if (new Date(y,m-1,d) < now) return null;
+          const diff = Math.ceil((new Date(y,m-1,d).getTime()-now.getTime())/(864e5));
+          const label = diff===0?"Today":diff===1?"Tomorrow":diff<=7?"In "+diff+" days":new Date(y,m-1,d).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+          return <a href={"/event/"+latestEvent.id} style={{display:"block",background:"#000",color:"#fff",textAlign:"center",padding:"10px 20px",fontSize:13,fontWeight:700,textDecoration:"none",letterSpacing:".04em",textTransform:"uppercase" as const}}>{"🎟 "+latestEvent.title+" — "+label+" — Get Tickets →"}</a>;
+        }
+        return null;
+      })()}
+      <div style={{minHeight:"100vh",background:activeBg,color:activeText,fontFamily}}>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');
+          *{box-sizing:border-box;margin:0;padding:0}
+          @keyframes pageIn{from{opacity:0}to{opacity:1}}
+          @keyframes slideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+          @keyframes marqueeScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+          .lp-page{animation:pageIn .5s ease forwards}
+          .lp-wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+          .lp-section{padding:80px 0}
+          .lp-section-title{font-size:clamp(11px,1.2vw,13px);font-weight:800;letter-spacing:.15em;text-transform:uppercase;opacity:.4;margin-bottom:40px}
+          .lp-nav{position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,.06)}
+          .lp-nav a{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;padding:18px 16px;display:inline-block;opacity:.5;transition:opacity .2s}
+          .lp-nav a:hover{opacity:1}
+          .lp-hero{position:relative;min-height:88vh;display:flex;align-items:flex-end;overflow:hidden}
+          .lp-hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+          .lp-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.2) 60%,transparent 100%)}
+          .lp-work-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+          @media(max-width:700px){.lp-work-grid{grid-template-columns:1fr}}
+          .lp-work-item{position:relative;aspect-ratio:1;overflow:hidden;border-radius:4px;cursor:pointer}
+          .lp-work-item img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+          .lp-work-item:hover img{transform:scale(1.05)}
+          .lp-work-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .3s;display:flex;flex-direction:column;justify-content:flex-end;padding:20px}
+          .lp-work-item:hover .lp-work-overlay{background:rgba(0,0,0,.6)}
+          .lp-work-label{color:#fff;font-size:14px;font-weight:800}
+          .lp-work-cta{color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:0;transform:translateY(6px);transition:all .3s;margin-top:4px}
+          .lp-work-item:hover .lp-work-cta{opacity:.7;transform:translateY(0)}
+          .lp-reveal{opacity:1}
+          .lp-svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+          @media(max-width:700px){.lp-svc-grid{grid-template-columns:1fr 1fr}}
+        `}</style>
+
+        {/* Hero */}
+        <div className="lp-hero">
+          {(profile as any).heroBanner
+            ? <img src={(profile as any).heroBanner} className="lp-hero-bg" alt="" style={{filter:"brightness(.7)"}}/>
+            : profile.photoURL
+              ? <img src={profile.photoURL} referrerPolicy="no-referrer" className="lp-hero-bg" alt="" style={{filter:"brightness(.4)"}}/>
+              : <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,"+btn+","+btn+"44)"}}/>}
+          <div className="lp-hero-overlay"/>
+          <div style={{position:"relative",zIndex:2,padding:"0 0 60px",width:"100%"}}>
+            <div className="lp-wrap">
+
+              <h1 style={{fontSize:"clamp(56px,12vw,160px)",fontWeight:900,letterSpacing:"-.04em",lineHeight:.88,color:"#fff",marginBottom:24,textTransform:"uppercase" as const}}>{profile.displayName}</h1>
+              {profile.bio&&<p style={{fontSize:16,color:"#fff",opacity:.7,maxWidth:480,lineHeight:1.6,marginBottom:28}}>{profile.bio}</p>}
+              <a href="#contact" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"14px 28px",background:btn,color:btnText,borderRadius:4,fontWeight:800,fontSize:13,textDecoration:"none",letterSpacing:".08em",textTransform:"uppercase" as const}}>Work With Me</a>
+            </div>
+          </div>
+        </div>
+
+        {/* Marquee - below hero */}
+        {(profile as any).marqueeText&&(
+          <div style={{overflow:"hidden",padding:"10px 0",background:btn,color:btnText}}>
+            <div style={{display:"flex",animation:"marqueeScroll 20s linear infinite",whiteSpace:"nowrap"}}>
+              {[1,2,3,4].map(i=><span key={i} style={{fontSize:11,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,paddingRight:48}}>{(profile as any).marqueeText}</span>)}
+            </div>
+          </div>
+        )}
+
+        {/* Sticky Nav */}
+        <div className="lp-nav" style={{background:activeBg+"ee"}}>
+          <div className="lp-wrap" style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <a href={"/"+(profile as any).username} style={{fontWeight:900,fontSize:15,letterSpacing:"-.01em",color:activeText,textDecoration:"none",flexShrink:0,marginRight:24}}>
+              {(profile as any).logoURL
+                ? <img src={(profile as any).logoURL} alt={profile.displayName||""} style={{height:32,width:"auto",objectFit:"contain"}}/>
+                : profile.displayName}
+            </a>
+            <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none" as any}}>
+              {[["WHAT WE DO","#services"],["COLLABS","#work"],["ABOUT","#about"],["PRESS","#press"],["CONTACT","#contact"]].map(([l,h])=>(
+                <a key={h} href={h} style={{color:activeText}}>{l}</a>
+              ))}
+            </div>
+            {profile.photoURL&&<img src={profile.photoURL} referrerPolicy="no-referrer" alt="" style={{width:32,height:32,borderRadius:"50%",objectFit:"cover"}}/>}
+          </div>
+        </div>
+
+
+
+        {/* Intro */}
+        <div style={{borderBottom:"1px solid "+text+"10"}}>
+          <div className="lp-wrap lp-section lp-reveal">
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:80,alignItems:"center"}}>
+              <div>
+                <h2 style={{fontSize:"clamp(36px,6vw,72px)",fontWeight:900,letterSpacing:"-.04em",lineHeight:.92,marginBottom:24,textTransform:"uppercase" as const}}>Brush,<br/>Beats,<br/>&amp; Beyond.</h2>
+              </div>
+              <div>
+                <p style={{fontSize:18,lineHeight:1.8,opacity:.7,marginBottom:32}}>{profile.bio}</p>
+                <a href="#contact" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"16px 32px",borderRadius:9999,background:activeBtn,color:activeBtnText,fontWeight:800,fontSize:13,textDecoration:"none",letterSpacing:".08em",textTransform:"uppercase" as const}}>Work With Me →</a>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:32,alignItems:"center",flexWrap:"wrap" as const,opacity:.2,marginTop:48}}>
+              {["TECOVAS","CARDINALS","AMP","MARC JACOBS","RAC","CONVERSE"].map(b=>(
+                <div key={b} style={{fontSize:11,fontWeight:800,letterSpacing:".12em"}}>{b}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Services */}
+        {services.length>0&&(
+          <div id="services" style={{borderBottom:"1px solid "+text+"10"}}>
+            <div className="lp-wrap lp-section lp-reveal">
+              <div className="lp-section-title">What We Do</div>
+              <div className="lp-svc-grid">
+                {services.map(svc=>(
+                  <button key={svc.id} onClick={()=>setQuoteModal(svc)}
+                    style={{padding:"16px 20px",borderRadius:9999,background:"#111",color:"#fff",border:"none",cursor:"pointer",textAlign:"left" as const,transition:"all .2s",display:"flex",alignItems:"center",gap:10}}
+                    onMouseEnter={e=>(e.currentTarget.style.transform="translateY(-2px)")}
+                    onMouseLeave={e=>(e.currentTarget.style.transform="translateY(0)")}>
+                    <div style={{fontSize:24,marginBottom:10}}>{(svc as any).icon||"🎨"}</div>
+                    <div style={{fontSize:14,fontWeight:800,marginBottom:4}}>{svc.title}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Collabs */}
+        {portfolio.length>0&&(
+          <div id="work" style={{borderBottom:"1px solid "+text+"10"}}>
+            <div className="lp-wrap lp-section lp-reveal">
+              <div className="lp-section-title">Recent Collabs</div>
+              <div className="lp-work-grid">
+                {portfolio.map(item=>(
+                  <div key={item.id} className="lp-work-item">
+                    {item.imageURL&&<img src={item.imageURL} alt={item.title} loading="lazy"/>}
+                    <div className="lp-work-overlay">
+                      <div style={{fontSize:10,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase" as const,color:"rgba(255,255,255,.6)",marginBottom:4}}>{(item as any).category||"Collab"}</div>
+                      <div className="lp-work-label">{item.title}</div>
+                      <div className="lp-work-cta">View Project →</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Big name */}
+        <div style={{background:"#000",overflow:"hidden",padding:"80px 0"}}>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:"clamp(80px,18vw,200px)",fontWeight:900,letterSpacing:"-.04em",lineHeight:.85,color:"transparent",WebkitTextStroke:"2px "+text+"30",userSelect:"none" as const,textTransform:"uppercase" as const,padding:"0 20px"}}>{profile.displayName?.split(" ")[0]||"BROCK"}</div>
+            <div style={{fontSize:"clamp(80px,18vw,200px)",fontWeight:900,letterSpacing:"-.04em",lineHeight:.85,color:"transparent",WebkitTextStroke:"2px "+text+"30",userSelect:"none" as const,textTransform:"uppercase" as const,padding:"0 20px",marginTop:-20}}>{profile.displayName?.split(" ")[1]||"SEALS"}</div>
+          </div>
+        </div>
+
+        {/* About */}
+        <div id="about" style={{borderBottom:"1px solid "+text+"10"}}>
+          <div className="lp-wrap lp-section lp-reveal">
+            <div className="lp-section-title">About</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:64,alignItems:"center"}}>
+              <div>{profile.photoURL&&<img src={profile.photoURL} referrerPolicy="no-referrer" alt="" style={{width:"100%",borderRadius:4,objectFit:"cover",aspectRatio:"3/4"}}/>}</div>
+              <div>
+                <p style={{fontSize:18,lineHeight:1.8,opacity:.8,marginBottom:32}}>{pages.about||profile.bio}</p>
+                <div style={{display:"flex",gap:12,flexWrap:"wrap" as const}}>
+                  {links.slice(0,3).map(link=>(
+                    <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" style={{padding:"10px 20px",borderRadius:4,background:btn,color:btnText,fontSize:12,fontWeight:800,textDecoration:"none",letterSpacing:".08em",textTransform:"uppercase" as const}}>{link.title}</a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Press */}
+        {pages.press&&pages.press.length>0&&(
+          <div id="press" style={{borderBottom:"1px solid "+text+"10"}}>
+            <div className="lp-wrap lp-section lp-reveal">
+              <div className="lp-section-title">Press</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:24}}>
+                {pages.press.map((p:any,i:number)=>(
+                  <a key={i} href={p.url||"#"} target="_blank" rel="noopener noreferrer"
+                    style={{padding:32,borderRadius:4,border:"1px solid "+text+"12",textDecoration:"none",color:text,display:"block",transition:"transform .2s"}}
+                    onMouseEnter={e=>(e.currentTarget.style.transform="translateY(-2px)")}
+                    onMouseLeave={e=>(e.currentTarget.style.transform="translateY(0)")}>
+                    <div style={{fontSize:11,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase" as const,opacity:.4,marginBottom:12}}>{p.outlet||p.source}</div>
+                    <div style={{fontSize:18,fontWeight:700,lineHeight:1.4,marginBottom:8}}>{p.headline||p.title}</div>
+                    {p.date&&<div style={{fontSize:12,opacity:.35,fontWeight:600}}>{p.date}</div>}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Contact */}
+        <div id="contact" style={{borderBottom:"1px solid "+text+"10"}}>
+          <div className="lp-wrap lp-section lp-reveal">
+            <div className="lp-section-title">Get In Touch</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:64}}>
+              <div>
+                <h2 style={{fontSize:"clamp(28px,4vw,48px)",fontWeight:900,letterSpacing:"-.02em",lineHeight:1.1,marginBottom:16}}>Let's create something legendary.</h2>
+                <p style={{fontSize:15,opacity:.5,lineHeight:1.7}}>Fill out the form and I'll get back to you within 48 hours.</p>
+              </div>
+              <div>
+                {quoteSent?(
+                  <div style={{padding:40,textAlign:"center"}}><div style={{fontSize:32,marginBottom:12}}>✅</div><div style={{fontWeight:800,fontSize:18,marginBottom:8}}>Message sent!</div><div style={{opacity:.5,fontSize:14}}>I'll be in touch soon.</div></div>
+                ):(
+                  <div style={{display:"flex",flexDirection:"column" as const,gap:12}}>
+                    <input value={quoteName} onChange={e=>setQuoteName(e.target.value)} placeholder="Your name" style={{padding:"14px 16px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily}}/>
+                    <input value={quoteEmail} onChange={e=>setQuoteEmail(e.target.value)} placeholder="Your email" style={{padding:"14px 16px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily}}/>
+                    <textarea value={quoteMessage} onChange={e=>setQuoteMessage(e.target.value)} placeholder="Tell me about your project..." rows={4} style={{padding:"14px 16px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily,resize:"vertical" as const}}/>
+                    <button onClick={async()=>{
+                      if(!quoteName.trim()||!quoteEmail.includes("@")||!quoteMessage.trim())return;
+                      setQuoteSubmitting(true);
+                      try{
+                        const {addDoc,collection:col,serverTimestamp}=await import("firebase/firestore");
+                        const {firestore:db}=await import("@/lib/firebase");
+                        await addDoc(col(db,"inquiries"),{creatorId:profile.uid,name:quoteName,email:quoteEmail,message:quoteMessage,createdAt:serverTimestamp(),read:false});
+                        setQuoteSent(true);
+                      }catch(e){console.error(e);}
+                      setQuoteSubmitting(false);
+                    }} style={{padding:"16px",borderRadius:4,background:btn,color:btnText,fontWeight:800,fontSize:14,border:"none",cursor:"pointer",letterSpacing:".04em",textTransform:"uppercase" as const}}>
+                      {quoteSubmitting?"Sending...":"Send Message"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{padding:"40px 0",borderTop:"1px solid "+text+"10"}}>
+          <div className="lp-wrap" style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap" as const,gap:16}}>
+            <div style={{fontSize:13,fontWeight:800}}>{profile.displayName}</div>
+            <div style={{fontSize:11,opacity:.3,fontWeight:600}}>Powered by GEMM</div>
+          </div>
+        </div>
+
+        {/* Brock color theme tabs */}
+        {isBrock&&(
+          <div style={{position:"fixed",bottom:24,right:24,zIndex:999,display:"flex",gap:8,background:"rgba(0,0,0,.8)",borderRadius:9999,padding:"8px 12px",backdropFilter:"blur(12px)"}}>
+            {[["noir","#fff","⬛"],["clean","#000","⬜"],["gold","#c9a84c","🟡"]].map(([theme,color,icon])=>(
+              <button key={theme} onClick={()=>setColorTheme(theme)}
+                style={{width:32,height:32,borderRadius:"50%",border:colorTheme===theme?"2px solid "+color:"2px solid transparent",background:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
+                {icon}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Scroll observer */}
+        <script dangerouslySetInnerHTML={{__html:"(function(){var o=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.style.animation='slideUp .6s ease forwards';o.unobserve(e.target);}})},{threshold:0.1});document.querySelectorAll('.lp-reveal').forEach(function(el){o.observe(el);});})()"}}/>
+
+        {/* Quote Modal */}
+        {quoteModal&&(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setQuoteModal(null)}>
+            <div style={{background:bg,color:text,borderRadius:8,padding:32,maxWidth:480,width:"100%"}} onClick={e=>e.stopPropagation()}>
+              <div style={{fontWeight:900,fontSize:20,marginBottom:4}}>{quoteModal.title}</div>
+              <div style={{opacity:.5,fontSize:13,marginBottom:24}}>Request a quote</div>
+              {quoteSent?(
+                <div style={{textAlign:"center",padding:20}}><div style={{fontSize:28,marginBottom:8}}>✅</div><div style={{fontWeight:700}}>Request sent!</div></div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column" as const,gap:12}}>
+                  <input value={quoteName} onChange={e=>setQuoteName(e.target.value)} placeholder="Your name" style={{padding:"12px 14px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily}}/>
+                  <input value={quoteEmail} onChange={e=>setQuoteEmail(e.target.value)} placeholder="Email" style={{padding:"12px 14px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily}}/>
+                  <textarea value={quoteMessage} onChange={e=>setQuoteMessage(e.target.value)} placeholder="Tell me about your project..." rows={3} style={{padding:"12px 14px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily,resize:"vertical" as const}}/>
+                  <button onClick={async()=>{
+                    if(!quoteName.trim()||!quoteEmail.includes("@")||!quoteMessage.trim())return;
+                    setQuoteSubmitting(true);
+                    try{
+                      const {addDoc,collection:col,serverTimestamp}=await import("firebase/firestore");
+                      const {firestore:db}=await import("@/lib/firebase");
+                      await addDoc(col(db,"inquiries"),{creatorId:profile.uid,serviceId:quoteModal.id,serviceName:quoteModal.title,name:quoteName,email:quoteEmail,message:quoteMessage,createdAt:serverTimestamp(),read:false});
+                      setQuoteSent(true);
+                    }catch(e){console.error(e);}
+                    setQuoteSubmitting(false);
+                  }} style={{padding:"14px",borderRadius:4,background:btn,color:btnText,fontWeight:800,fontSize:13,border:"none",cursor:"pointer",letterSpacing:".04em",textTransform:"uppercase" as const}}>
+                    {quoteSubmitting?"Sending...":"Send Request"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      </>
+    );
+  }
   return (
     <>
     {latestEvent && (()=>{

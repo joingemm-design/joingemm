@@ -110,6 +110,11 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
+    match /contacts/{contactId} {
+      allow read, update, delete: if request.auth != null && resource.data.creatorId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.creatorId == request.auth.uid;
+    }
+
     // Banned accounts - admin only
     match /banned/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;

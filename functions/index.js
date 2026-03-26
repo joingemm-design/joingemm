@@ -233,3 +233,51 @@ exports.createShopCheckout = onRequest({ cors: true }, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ── Inquiry Email Notifications ─────────────────────────────────────────
+exports.onInquiryCreated = onDocumentCreated("inquiries/{inquiryId}", async (event) => {
+  const inquiry = event.data.data();
+  const { creatorId, name, email, message, serviceName } = inquiry;
+  let creatorEmail = null, creatorName = "Creator";
+  try {
+    const creatorDoc = await db.collection("users").doc(creatorId).get();
+    if (creatorDoc.exists) {
+      const d = creatorDoc.data();
+      creatorEmail = d.email;
+      creatorName = d.displayName || d.username || "Creator";
+    }
+    if (!creatorEmail) {
+      const u = await admin.auth().getUser(creatorId);
+      creatorEmail = u.email;
+    }
+  } catch(e) { console.error(e); }
+
+  const subject = serviceName ? "New inquiry for " + serviceName + " from " + name : "New inquiry from " + name;
+
+  if (creatorEmail) {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + process.env.RESEND_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "GEMM <hello@joingemm.com>",
+        to: creatorEmail,
+        reply_to: email,
+        subject: subject,
+        html: "<div style='background:#111;color:#fff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;border-radius:16px'><div style='font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:16px'>GEMM — New Inquiry</div><h1 style='font-size:24px;font-weight:900;margin:0 0 24px'>" + subject + "</h1><div style='background:rgba(255,255,255,.06);border-radius:10px;padding:24px;margin-bottom:24px'><p style='margin:0 0 8px'><b>From:</b> " + name + "</p><p style='margin:0 0 8px'><b>Email:</b> " + email + "</p>" + (serviceName ? "<p style='margin:0 0 8px'><b>Service:</b> " + serviceName + "</p>" : "") + "<p style='margin:16px 0 0;color:rgba(255,255,255,.7);line-height:1.6'>" + message + "</p></div><a href='https://joingemm.com/dashboard/inquiries' style='display:inline-block;padding:12px 24px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:800;font-size:13px'>View in Dashboard →</a></div>",
+      }),
+    });
+  }
+
+  if (email) {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + process.env.RESEND_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "GEMM <hello@joingemm.com>",
+        to: email,
+        subject: "Your message to " + creatorName + " was received",
+        html: "<div style='background:#111;color:#fff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;border-radius:16px'><div style='font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:16px'>GEMM</div><h1 style='font-size:24px;font-weight:900;margin:0 0 12px'>Message received ✓</h1><p style='color:rgba(255,255,255,.6);margin:0 0 24px;line-height:1.6'>Hi " + name + ", your message to <b style='color:#fff'>" + creatorName + "</b> has been sent. They'll be in touch soon.</p><div style='background:rgba(255,255,255,.06);border-radius:10px;padding:24px;margin-bottom:24px'>" + (serviceName ? "<p style='margin:0 0 8px;font-size:13px'><b>Service:</b> " + serviceName + "</p>" : "") + "<p style='margin:0;color:rgba(255,255,255,.7);line-height:1.6;font-size:14px'>" + message + "</p></div><p style='color:rgba(255,255,255,.3);font-size:12px;margin:0'>Powered by GEMM · joingemm.com</p></div>",
+      }),
+    });
+  }
+});

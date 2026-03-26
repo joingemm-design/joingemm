@@ -169,6 +169,7 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
     { icon: <ShopIcon/>, label: "Portfolio", desc: "Showcase your work", action: () => router.push("/dashboard/portfolio") },
     { icon: <ZapIcon/>, label: "Services", desc: "Offer services & get quotes", action: () => router.push("/dashboard/services") },
     { icon: <ZapIcon/>, label: "Inquiries", desc: "View quote requests", action: () => router.push("/dashboard/inquiries") },
+    { icon: <ZapIcon/>, label: "CRM", desc: "Manage your contacts", action: () => router.push("/dashboard/crm") },
     { icon: <GlobeIcon/>, label: "Pages", desc: "About & Press pages", action: () => router.push("/dashboard/pages") },
     { icon: <SparkleIcon/>, label: "Branding", desc: "Colors, fonts & style", action: () => router.push("/dashboard/branding") },
   ];
