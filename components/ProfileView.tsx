@@ -299,14 +299,14 @@ export default function ProfileView({ username }: { username: string }) {
               <div className="lp-section-title">Recent Collabs</div>
               <div className="lp-work-grid">
                 {portfolio.map(item=>(
-                  <div key={item.id} className="lp-work-item">
+                  <a key={item.id} className="lp-work-item" href={(item as any).url||(item as any).link||"#"} target="_blank" rel="noopener noreferrer" style={{textDecoration:"none",display:"block"}}>
                     {item.imageURL&&<img src={item.imageURL} alt={item.title} loading="lazy"/>}
                     <div className="lp-work-overlay">
                       <div style={{fontSize:10,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase" as const,color:"rgba(255,255,255,.6)",marginBottom:4}}>{(item as any).category||"Collab"}</div>
                       <div className="lp-work-label">{item.title}</div>
                       <div className="lp-work-cta">View Project →</div>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>
