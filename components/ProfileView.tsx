@@ -131,11 +131,35 @@ export default function ProfileView({ username }: { username: string }) {
     const btnText = (profile as any).colorBtnText || "#ffffff";
     const fontFamily = (profile as any).fontFamily || "'DM Sans',sans-serif";
     const isBrock = profile.uid === "9ppSAQTMFchFf8JrACZg0S3OFXj1";
-    const themeBg = colorTheme==="noir"?"#0a0a0a":colorTheme==="gold"?"#0a0a0a":bg;
-    const themeText = colorTheme==="noir"?"#ffffff":colorTheme==="gold"?"#ffffff":text;
-    const themeBtn = colorTheme==="noir"?"#ffffff":colorTheme==="gold"?"#c9a84c":btn;
-    const themeBtnText = colorTheme==="noir"?"#000000":colorTheme==="gold"?"#000000":btnText;
-    const activeBg = themeBg; const activeText = themeText; const activeBtn = themeBtn; const activeBtnText = themeBtnText;
+    const PRESETS: Record<string,{bg:string,text:string,btn:string,btnText:string}> = {
+      clean:{bg:"#ffffff",text:"#000000",btn:"#000000",btnText:"#ffffff"},
+      midnight:{bg:"#09090b",text:"#f4f4f5",btn:"#ffffff",btnText:"#000000"},
+      slate:{bg:"#1e293b",text:"#e2e8f0",btn:"#e2e8f0",btnText:"#1e293b"},
+      charcoal:{bg:"#27272a",text:"#e4e4e7",btn:"#e4e4e7",btnText:"#27272a"},
+      cream:{bg:"#fefce8",text:"#422006",btn:"#422006",btnText:"#fefce8"},
+      lemon:{bg:"#fef9c3",text:"#713f12",btn:"#713f12",btnText:"#fef9c3"},
+      grape:{bg:"#2e1065",text:"#e9d5ff",btn:"#a855f7",btnText:"#ffffff"},
+      cherry:{bg:"#ef4444",text:"#ffffff",btn:"#ffffff",btnText:"#ef4444"},
+      noir:{bg:"#000000",text:"#ffffff",btn:"#ffffff",btnText:"#000000"},
+      ink:{bg:"#0f172a",text:"#cbd5e1",btn:"#38bdf8",btnText:"#0f172a"},
+      forest:{bg:"#022c22",text:"#ecfdf5",btn:"#34d399",btnText:"#022c22"},
+      emerald:{bg:"#064e3b",text:"#d1fae5",btn:"#10b981",btnText:"#ffffff"},
+      ocean:{bg:"#082f49",text:"#e0f2fe",btn:"#38bdf8",btnText:"#082f49"},
+      navy:{bg:"#1e1b4b",text:"#e0e7ff",btn:"#818cf8",btnText:"#1e1b4b"},
+      teal:{bg:"#134e4a",text:"#ccfbf1",btn:"#2dd4bf",btnText:"#134e4a"},
+      mint:{bg:"#f0fdf4",text:"#14532d",btn:"#22c55e",btnText:"#ffffff"},
+      sage:{bg:"#dcfce7",text:"#166534",btn:"#166534",btnText:"#dcfce7"},
+      lavender:{bg:"#f5f3ff",text:"#4c1d95",btn:"#7c3aed",btnText:"#ffffff"},
+      blush:{bg:"#fdf2f8",text:"#831843",btn:"#ec4899",btnText:"#ffffff"},
+      rose:{bg:"#fff1f2",text:"#881337",btn:"#fb7185",btnText:"#ffffff"},
+      sand:{bg:"#fdfbf7",text:"#451a03",btn:"#d97706",btnText:"#ffffff"},
+      sky:{bg:"#e0f2fe",text:"#0c4a6e",btn:"#0284c7",btnText:"#ffffff"},
+      dracula:{bg:"#282a36",text:"#f8f8f2",btn:"#bd93f9",btnText:"#282a36"},
+      cyber:{bg:"#09090b",text:"#00f0ff",btn:"#ff0099",btnText:"#ffffff"},
+      velvet:{bg:"#4a044e",text:"#fae8ff",btn:"#e879f9",btnText:"#4a044e"},
+    };
+    const activePreset = PRESETS[colorTheme] || PRESETS["noir"];
+    const activeBg = activePreset.bg; const activeText = activePreset.text; const activeBtn = activePreset.btn; const activeBtnText = activePreset.btnText;
     return (
       <>
       {latestEvent && (()=>{
@@ -383,12 +407,21 @@ export default function ProfileView({ username }: { username: string }) {
 
         {/* Brock color theme tabs */}
         {isBrock&&(
-          <div style={{position:"fixed",bottom:24,right:24,zIndex:999,display:"flex",gap:8,background:"rgba(0,0,0,.8)",borderRadius:9999,padding:"8px 12px",backdropFilter:"blur(12px)"}}>
-            {[["noir","#fff","⬛"],["clean","#000","⬜"],["gold","#c9a84c","🟡"]].map(([theme,color,icon])=>(
-              <button key={theme} onClick={()=>setColorTheme(theme)}
-                style={{width:32,height:32,borderRadius:"50%",border:colorTheme===theme?"2px solid "+color:"2px solid transparent",background:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
-                {icon}
-              </button>
+          <div style={{position:"fixed",bottom:24,right:24,zIndex:999,background:"rgba(0,0,0,.85)",borderRadius:16,padding:"12px",backdropFilter:"blur(12px)",display:"flex",flexWrap:"wrap" as const,gap:6,maxWidth:200}}>
+            {[
+              {key:"clean",bg:"#ffffff"},{key:"midnight",bg:"#09090b"},{key:"slate",bg:"#1e293b"},
+              {key:"charcoal",bg:"#27272a"},{key:"cream",bg:"#fefce8"},{key:"lemon",bg:"#fef9c3"},
+              {key:"grape",bg:"#2e1065"},{key:"cherry",bg:"#ef4444"},{key:"noir",bg:"#000000"},
+              {key:"ink",bg:"#0f172a"},{key:"forest",bg:"#022c22"},{key:"emerald",bg:"#064e3b"},
+              {key:"ocean",bg:"#082f49"},{key:"navy",bg:"#1e1b4b"},{key:"teal",bg:"#134e4a"},
+              {key:"mint",bg:"#f0fdf4"},{key:"sage",bg:"#dcfce7"},{key:"lavender",bg:"#f5f3ff"},
+              {key:"blush",bg:"#fdf2f8"},{key:"rose",bg:"#fff1f2"},{key:"sand",bg:"#fdfbf7"},
+              {key:"sky",bg:"#e0f2fe"},{key:"dracula",bg:"#282a36"},{key:"cyber",bg:"#09090b"},
+              {key:"velvet",bg:"#4a044e"},
+            ].map(p=>(
+              <button key={p.key} onClick={()=>setColorTheme(p.key)}
+                style={{width:28,height:28,borderRadius:"50%",background:p.bg,border:colorTheme===p.key?"3px solid #7c3aed":"2px solid rgba(255,255,255,.2)",cursor:"pointer",transition:"transform .15s",transform:colorTheme===p.key?"scale(1.2)":"scale(1)"}}
+                title={p.key}/>
             ))}
           </div>
         )}
