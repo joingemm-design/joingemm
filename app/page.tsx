@@ -1160,7 +1160,7 @@ export default function LandingPage() {
                       </p>
                     )}
 
-                    <button onClick={() => { if (plan.key === "velocity") window.open(yearly ? "https://buy.stripe.com/7sY8wP6cx2MFcfygth4gg06" : "https://buy.stripe.com/9B65kD30l72VenGdh54gg03", "_blank"); else if (plan.key === "empire") window.open(yearly ? "https://buy.stripe.com/00w14n7gBaf7cfy1yn4gg05" : "https://buy.stripe.com/3cIbJ1gRb0Ex6Ve1yn4gg04", "_blank"); else router.push("/dashboard"); }} style={{
+                    <button onClick={() => { if (plan.key === "velocity") window.open(yearly ? "https://buy.stripe.com/00w14n7gBaf7cfy1yn4gg05" : "https://buy.stripe.com/9B65kD30l72VenGdh54gg03", "_blank"); else if (plan.key === "empire") window.open(yearly ? "https://buy.stripe.com/7sY8wP6cx2MFcfygth4gg06" : "https://buy.stripe.com/3cIbJ1gRb0Ex6Ve1yn4gg04", "_blank"); else router.push("/dashboard"); }} style={{
                       width: "100%", padding: 16, borderRadius: 12,
                       fontWeight: 700, fontSize: 14, marginBottom: 32,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
