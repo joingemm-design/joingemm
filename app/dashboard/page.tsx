@@ -9,6 +9,7 @@ import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { getUserProfile, UserProfile } from "@/lib/db";
+import { getUserEvents, EventData } from "@/lib/events";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -36,7 +37,7 @@ const UploadIcon = () => (<svg width={20} height={20} viewBox="0 0 24 24" fill="
 const ArrowSmall = () => (<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{opacity:.3}}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>);
 const CmdIcon = () => (<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{opacity:.4}}><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></svg>);
 
-const css = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;background:#030303;color:#e4e4e7}::selection{background:#a855f7;color:#fff}button:active{transform:scale(.98)!important}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,255,255,.05)}50%{box-shadow:0 0 40px rgba(255,255,255,.1)}}.fade{animation:fadeIn .6s ease forwards;opacity:0}input:focus{outline:none;box-shadow:0 0 0 2px rgba(255,255,255,0.1)!important}input::placeholder{color:rgba(255,255,255,0.2)}`;
+const css = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;background:#030303;color:#e4e4e7}::selection{background:#a855f7;color:#fff}button:active{transform:scale(.98)!important}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,255,255,.05)}50%{box-shadow:0 0 40px rgba(255,255,255,.1)}}@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.7)}70%{box-shadow:0 0 0 8px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}.fade{animation:fadeIn .6s ease forwards;opacity:0}input:focus{outline:none;box-shadow:0 0 0 2px rgba(255,255,255,0.1)!important}input::placeholder{color:rgba(255,255,255,0.2)}`;
 
 // ── Auth Screens ────────────────────────────────────────────────────────
 function WorkspaceGateway({ onContinue }: { onContinue: () => void }) {
@@ -148,30 +149,38 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
   const tier = "FREE TIER"; // placeholder
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Live events count for the badge
+  const [liveEventsCount, setLiveEventsCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    getUserEvents(user.uid).then((events: EventData[]) => {
+      const now = new Date();
+      const count = events.filter(e => {
+        if (!e.published) return false;
+        if (!e.endDate) return true;
+        const end = new Date(`${e.endDate}T${e.endTime || "23:59"}`);
+        return end >= now;
+      }).length;
+      setLiveEventsCount(count);
+    }).catch(() => setLiveEventsCount(0));
+  }, [user]);
+
   const quickActions = [
     { icon: <TicketIcon/>, label: "Find My Tickets", desc: "Locate your passes & QR", cols: 1, action: () => router.push("/dashboard/tickets") },
-    { icon: <WalletIcon/>, label: "Billing & Payouts", desc: "Manage billing and connect your bank account", cols: 1, action: () => router.push("/dashboard/billing") },
+    { icon: <WalletIcon/>, label: "Billing & Payouts", desc: "Manage billing & bank account", cols: 1, action: () => router.push("/dashboard/billing") },
     { icon: <ChartIcon/>, label: "Data & Analytics", desc: "Platform traffic intelligence", cols: 1, action: () => router.push("/dashboard/analytics") },
-    { icon: <HomeIcon/>, label: "Go Home", desc: "Back to main site", cols: 1, action: () => router.push("/") },
-    { icon: <HelpIcon/>, label: "Help & Support", desc: "Activate Neural Base", cols: 1, action: () => router.push("/dashboard/help") },
-    { icon: <SparkleIcon/>, label: "Settings", desc: "Username, account & deletion", cols: 1, action: () => router.push("/dashboard/settings") },
+    { icon: <HelpIcon/>, label: "Customer Support", desc: "Get help or contact us", cols: 1, action: () => router.push("/dashboard/help") },
   ];
 
   const modules = [
-    { icon: <ZapIcon/>, label: "Link-in-Bio", desc: "Create public profile", action: () => router.push("/dashboard/links") },
-    { icon: <CalendarPlusIcon/>, label: "Publish Event", desc: "Deploy events, affiliates and onboarding forms", action: () => router.push("/dashboard/events/new") },
-    { icon: <CalendarCheckIcon/>, label: "Manage Events", desc: "Tickets, guestlists & scanners", action: () => router.push("/dashboard/events") },
-    { icon: <GlobeIcon/>, label: "Discover Events", desc: "Register to promote events", action: () => router.push("/dashboard/discover") },
-    { icon: <ShopIcon/>, label: "Publish Shop", desc: "Deploy shops, products & affiliates", action: () => router.push("/dashboard/shop/new") },
-    { icon: <ShoppingBagIcon/>, label: "Commerce", desc: "Manage Shops", action: () => router.push("/dashboard/shop") },
-    { icon: <QrIcon/>, label: "QR Codes", desc: "Dynamic tracking codes", action: () => router.push("/dashboard/qr") },
-    { icon: <UploadIcon/>, label: "Quick Media", desc: "Fast media upload tool", action: () => router.push("/dashboard/media") },
-    { icon: <ShopIcon/>, label: "Portfolio", desc: "Showcase your work", action: () => router.push("/dashboard/portfolio") },
-    { icon: <ZapIcon/>, label: "Services", desc: "Offer services & get quotes", action: () => router.push("/dashboard/services") },
-    { icon: <ZapIcon/>, label: "Inquiries", desc: "View quote requests", action: () => router.push("/dashboard/inquiries") },
-    { icon: <ZapIcon/>, label: "CRM", desc: "Manage your contacts", action: () => router.push("/dashboard/crm") },
-    { icon: <GlobeIcon/>, label: "Pages", desc: "About & Press pages", action: () => router.push("/dashboard/pages") },
-    { icon: <SparkleIcon/>, label: "Branding", desc: "Colors, fonts & style", action: () => router.push("/dashboard/branding") },
+    { icon: <ZapIcon/>, label: "Link-in-Bio", desc: "Public profile & pages", action: () => router.push("/dashboard/links"), live: 0 },
+    { icon: <CalendarCheckIcon/>, label: "Events", desc: "Publish, manage & discover", action: () => router.push("/dashboard/events"), live: liveEventsCount },
+    { icon: <ShopIcon/>, label: "Shop & Commerce", desc: "Products, sales & affiliates", action: () => router.push("/dashboard/shop"), live: 0 },
+    { icon: <QrIcon/>, label: "QR Codes", desc: "Dynamic tracking codes", action: () => router.push("/dashboard/qr"), live: 0 },
+    { icon: <ShoppingBagIcon/>, label: "Portfolio", desc: "Showcase your work", action: () => router.push("/dashboard/portfolio"), live: 0 },
+    { icon: <ZapIcon/>, label: "Clients", desc: "Services, inquiries & CRM", action: () => router.push("/dashboard/crm"), live: 0 },
+    { icon: <SparkleIcon/>, label: "Branding", desc: "Colors, fonts & style", action: () => router.push("/dashboard/branding"), live: 0 },
+    { icon: <UploadIcon/>, label: "Quick Media", desc: "Fast media upload tool", action: () => router.push("/dashboard/media"), live: 0 },
   ];
 
   const filteredQuickActions = quickActions.filter(a => !searchQuery || a.label.toLowerCase().includes(searchQuery.toLowerCase()) || a.desc.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -335,7 +344,15 @@ function CommandCenter({ user, profile, signOut }: { user: any; profile: UserPro
             <button key={m.label} onClick={m.action} style={{ ...cardStyle, textAlign: "left", minHeight: 130 } as any}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}>
-              <div style={{ opacity: 0.4 }}>{m.icon}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div style={{ opacity: 0.4 }}>{m.icon}</div>
+                {m.live > 0 && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 8px 3px 7px", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: 999, fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", color: "#ef4444", textTransform: "uppercase" }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#ef4444", animation: "livePulse 1.6s infinite" }}/>
+                    {m.live} Live
+                  </span>
+                )}
+              </div>
               <div style={{ marginTop: "auto" }}>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>{m.label}</div>
                 <div style={{ fontSize: 11, opacity: 0.3, marginTop: 2 }}>{m.desc}</div>
