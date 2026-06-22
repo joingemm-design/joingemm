@@ -13,6 +13,13 @@ const BASE_URL = "https://joingemm.com";
 exports.sendOrderConfirmation = onDocumentCreated("orders/{orderId}", async (event) => {
   const order = event.data.data();
   const orderId = event.params.orderId;
+  console.log("Order confirmation triggered:", { orderId, customerEmail: order.customerEmail, eventName: order.eventName });
+
+  if (!order.customerEmail) {
+    console.error("No customerEmail on order, skipping confirmation");
+    return;
+  }
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -34,6 +41,12 @@ exports.sendOrderConfirmation = onDocumentCreated("orders/{orderId}", async (eve
       `,
     }),
   });
+  const result = await response.json();
+  if (response.ok) {
+    console.log("Confirmation email sent:", result.id);
+  } else {
+    console.error("Confirmation email FAILED:", result);
+  }
 });
 
 // ── 2. Contact Form ──────────────────────────────────────────────────────
@@ -118,41 +131,65 @@ exports.getConnectStatus = onRequest({ cors: true }, async (req, res) => {
 
 // ── 5. Stripe Checkout — Create Session for Paid Tickets ────────────────
 exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
-  const { eventId, ticketType, ticketPrice, eventName, creatorUid, customerEmail } = req.body;
-
+  // SECURITY: price + creator are read from Firestore. Client price is ignored.
+  const { eventId: rawEventId, ticketType, ticketId, customerEmail } = req.body;
   try {
-    // Get creator's Stripe account
+    // Legacy alias: the AMP page hardcodes "amp-2026" but the real doc id differs.
+    const ALIASES = { "amp-2026": "tiiChMzV9uNneyDZjcIN" };
+    const eventId = ALIASES[rawEventId] || rawEventId;
+    if (!eventId || (!ticketType && !ticketId)) {
+      return res.status(400).json({ error: "Missing eventId or ticket" });
+    }
+    const eventSnap = await db.collection("events").doc(eventId).get();
+    if (!eventSnap.exists) return res.status(404).json({ error: "Event not found" });
+    const ev = eventSnap.data();
+    const creatorUid = ev.uid || ev.creatorUid;
+    const eventName = ev.title || ev.name || "Event";
+    const tiers = ev.tickets || [];
+    const tier = tiers.find(t => (ticketId && t.id === ticketId) || t.type === ticketType);
+    if (!tier) return res.status(400).json({ error: "Ticket tier not found" });
+    const resolvedType = tier.type;
+    const ticketPrice = Number(tier.price);
+    if (!Number.isFinite(ticketPrice) || ticketPrice <= 0) {
+      return res.status(400).json({ error: "Invalid ticket price" });
+    }
+    if (tier.soldout) return res.status(400).json({ error: "This ticket is sold out" });
     const userSnap = await db.collection("users").doc(creatorUid).get();
-    const stripeAccountId = userSnap.data()?.stripeAccountId;
-
+    const stripeAccountId = userSnap.data() && userSnap.data().stripeAccountId;
     if (!stripeAccountId) {
       return res.status(400).json({ error: "Creator has not connected Stripe yet" });
     }
-
+    const SERVICE_FEE_CENTS = 260; // $2.60 buyer-paid service fee, kept by platform
     const priceInCents = Math.round(ticketPrice * 100);
     const platformFee = Math.round(priceInCents * PLATFORM_FEE);
-
     const session = await getStripe().checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: [{
-        price_data: {
-          currency: "usd",
-          product_data: { name: `${eventName} — ${ticketType}` },
-          unit_amount: priceInCents,
+      line_items: [
+        {
+          price_data: { currency: "usd", product_data: { name: eventName + " — " + resolvedType }, unit_amount: priceInCents },
+          quantity: 1,
         },
-        quantity: 1,
-      }],
+        {
+          price_data: { currency: "usd", product_data: { name: "Service Fee" }, unit_amount: SERVICE_FEE_CENTS },
+          quantity: 1,
+        },
+      ],
       mode: "payment",
       customer_email: customerEmail || undefined,
+      custom_fields: [
+        { key: "first_name", label: { type: "custom", custom: "First Name" }, type: "text", text: { minimum_length: 1, maximum_length: 50 } },
+        { key: "last_name",  label: { type: "custom", custom: "Last Name" },  type: "text", text: { minimum_length: 1, maximum_length: 50 } },
+      ],
       payment_intent_data: {
-        application_fee_amount: platformFee,
+        application_fee_amount: platformFee + SERVICE_FEE_CENTS,
         transfer_data: { destination: stripeAccountId },
+        metadata: { refund_policy: "request_only", eventId, creatorUid },
       },
-      success_url: `${BASE_URL}/event-success?session_id={CHECKOUT_SESSION_ID}&eventId=${eventId}`,
-      cancel_url: `${BASE_URL}/event/${eventId}`,
-      metadata: { eventId, ticketType, creatorUid },
+      custom_text: { submit: { message: "All ticket sales are final and nonrefundable." } },
+      success_url: BASE_URL + "/event-success?session_id={CHECKOUT_SESSION_ID}&eventId=" + eventId,
+      cancel_url: BASE_URL + "/event/" + eventId,
+      metadata: { eventId, ticketType: resolvedType, creatorUid, eventName },
     });
-
     res.json({ url: session.url });
   } catch (err) {
     console.error(err);
@@ -161,6 +198,57 @@ exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
 });
 
 // ── 6. Stripe Webhook — Handle Successful Payments ──────────────────────
+// ── Redeem free promo code (atomic, one-time use) ──────────────────────
+exports.redeemPromoCode = onRequest({ cors: true }, async (req, res) => {
+  try {
+    const { code, name, email } = req.body || {};
+    if (!code || !name || !email) {
+      return res.status(400).json({ error: "Missing code, name, or email" });
+    }
+    const codeId = String(code).trim().toUpperCase();
+    const codeRef = db.collection("promoCodes").doc(codeId);
+
+    let codeData;
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(codeRef);
+      if (!snap.exists) throw { code: 404, msg: "Invalid code" };
+      const c = snap.data();
+      if (c.used) throw { code: 409, msg: "This code has already been used" };
+      tx.update(codeRef, {
+        used: true,
+        usedBy: name,
+        usedByEmail: email,
+        usedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      codeData = c;
+    });
+
+    const evSnap = await db.collection("events").doc(codeData.eventId).get();
+    if (!evSnap.exists) return res.status(404).json({ error: "Event not found" });
+    const ev = evSnap.data();
+
+    const orderId = "free_" + codeId + "_" + Date.now();
+    await db.collection("orders").doc(orderId).set({
+      eventId: codeData.eventId,
+      ticketType: codeData.ticketType || "General Admission",
+      creatorUid: ev.uid || ev.creatorUid,
+      eventName: ev.title || ev.name || "Event",
+      customerEmail: email,
+      customerName: name,
+      amount: 0,
+      promoCode: codeId,
+      checkedIn: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return res.json({ success: true, orderId });
+  } catch (e) {
+    if (e && e.code && e.msg) return res.status(e.code).json({ error: e.msg });
+    console.error("redeemPromoCode error:", e);
+    return res.status(500).json({ error: "Something went wrong. Please try again." });
+  }
+});
+
 exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
@@ -176,7 +264,7 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
     const meta = session.metadata || {};
 
     if (meta.orderType === "shop") {
-      await db.collection("shop_orders").add({
+      await db.collection("shop_orders").doc(session.id).set({
         productId: meta.productId,
         shopId: meta.shopId,
         creatorUid: meta.creatorUid,
@@ -187,11 +275,20 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     } else {
-      await db.collection("orders").add({
+      const cd = session.customer_details || {};
+      const cf = session.custom_fields || [];
+      const firstName = cf.find(f => f.key === "first_name")?.text?.value || null;
+      const lastName = cf.find(f => f.key === "last_name")?.text?.value || null;
+      const fullName = (firstName && lastName) ? `${firstName} ${lastName}` : (firstName || lastName || cd.name || null);
+      await db.collection("orders").doc(session.id).set({
         eventId: meta.eventId,
         ticketType: meta.ticketType,
         creatorUid: meta.creatorUid,
-        customerEmail: session.customer_email,
+        customerEmail: cd.email || session.customer_email || null,
+        customerName: fullName,
+        customerFirstName: firstName,
+        customerLastName: lastName,
+        customerPhone: cd.phone || null,
         amount: session.amount_total,
         stripeSessionId: session.id,
         checkedIn: false,
@@ -237,7 +334,9 @@ exports.createShopCheckout = onRequest({ cors: true }, async (req, res) => {
 // ── Inquiry Email Notifications ─────────────────────────────────────────
 exports.onInquiryCreated = onDocumentCreated("inquiries/{inquiryId}", async (event) => {
   const inquiry = event.data.data();
-  const { creatorId, name, email, message, serviceName } = inquiry;
+  const { creatorId, name, firstName, lastName, email, phone, message, serviceName, serviceType, deadline, budget, extra, referral } = inquiry;
+  const displayName = (firstName && lastName) ? firstName+" "+lastName : name;
+  const displayService = serviceType || serviceName || null;
   let creatorEmail = null, creatorName = "Creator";
   try {
     const creatorDoc = await db.collection("users").doc(creatorId).get();
@@ -252,7 +351,7 @@ exports.onInquiryCreated = onDocumentCreated("inquiries/{inquiryId}", async (eve
     }
   } catch(e) { console.error(e); }
 
-  const subject = serviceName ? "New inquiry for " + serviceName + " from " + name : "New inquiry from " + name;
+  const subject = displayService ? "New inquiry for " + displayService + " from " + displayName : "New inquiry from " + displayName;
 
   if (creatorEmail) {
     await fetch("https://api.resend.com/emails", {
@@ -263,7 +362,7 @@ exports.onInquiryCreated = onDocumentCreated("inquiries/{inquiryId}", async (eve
         to: creatorEmail,
         reply_to: email,
         subject: subject,
-        html: "<div style='background:#111;color:#fff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;border-radius:16px'><div style='font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:16px'>GEMM — New Inquiry</div><h1 style='font-size:24px;font-weight:900;margin:0 0 24px'>" + subject + "</h1><div style='background:rgba(255,255,255,.06);border-radius:10px;padding:24px;margin-bottom:24px'><p style='margin:0 0 8px'><b>From:</b> " + name + "</p><p style='margin:0 0 8px'><b>Email:</b> " + email + "</p>" + (serviceName ? "<p style='margin:0 0 8px'><b>Service:</b> " + serviceName + "</p>" : "") + "<p style='margin:16px 0 0;color:rgba(255,255,255,.7);line-height:1.6'>" + message + "</p></div><a href='https://joingemm.com/dashboard/inquiries' style='display:inline-block;padding:12px 24px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:800;font-size:13px'>View in Dashboard →</a></div>",
+        html: "<div style='background:#111;color:#fff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;border-radius:16px'><div style='font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:16px'>GEMM — New Inquiry</div><h1 style='font-size:24px;font-weight:900;margin:0 0 24px'>" + subject + "</h1><div style='background:rgba(255,255,255,.06);border-radius:10px;padding:24px;margin-bottom:24px'><p style='margin:0 0 8px'><b>Name:</b> " + displayName + "</p><p style='margin:0 0 8px'><b>Email:</b> " + email + "</p>" + (phone ? "<p style='margin:0 0 8px'><b>Phone:</b> " + phone + "</p>" : "") + (displayService ? "<p style='margin:0 0 8px'><b>Service:</b> " + displayService + "</p>" : "") + (deadline ? "<p style='margin:0 0 8px'><b>Deadline:</b> " + deadline + "</p>" : "") + (budget ? "<p style='margin:0 0 8px'><b>Budget:</b> " + budget + "</p>" : "") + "<p style='margin:16px 0 8px;color:rgba(255,255,255,.7);line-height:1.6'><b>Scope of Work:</b><br>" + message + "</p>" + (extra ? "<p style='margin:8px 0;color:rgba(255,255,255,.7);line-height:1.6'><b>Additional Notes:</b><br>" + extra + "</p>" : "") + (referral ? "<p style='margin:8px 0;color:rgba(255,255,255,.5);font-size:13px'><b>How they found Brock:</b> " + referral + "</p>" : "") + "</div><a href='https://joingemm.com/dashboard/inquiries' style='display:inline-block;padding:12px 24px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:800;font-size:13px'>View in Dashboard →</a></div>",
       }),
     });
   }
@@ -275,9 +374,167 @@ exports.onInquiryCreated = onDocumentCreated("inquiries/{inquiryId}", async (eve
       body: JSON.stringify({
         from: "GEMM <hello@joingemm.com>",
         to: email,
-        subject: "Your message to " + creatorName + " was received",
+        subject: "Your message to Brock Seals was received",
         html: "<div style='background:#111;color:#fff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;border-radius:16px'><div style='font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:16px'>GEMM</div><h1 style='font-size:24px;font-weight:900;margin:0 0 12px'>Message received ✓</h1><p style='color:rgba(255,255,255,.6);margin:0 0 24px;line-height:1.6'>Hi " + name + ", your message to <b style='color:#fff'>" + creatorName + "</b> has been sent. They'll be in touch soon.</p><div style='background:rgba(255,255,255,.06);border-radius:10px;padding:24px;margin-bottom:24px'>" + (serviceName ? "<p style='margin:0 0 8px;font-size:13px'><b>Service:</b> " + serviceName + "</p>" : "") + "<p style='margin:0;color:rgba(255,255,255,.7);line-height:1.6;font-size:14px'>" + message + "</p></div><p style='color:rgba(255,255,255,.3);font-size:12px;margin:0'>Powered by GEMM · joingemm.com</p></div>",
       }),
     });
   }
 });
+
+// ── ONE-TIME: Seed Brock's shop products ────────────────────────────────
+exports.seedBrockShop = onRequest({ cors: true }, async (req, res) => {
+  const BROCK_UID = "9ppSAQTMFchFf8JrACZg0S3OFXj1";
+  
+  // Check if already seeded
+  const existing = await db.collection("shops").where("uid","==",BROCK_UID).get();
+  if (!existing.empty) return res.json({ ok: false, msg: "Already seeded" });
+
+  const shopRef = await db.collection("shops").add({
+    uid: BROCK_UID,
+    name: "Seals Shop",
+    description: "Original art, prints, and custom sneakers by Brock Seals",
+    active: true,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  const products = [
+    { id: "p_1", name: '"Cheers"', price: 25.00, imageURL: "https://palettebyseals.com/wp-content/uploads/2026/01/IMG_4866.jpg", category: "Art Print", active: true, createdAt: new Date().toISOString() },
+    { id: "p_2", name: '"Look Ma, I can fly" (Print)', price: 25.00, imageURL: "https://palettebyseals.com/wp-content/uploads/2025/11/IMG_4798.jpg", category: "Art Print", active: true, createdAt: new Date().toISOString() },
+    { id: "p_3", name: '"Tay Tay\'s Beads" (Print)', price: 25.00, imageURL: "https://palettebyseals.com/wp-content/uploads/2025/10/15D57276-193E-422A-B07E-EC076B3093A9-300x300.jpg", category: "Art Print", active: true, createdAt: new Date().toISOString() },
+    { id: "p_4", name: '"WE ARE ONE" (Print)', price: 25.00, imageURL: "https://palettebyseals.com/wp-content/uploads/2025/05/weareone.png", category: "Art Print", active: true, createdAt: new Date().toISOString() },
+    { id: "p_5", name: "314 Day 2023", price: 25.00, imageURL: "https://palettebyseals.com/wp-content/uploads/2026/03/314Day.jpg", category: "Art Print", active: true, createdAt: new Date().toISOString() },
+    { id: "p_6", name: "314 Day Print Sale", price: 25.00, imageURL: "https://palettebyseals.com/wp-content/uploads/2026/03/53FEC2FE-8340-4C0C-A87B-2909E20B68D9.jpg", category: "Art Print", active: true, createdAt: new Date().toISOString() },
+    { id: "p_7", name: "Have A Nice Day (Leather Converse)", price: 222.22, imageURL: "https://palettebyseals.com/wp-content/uploads/2025/11/IMG_4795.jpg", category: "Custom Sneakers", active: true, createdAt: new Date().toISOString() },
+    { id: "p_8", name: "REBEL", price: 498.00, imageURL: "https://palettebyseals.com/wp-content/uploads/2026/01/IMG_4878.jpg", category: "Original Art", active: true, createdAt: new Date().toISOString() },
+    { id: "p_9", name: "Scientists & Engineers — One-of-One Display Piece", price: 314.00, imageURL: "https://palettebyseals.com/wp-content/uploads/2025/12/2.png", category: "Custom Sneakers", active: true, createdAt: new Date().toISOString() },
+    { id: "p_10", name: "Sella", price: 111.11, imageURL: "https://palettebyseals.com/wp-content/uploads/2025/12/sella.png", category: "Original Art", active: true, createdAt: new Date().toISOString() },
+    { id: "p_11", name: "Tito", price: 222.22, imageURL: "https://palettebyseals.com/wp-content/uploads/2025/12/sella.png", category: "Original Art", active: true, createdAt: new Date().toISOString() },
+    { id: "p_12", name: "What High School you went to? (Print)", price: 25.00, imageURL: "https://palettebyseals.com/wp-content/uploads/2026/03/IMG_4961.jpg", category: "Art Print", active: true, createdAt: new Date().toISOString() },
+  ];
+
+  // Store products as array field (matches lib/shop.ts structure)
+  await db.collection("shops").doc(shopRef.id).update({ products, isPublic: true });
+
+  res.json({ ok: true, shopId: shopRef.id, count: products.length });
+});
+
+// ── Earnings Notification — emails you on every ticket sale ──────────────
+exports.notifyEarnings = onDocumentCreated("orders/{orderId}", async (event) => {
+  const order = event.data.data();
+  const orderId = event.params.orderId;
+
+  const total = (order.amount || 0) / 100;
+  const platformFee = total * PLATFORM_FEE;
+
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.RESEND_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "GEMM <hello@joingemm.com>",
+        to: "joingemm@gmail.com",
+        subject: `💰 You earned $${platformFee.toFixed(2)} from ${order.ticketType || "a ticket"}`,
+        html: `
+          <div style="background:#0a0a0a;color:#fff;font-family:sans-serif;padding:40px;max-width:520px;margin:0 auto;border-radius:16px">
+            <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:8px;letter-spacing:.1em;text-transform:uppercase">New Sale</div>
+            <div style="font-size:42px;font-weight:900;margin:0 0 4px;color:#C9A84C">+$${platformFee.toFixed(2)}</div>
+            <div style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:32px">your 5% on a $${total.toFixed(2)} ticket</div>
+            <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:24px;font-size:13px;color:rgba(255,255,255,0.7);line-height:1.7">
+              Tier: <b style="color:#fff">${order.ticketType || "—"}</b><br/>
+              Event: <b style="color:#fff">${order.eventId || "—"}</b><br/>
+              Order: ${orderId}
+            </div>
+          </div>
+        `,
+      }),
+    });
+  } catch (err) {
+    console.error("notifyEarnings error:", err);
+  }
+});
+
+// ── Creator Payouts: balance + manual withdrawal ───────────────────────
+exports.getCreatorBalance = onRequest({ cors: true }, async (req, res) => {
+  try {
+    const { creatorUid, requesterUid } = req.body.data || req.body || {};
+    if (!creatorUid || !requesterUid) {
+      return res.status(400).json({ error: "Missing creatorUid or requesterUid" });
+    }
+    const ADMIN_UIDS = ["3eWTfkVvdRcUTAiHPawy0WSHm1O2"];
+    if (requesterUid !== creatorUid && !ADMIN_UIDS.includes(requesterUid)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    const userSnap = await db.collection("users").doc(creatorUid).get();
+    const stripeAccountId = userSnap.data() && userSnap.data().stripeAccountId;
+    if (!stripeAccountId) {
+      return res.status(400).json({ error: "Creator has not connected Stripe" });
+    }
+    const stripe = getStripe();
+    const balance = await stripe.balance.retrieve({}, { stripeAccount: stripeAccountId });
+    const payouts = await stripe.payouts.list({ limit: 5 }, { stripeAccount: stripeAccountId });
+    return res.json({
+      data: {
+        available: ((balance.available[0] && balance.available[0].amount) || 0) / 100,
+        pending: ((balance.pending[0] && balance.pending[0].amount) || 0) / 100,
+        currency: ((balance.available[0] && balance.available[0].currency) || "usd"),
+        payouts: payouts.data.map(p => ({
+          id: p.id,
+          amount: p.amount / 100,
+          status: p.status,
+          arrivalDate: p.arrival_date * 1000,
+          method: p.method,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error("getCreatorBalance error:", err);
+    return res.status(500).json({ error: err.message || "Stripe error" });
+  }
+});
+
+exports.createCreatorPayout = onRequest({ cors: true }, async (req, res) => {
+  try {
+    const { creatorUid, requesterUid, amount } = req.body.data || req.body || {};
+    if (!creatorUid || !requesterUid) {
+      return res.status(400).json({ error: "Missing creatorUid or requesterUid" });
+    }
+    if (requesterUid !== creatorUid) {
+      return res.status(403).json({ error: "Only the creator can withdraw their own funds" });
+    }
+    const userSnap = await db.collection("users").doc(creatorUid).get();
+    const stripeAccountId = userSnap.data() && userSnap.data().stripeAccountId;
+    if (!stripeAccountId) {
+      return res.status(400).json({ error: "Stripe not connected" });
+    }
+    const stripe = getStripe();
+    const balance = await stripe.balance.retrieve({}, { stripeAccount: stripeAccountId });
+    const available = (balance.available[0] && balance.available[0].amount) || 0;
+    const payoutAmount = amount ? Math.round(amount * 100) : available;
+    if (payoutAmount <= 0) {
+      return res.status(400).json({ error: "No funds available to withdraw" });
+    }
+    if (payoutAmount > available) {
+      return res.status(400).json({ error: "Requested amount exceeds available balance" });
+    }
+    const payout = await stripe.payouts.create(
+      { amount: payoutAmount, currency: "usd" },
+      { stripeAccount: stripeAccountId }
+    );
+    return res.json({
+      data: {
+        success: true,
+        payoutId: payout.id,
+        amount: payout.amount / 100,
+        arrivalDate: payout.arrival_date * 1000,
+        status: payout.status,
+      },
+    });
+  } catch (err) {
+    console.error("createCreatorPayout error:", err);
+    return res.status(500).json({ error: err.message || "Payout failed" });
+  }
+});
+

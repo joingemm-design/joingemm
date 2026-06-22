@@ -1,0 +1,137 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ADMIN - full access to everything
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == "3eWTfkVvdRcUTAiHPawy0WSHm1O2";
+    }
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // Users can read/write/delete their own profile
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Usernames - owner can create, update, delete
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.uid == request.auth.uid || request.resource.data.uid == request.auth.uid);
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow write: if request.auth != null && (
+        resource == null || 
+        resource.data.uid == request.auth.uid || 
+        request.resource.data.uid == request.auth.uid
+      );
+    }
+
+    // Events are public to read, only owner can write
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Orders - keep forever
+    // Reads are public so the success page can fetch by stripeSessionId.
+    // The session_id is a secret that only Stripe and the buyer know,
+    // making it function as a one-time access token.
+    match /orders/{orderId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (
+        resource.data.uid == request.auth.uid ||
+        resource.data.creatorUid == request.auth.uid
+      );
+    }
+
+    // Shop orders - keep forever, creator can read
+    match /shop_orders/{orderId} {
+      allow read: if request.auth != null && resource.data.creatorUid == request.auth.uid;
+      allow create: if true;
+      allow update: if request.auth != null && resource.data.creatorUid == request.auth.uid;
+    }
+
+    // Shops - public to read, only owner can write/delete
+    match /shops/{shopId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Links - public to read, only owner can write/delete
+    match /links/{linkId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+    // User subcollection links
+    match /users/{userId}/links/{linkId} {
+      allow read: if true;
+      allow write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Portfolio - public to read, only owner can write/delete
+    match /portfolio/{itemId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Services - public to read, only owner can write/delete
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Quote requests - creator can read, anyone can create
+    match /quote_requests/{quoteId} {
+      allow read: if request.auth != null && resource.data.creatorUid == request.auth.uid;
+      allow create: if true;
+      allow update: if request.auth != null && resource.data.creatorUid == request.auth.uid;
+    }
+
+    // Inquiries - creator can read, anyone can create (for quote requests)
+    match /inquiries/{inquiryId} {
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if true;
+      allow update: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Pages (about + press) - public to read, only owner can write
+    match /pages/{pageId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    match /contacts/{contactId} {
+      allow read, update, delete: if request.auth != null && resource.data.creatorId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.creatorId == request.auth.uid;
+    }
+
+    // Subscribers - email signups (anyone can create, only admin reads)
+    match /subscribers/{subscriberId} {
+      allow create: if true;
+      allow read: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // Banned accounts - admin only
+    match /banned/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if isAdmin();
+    }
+
+    // Suspended accounts - admin only
+    match /suspended/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if isAdmin();
+    }
+  }
+}

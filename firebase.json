@@ -7,9 +7,18 @@
       "**/node_modules/**"
     ],
     "cleanUrls": true,
+    "headers": [
+      {
+        "source": "**/*.@(mp4|webm|mov)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Accept-Ranges", "value": "bytes" }
+        ]
+      }
+    ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "!/**/*.@(js|css|mp4|webm|mov|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot|json|map|txt|xml|mp3|wav|pdf|avif)",
         "destination": "/index.html"
       }
     ]

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{event_title}} - GEMM Event</title>
+    
+    <!-- PERFORMANCE OPTIMIZATIONS -->
+    <link rel="preload" href="/js/checkout-performance-monitor.js" as="script">
+    <link rel="preload" href="/js/optimized-checkout.js" as="script">
+    <link rel="preload" href="/assets/performance-styles.css" as="style">
+    
+    <!-- Prefetch checkout pages -->
+    <link rel="prefetch" href="/checkout">
+    <link rel="prefetch" href="/payment">
+    
+    <!-- DNS prefetch for external services -->
+    <link rel="dns-prefetch" href="//js.stripe.com">
+    <link rel="dns-prefetch" href="//www.paypal.com">
+    
+    <!-- Load styles -->
+    <link rel="stylesheet" href="/assets/performance-styles.css">
+    
+    <!-- Your existing styles -->
+    <link rel="stylesheet" href="/assets/main.css">
+</head>
+
+<body>
+    <main>
+        <header>
+            <h1>{{event_title}}</h1>
+            <p>{{event_description}}</p>
+        </header>
+        
+        <section class="event-details">
+            <div class="event-info">
+                <p><strong>Date:</strong> {{event_date}}</p>
+                <p><strong>Time:</strong> {{event_time}}</p>
+                <p><strong>Location:</strong> {{event_location}}</p>
+                <p><strong>Price:</strong> ${{ticket_price}}</p>
+            </div>
+            
+            <div class="ticket-button">
+                <div class="ticket-button" id="ticketStatus">
+                    <span id="ticketsRemaining">{{tickets_remaining}}</span> tickets remaining
+                </div>
+                
+                <!-- OPTIMIZED TICKET BUTTON -->
+                <button 
+                    class="ticket-button" 
+                    id="buyTicketsBtn"
+                    data-event-id="{{event_id}}"
+                    data-price="{{ticket_price}}"
+                    onclick="optimizedCheckoutFlow(this)"
+                >
+                    GET TICKETS - {{event_date}}
+                </button>
+                
+                <p class="powered-by">
+                    Tickets sold & processed securely through GEMM
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Load performance scripts -->
+    <script src="/js/checkout-performance-monitor.js"></script>
+    <script src="/js/optimized-checkout.js"></script>
+    
+    <!-- Your existing scripts -->
+    <script src="/js/main.js"></script>
+</body>
+</html>

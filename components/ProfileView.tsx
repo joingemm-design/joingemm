@@ -40,6 +40,8 @@ export default function ProfileView({ username }: { username: string }) {
   const [notFound, setNotFound] = useState(false);
   const [latestEvent, setLatestEvent] = useState<any>(null);
   const [colorTheme, setColorTheme] = useState("noir");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string|null>(null);
 
   async function handleCheckout() {
     if (!emailModal || !emailInput.includes("@")) return;
@@ -124,346 +126,212 @@ export default function ProfileView({ username }: { username: string }) {
 
 
   // LANDING PAGE LAYOUT
+
+  // LANDING PAGE LAYOUT
   if ((profile as any).profileStyle === "landing") {
-    const bg = (profile as any).colorBg || "#ffffff";
-    const text = (profile as any).colorText || "#000000";
-    const btn = (profile as any).colorBtn || "#000000";
-    const btnText = (profile as any).colorBtnText || "#ffffff";
-    const fontFamily = (profile as any).fontFamily || "'DM Sans',sans-serif";
     const isBrock = profile.uid === "9ppSAQTMFchFf8JrACZg0S3OFXj1";
-    const PRESETS: Record<string,{bg:string,text:string,btn:string,btnText:string}> = {
-      clean:{bg:"#ffffff",text:"#000000",btn:"#000000",btnText:"#ffffff"},
-      midnight:{bg:"#09090b",text:"#f4f4f5",btn:"#ffffff",btnText:"#000000"},
-      slate:{bg:"#1e293b",text:"#e2e8f0",btn:"#e2e8f0",btnText:"#1e293b"},
-      charcoal:{bg:"#27272a",text:"#e4e4e7",btn:"#e4e4e7",btnText:"#27272a"},
-      cream:{bg:"#fefce8",text:"#422006",btn:"#422006",btnText:"#fefce8"},
-      lemon:{bg:"#fef9c3",text:"#713f12",btn:"#713f12",btnText:"#fef9c3"},
-      grape:{bg:"#2e1065",text:"#e9d5ff",btn:"#a855f7",btnText:"#ffffff"},
-      cherry:{bg:"#ef4444",text:"#ffffff",btn:"#ffffff",btnText:"#ef4444"},
-      noir:{bg:"#000000",text:"#ffffff",btn:"#ffffff",btnText:"#000000"},
-      ink:{bg:"#0f172a",text:"#cbd5e1",btn:"#38bdf8",btnText:"#0f172a"},
-      forest:{bg:"#022c22",text:"#ecfdf5",btn:"#34d399",btnText:"#022c22"},
-      emerald:{bg:"#064e3b",text:"#d1fae5",btn:"#10b981",btnText:"#ffffff"},
-      ocean:{bg:"#082f49",text:"#e0f2fe",btn:"#38bdf8",btnText:"#082f49"},
-      navy:{bg:"#1e1b4b",text:"#e0e7ff",btn:"#818cf8",btnText:"#1e1b4b"},
-      teal:{bg:"#134e4a",text:"#ccfbf1",btn:"#2dd4bf",btnText:"#134e4a"},
-      mint:{bg:"#f0fdf4",text:"#14532d",btn:"#22c55e",btnText:"#ffffff"},
-      sage:{bg:"#dcfce7",text:"#166534",btn:"#166534",btnText:"#dcfce7"},
-      lavender:{bg:"#f5f3ff",text:"#4c1d95",btn:"#7c3aed",btnText:"#ffffff"},
-      blush:{bg:"#fdf2f8",text:"#831843",btn:"#ec4899",btnText:"#ffffff"},
-      rose:{bg:"#fff1f2",text:"#881337",btn:"#fb7185",btnText:"#ffffff"},
-      sand:{bg:"#fdfbf7",text:"#451a03",btn:"#d97706",btnText:"#ffffff"},
-      sky:{bg:"#e0f2fe",text:"#0c4a6e",btn:"#0284c7",btnText:"#ffffff"},
-      dracula:{bg:"#282a36",text:"#f8f8f2",btn:"#bd93f9",btnText:"#282a36"},
-      cyber:{bg:"#09090b",text:"#00f0ff",btn:"#ff0099",btnText:"#ffffff"},
-      velvet:{bg:"#4a044e",text:"#fae8ff",btn:"#e879f9",btnText:"#4a044e"},
+    const PRESETS: Record<string,{bg:string,text:string,btn:string,btnText:string,accent:string,grad:string}> = {
+      noir:{bg:"#080808",text:"#F2EDE4",btn:"#F2EDE4",btnText:"#080808",accent:"#C9A84C",grad:"radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 70%)"},
+      red:{bg:"#0D0305",text:"#ffffff",btn:"#E8263A",btnText:"#ffffff",accent:"#E8263A",grad:"radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,38,58,0.18) 0%, transparent 70%)"},
+      gold:{bg:"#0A0800",text:"#F5E6C8",btn:"#F5A623",btnText:"#000000",accent:"#F5A623",grad:"radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,166,35,0.2) 0%, transparent 70%)"},
+      clean:{bg:"#F8F6F2",text:"#0D0D0D",btn:"#0D0D0D",btnText:"#F8F6F2",accent:"#0D0D0D",grad:"radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,0,0,0.04) 0%, transparent 70%)"},
     };
-    const activePreset = PRESETS[colorTheme] || PRESETS["noir"];
-    const activeBg = activePreset.bg; const activeText = activePreset.text; const activeBtn = activePreset.btn; const activeBtnText = activePreset.btnText;
+    const ap = PRESETS[colorTheme] || PRESETS["noir"];
+    const aBg=ap.bg, aText=ap.text, aBtn=ap.btn, aBtnText=ap.btnText, aAccent=(ap as any).accent||ap.btn, aGrad=(ap as any).grad||"none";
+    const ff = (profile as any).fontFamily || "'DM Sans',sans-serif";
+    const eventPill = null; // hidden
+    const allPills = [
+      ...(eventPill?[eventPill]:[]),
+      {label:"WORK WITH ME", href:"/"+profile.username+"/services", external:false},
+      {label:"COLLABS", href:"/"+profile.username+"/collabs", external:false},
+      {label:"ABOUT", href:"/"+profile.username+"/about", external:false},
+      {label:"MUSIC", href:"/"+profile.username+"/music", external:false},
+
+
+      {label:"PRESS", href:"/"+profile.username+"/press", external:false},
+      ...(shops.length>0?[{label:"SHOP", href:"/"+profile.username+"/shop", external:false}]:[]),
+      ...links.filter((lk:any)=>{
+        const t=(lk.title||"").toLowerCase();
+        const u=(lk.url||"").toLowerCase();
+        const isSocial=["instagram","youtube","tiktok","twitter","facebook","linkedin","snapchat","x.com"].some(s=>t.includes(s)||u.includes(s));
+        return !isSocial;
+      }).slice(0,6).map((lk:any)=>({label:lk.title.toUpperCase()+" ↗", href:lk.url, external:true})),
+    ];
     return (
       <>
-      {latestEvent && (()=>{
-        const now = new Date(); now.setHours(0,0,0,0);
-        const eventDateStr = latestEvent.startDate || latestEvent.date;
-        if (eventDateStr) {
-          const [y,m,d] = eventDateStr.split("-").map(Number);
-          if (new Date(y,m-1,d) < now) return null;
-          const diff = Math.ceil((new Date(y,m-1,d).getTime()-now.getTime())/(864e5));
-          const label = diff===0?"Today":diff===1?"Tomorrow":diff<=7?"In "+diff+" days":new Date(y,m-1,d).toLocaleDateString("en-US",{month:"short",day:"numeric"});
-          return <a href={"/event/"+latestEvent.id} style={{display:"block",background:"#000",color:"#fff",textAlign:"center",padding:"10px 20px",fontSize:13,fontWeight:700,textDecoration:"none",letterSpacing:".04em",textTransform:"uppercase" as const}}>{"🎟 "+latestEvent.title+" — "+label+" — Get Tickets →"}</a>;
-        }
-        return null;
-      })()}
-      <div style={{minHeight:"100vh",background:activeBg,color:activeText,fontFamily}}>
+      <div style={{position:"fixed",inset:0,background:aBg,zIndex:0}}>
+        {(profile as any).heroBanner
+          ? <img src={(profile as any).heroBanner} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.4}}/>
+          : profile.photoURL
+            ? <img src={profile.photoURL} referrerPolicy="no-referrer" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.25,filter:"blur(3px)"}}/>
+            : null}
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.2),rgba(0,0,0,.6))"}}/>
+      </div>
+      <div style={{position:"relative",zIndex:1,minHeight:"100vh",color:aText,fontFamily:ff}}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');
           *{box-sizing:border-box;margin:0;padding:0}
-          @keyframes pageIn{from{opacity:0}to{opacity:1}}
-          @keyframes slideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
-          @keyframes marqueeScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-          .lp-page{animation:pageIn .5s ease forwards}
-          .lp-wrap{max-width:1100px;margin:0 auto;padding:0 24px}
-          .lp-section{padding:80px 0}
-          .lp-section-title{font-size:clamp(11px,1.2vw,13px);font-weight:800;letter-spacing:.15em;text-transform:uppercase;opacity:.4;margin-bottom:40px}
-          .lp-nav{position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,.06)}
-          .lp-nav a{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;padding:18px 16px;display:inline-block;opacity:.5;transition:opacity .2s}
-          .lp-nav a:hover{opacity:1}
-          .lp-hero{position:relative;min-height:88vh;display:flex;align-items:flex-end;overflow:hidden}
-          .lp-hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-          .lp-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.2) 60%,transparent 100%)}
-          .lp-work-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-          @media(max-width:700px){.lp-work-grid{grid-template-columns:1fr}}
-          .lp-work-item{position:relative;aspect-ratio:1;overflow:hidden;border-radius:4px;cursor:pointer}
-          .lp-work-item img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
-          .lp-work-item:hover img{transform:scale(1.05)}
-          .lp-work-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .3s;display:flex;flex-direction:column;justify-content:flex-end;padding:20px}
-          .lp-work-item:hover .lp-work-overlay{background:rgba(0,0,0,.6)}
-          .lp-work-label{color:#fff;font-size:14px;font-weight:800}
-          .lp-work-cta{color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:0;transform:translateY(6px);transition:all .3s;margin-top:4px}
-          .lp-work-item:hover .lp-work-cta{opacity:.7;transform:translateY(0)}
-          .lp-reveal{opacity:1}
-          .lp-svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-          @media(max-width:700px){.lp-svc-grid{grid-template-columns:1fr 1fr}}
+          @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+          @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+          @keyframes spinR{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+          .pill{display:block;width:100%;padding:15px 24px;border-radius:9999px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:inherit;text-align:center;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);font-family:inherit;animation:fadeUp .4s ease forwards;opacity:0}
+          .pill:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.4);transform:scale(1.02)}
+          .pill.hi{border-color:transparent}
+          .corner{position:fixed;font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;text-decoration:none;opacity:.45;transition:opacity .2s;z-index:20}
+          .corner:hover{opacity:1}
+          .ring1{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);animation:spin 12s linear infinite}
+          .ring2{position:absolute;inset:10px;border-radius:50%;border:1px solid rgba(255,255,255,.08);animation:spinR 8s linear infinite}
         `}</style>
-
-        {/* Hero */}
-        <div className="lp-hero">
-          {(profile as any).heroBanner
-            ? <img src={(profile as any).heroBanner} className="lp-hero-bg" alt="" style={{filter:"brightness(.7)"}}/>
-            : profile.photoURL
-              ? <img src={profile.photoURL} referrerPolicy="no-referrer" className="lp-hero-bg" alt="" style={{filter:"brightness(.4)"}}/>
-              : <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,"+btn+","+btn+"44)"}}/>}
-          <div className="lp-hero-overlay"/>
-          <div style={{position:"relative",zIndex:2,padding:"0 0 60px",width:"100%"}}>
-            <div className="lp-wrap">
-
-              <h1 style={{fontSize:"clamp(56px,12vw,160px)",fontWeight:900,letterSpacing:"-.04em",lineHeight:.88,color:"#fff",marginBottom:24,textTransform:"uppercase" as const}}>{profile.displayName}</h1>
-              {profile.bio&&<p style={{fontSize:16,color:"#fff",opacity:.7,maxWidth:480,lineHeight:1.6,marginBottom:28}}>{profile.bio}</p>}
-              <a href="#contact" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"14px 28px",background:btn,color:btnText,borderRadius:4,fontWeight:800,fontSize:13,textDecoration:"none",letterSpacing:".08em",textTransform:"uppercase" as const}}>Work With Me</a>
-            </div>
-          </div>
-        </div>
-
-        {/* Marquee - below hero */}
-        {(profile as any).marqueeText&&(
-          <div style={{overflow:"hidden",padding:"10px 0",background:btn,color:btnText}}>
-            <div style={{display:"flex",animation:"marqueeScroll 20s linear infinite",whiteSpace:"nowrap"}}>
-              {[1,2,3,4].map(i=><span key={i} style={{fontSize:11,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,paddingRight:48}}>{(profile as any).marqueeText}</span>)}
-            </div>
-          </div>
-        )}
-
-        {/* Sticky Nav */}
-        <div className="lp-nav" style={{background:activeBg+"ee"}}>
-          <div className="lp-wrap" style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <a href={"/"+(profile as any).username} style={{fontWeight:900,fontSize:15,letterSpacing:"-.01em",color:activeText,textDecoration:"none",flexShrink:0,marginRight:24}}>
-              {(profile as any).logoURL
-                ? <img src={(profile as any).logoURL} alt={profile.displayName||""} style={{height:32,width:"auto",objectFit:"contain"}}/>
-                : profile.displayName}
-            </a>
-            <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none" as any}}>
-              {[["WHAT WE DO","#services"],["COLLABS","#work"],["ABOUT","#about"],["PRESS","#press"],["CONTACT","#contact"]].map(([l,h])=>(
-                <a key={h} href={h} style={{color:activeText}}>{l}</a>
-              ))}
-            </div>
-            {profile.photoURL&&<img src={profile.photoURL} referrerPolicy="no-referrer" alt="" style={{width:32,height:32,borderRadius:"50%",objectFit:"cover"}}/>}
-          </div>
-        </div>
-
-
-
-        {/* Intro */}
-        <div style={{borderBottom:"1px solid "+text+"10"}}>
-          <div className="lp-wrap lp-section lp-reveal">
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:80,alignItems:"center"}}>
-              <div>
-                <h2 style={{fontSize:"clamp(36px,6vw,72px)",fontWeight:900,letterSpacing:"-.04em",lineHeight:.92,marginBottom:24,textTransform:"uppercase" as const}}>Brush,<br/>Beats,<br/>&amp; Beyond.</h2>
-              </div>
-              <div>
-                <p style={{fontSize:18,lineHeight:1.8,opacity:.7,marginBottom:32}}>{profile.bio}</p>
-                <a href="#contact" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"16px 32px",borderRadius:9999,background:activeBtn,color:activeBtnText,fontWeight:800,fontSize:13,textDecoration:"none",letterSpacing:".08em",textTransform:"uppercase" as const}}>Work With Me →</a>
-              </div>
-            </div>
-            <div style={{display:"flex",gap:32,alignItems:"center",flexWrap:"wrap" as const,opacity:.2,marginTop:48}}>
-              {["TECOVAS","CARDINALS","AMP","MARC JACOBS","RAC","CONVERSE"].map(b=>(
-                <div key={b} style={{fontSize:11,fontWeight:800,letterSpacing:".12em"}}>{b}</div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Services */}
-        {services.length>0&&(
-          <div id="services" style={{borderBottom:"1px solid "+text+"10"}}>
-            <div className="lp-wrap lp-section lp-reveal">
-              <div className="lp-section-title">What We Do</div>
-              <div className="lp-svc-grid">
-                {services.map(svc=>(
-                  <button key={svc.id} onClick={()=>setQuoteModal(svc)}
-                    style={{padding:"16px 20px",borderRadius:9999,background:"#111",color:"#fff",border:"none",cursor:"pointer",textAlign:"left" as const,transition:"all .2s",display:"flex",alignItems:"center",gap:10}}
-                    onMouseEnter={e=>(e.currentTarget.style.transform="translateY(-2px)")}
-                    onMouseLeave={e=>(e.currentTarget.style.transform="translateY(0)")}>
-                    <div style={{fontSize:24,marginBottom:10}}>{(svc as any).icon||"🎨"}</div>
-                    <div style={{fontSize:14,fontWeight:800,marginBottom:4}}>{svc.title}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Collabs */}
-        {portfolio.length>0&&(
-          <div id="work" style={{borderBottom:"1px solid "+text+"10"}}>
-            <div className="lp-wrap lp-section lp-reveal">
-              <div className="lp-section-title">Recent Collabs</div>
-              <div className="lp-work-grid">
-                {portfolio.map(item=>(
-                  <a key={item.id} className="lp-work-item" href={(item as any).url||(item as any).link||"#"} target="_blank" rel="noopener noreferrer" style={{textDecoration:"none",display:"block"}}>
-                    {item.imageURL&&<img src={item.imageURL} alt={item.title} loading="lazy"/>}
-                    <div className="lp-work-overlay">
-                      <div style={{fontSize:10,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase" as const,color:"rgba(255,255,255,.6)",marginBottom:4}}>{(item as any).category||"Collab"}</div>
-                      <div className="lp-work-label">{item.title}</div>
-                      <div className="lp-work-cta">View Project →</div>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Big name */}
-        <div style={{background:"#000",overflow:"hidden",padding:"80px 0"}}>
-          <div style={{textAlign:"center"}}>
-            <div style={{fontSize:"clamp(80px,18vw,200px)",fontWeight:900,letterSpacing:"-.04em",lineHeight:.85,color:"transparent",WebkitTextStroke:"2px "+text+"30",userSelect:"none" as const,textTransform:"uppercase" as const,padding:"0 20px"}}>{profile.displayName?.split(" ")[0]||"BROCK"}</div>
-            <div style={{fontSize:"clamp(80px,18vw,200px)",fontWeight:900,letterSpacing:"-.04em",lineHeight:.85,color:"transparent",WebkitTextStroke:"2px "+text+"30",userSelect:"none" as const,textTransform:"uppercase" as const,padding:"0 20px",marginTop:-20}}>{profile.displayName?.split(" ")[1]||"SEALS"}</div>
-          </div>
-        </div>
-
-        {/* About */}
-        <div id="about" style={{borderBottom:"1px solid "+text+"10"}}>
-          <div className="lp-wrap lp-section lp-reveal">
-            <div className="lp-section-title">About</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:64,alignItems:"center"}}>
-              <div>{profile.photoURL&&<img src={profile.photoURL} referrerPolicy="no-referrer" alt="" style={{width:"100%",borderRadius:4,objectFit:"cover",aspectRatio:"3/4"}}/>}</div>
-              <div>
-                <p style={{fontSize:18,lineHeight:1.8,opacity:.8,marginBottom:32}}>{pages.about||profile.bio}</p>
-                <div style={{display:"flex",gap:12,flexWrap:"wrap" as const}}>
-                  {links.slice(0,3).map(link=>(
-                    <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" style={{padding:"10px 20px",borderRadius:4,background:btn,color:btnText,fontSize:12,fontWeight:800,textDecoration:"none",letterSpacing:".08em",textTransform:"uppercase" as const}}>{link.title}</a>
-                  ))}
+        <a className="corner" style={{top:24,left:24,color:aText,cursor:"pointer"}} onClick={()=>setMenuOpen(!menuOpen)}>{menuOpen?"✕ CLOSE":"MENU"}</a>
+        <a href={"/"+profile.username+"/shop"} className="corner" style={{top:24,right:24,color:aText}}>SHOP</a>
+        {!menuOpen&&(
+          <div style={{display:"flex",flexDirection:"column" as const,alignItems:"center",justifyContent:"center",minHeight:"100vh",gap:20}}>
+            <button onClick={()=>setMenuOpen(true)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column" as const,alignItems:"center",gap:20,padding:32}}>
+              <div style={{position:"relative",width:160,height:160}}>
+                <div className="ring1"/>
+                <div className="ring2"/>
+                <div style={{position:"absolute",inset:18,borderRadius:"50%",overflow:"hidden",background:"rgba(255,255,255,.06)"}}>
+                  {profile.photoURL
+                    ? <img src={profile.photoURL} referrerPolicy="no-referrer" alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    : <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:32,color:aText}}>{profile.displayName?.charAt(0)}</div>}
                 </div>
               </div>
+              <div style={{textAlign:"center" as const}}>
+                <div style={{fontSize:"clamp(18px,5vw,32px)",fontWeight:900,letterSpacing:"-.02em",textTransform:"uppercase" as const,color:aText,marginBottom:6}}>{profile.displayName}</div>
+                <div style={{fontSize:10,fontWeight:700,letterSpacing:".2em",textTransform:"uppercase" as const,opacity:.35,color:aText}}>TAP TO EXPLORE</div>
+              </div>
+            </button>
+          </div>
+        )}
+        {menuOpen&&(
+          <div style={{display:"flex",flexDirection:"column" as const,alignItems:"center",padding:"80px 20px 60px",minHeight:"100vh"}}>
+            <div style={{display:"flex",flexDirection:"column" as const,alignItems:"center",gap:10,width:"100%",maxWidth:420}}>
+              {allPills.map((pill:any,i:number)=>{
+                const isToggle = !!pill.section;
+                const isActive = activeSection===pill.section;
+                return (
+                  <div key={i} style={{width:"100%",display:"flex",flexDirection:"column" as const,gap:8}}>
+                    {isToggle ? (
+                      <button onClick={()=>setActiveSection(isActive?null:pill.section)} className={"pill"+(pill.highlight?" hi":"")} style={{animationDelay:(i*.06)+"s",background:isActive?"rgba(255,255,255,.18)":pill.highlight?aBtn:undefined,color:pill.highlight&&!isActive?aBtnText:undefined}}>
+                        {pill.label}
+                      </button>
+                    ) : (
+                      <a href={pill.href} target={pill.external?"_blank":"_self"} rel="noopener noreferrer" className={"pill"+(pill.highlight?" hi":"")} style={{animationDelay:(i*.06)+"s",background:pill.highlight?aBtn:undefined,color:pill.highlight?aBtnText:undefined}}>
+                        {pill.label}
+                      </a>
+                    )}
+                    {isToggle&&isActive&&pill.section==="services"&&(
+                      <div style={{display:"flex",flexDirection:"column" as const,gap:8,paddingLeft:8}}>
+                        {services.map((svc:any)=>(<button key={svc.id} onClick={()=>setQuoteModal(svc)} className="pill" style={{animationDelay:"0s",textAlign:"left" as const,fontSize:12}}>{(svc as any).icon||"🎨"} {svc.title}</button>))}
+                      </div>
+                    )}
+                    {isToggle&&isActive&&pill.section==="collabs"&&(
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                        {portfolio.map((item:any)=>(<a key={item.id} href={(item as any).url||"#"} target="_blank" rel="noopener noreferrer" style={{position:"relative",aspectRatio:"1",borderRadius:12,overflow:"hidden",display:"block"}}>{item.imageURL&&<img src={item.imageURL} alt={item.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>}<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.45)",display:"flex",alignItems:"flex-end",padding:10}}><span style={{fontSize:10,fontWeight:800,color:"#fff",letterSpacing:".06em",textTransform:"uppercase" as const}}>{item.title}</span></div></a>))}
+                      </div>
+                    )}
+                    {isToggle&&isActive&&pill.section==="about"&&(
+                      <div style={{padding:"12px 16px",borderRadius:16,background:"rgba(255,255,255,.07)",fontSize:14,lineHeight:1.8,opacity:.8}}>
+                        {pages.about||profile.bio}
+                      </div>
+                    )}
+                    {isToggle&&isActive&&pill.section==="shop"&&(
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                        {shops.flatMap((shop:any)=>shop.products||[]).map((product:any)=>(
+                          <div key={product.id} style={{borderRadius:12,overflow:"hidden",background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.1)"}}>
+                            {product.imageURL&&<img src={product.imageURL} alt={product.name} style={{width:"100%",aspectRatio:"1",objectFit:"cover"}}/>}
+                            <div style={{padding:"10px 12px"}}>
+                              <div style={{fontSize:12,fontWeight:800,marginBottom:4}}>{product.name}</div>
+                              <div style={{fontSize:11,opacity:.5,marginBottom:8}}>{product.price?"$"+product.price:""}</div>
+                              <button onClick={()=>{}} style={{width:"100%",padding:"8px",borderRadius:9999,background:aBtn,color:aBtnText,border:"none",fontSize:11,fontWeight:800,cursor:"pointer",textTransform:"uppercase" as const,letterSpacing:".08em"}}>Buy Now</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {isToggle&&isActive&&pill.section==="press"&&(
+                      <div style={{display:"flex",flexDirection:"column" as const,gap:8}}>
+                        {(pages.press as any[]||[]).map((p:any,j:number)=>(<a key={j} href={p.url||"#"} target="_blank" rel="noopener noreferrer" className="pill" style={{animationDelay:"0s",textAlign:"left" as const,fontSize:11}}>{p.outlet||p.source} — {p.headline||p.title}</a>))}
+                      </div>
+                    )}
+                    {isToggle&&isActive&&pill.section==="contact"&&(
+                      <div style={{display:"flex",flexDirection:"column" as const,gap:10}}>
+                        {quoteSent?(
+                          <div style={{textAlign:"center" as const,padding:24,background:"rgba(255,255,255,.07)",borderRadius:16}}><div style={{fontSize:28,marginBottom:8}}>✅</div><div style={{fontWeight:800}}>Message sent!</div></div>
+                        ):(
+                          <>
+                          <input value={quoteName} onChange={e=>setQuoteName(e.target.value)} placeholder="Your name" style={{padding:"14px 20px",borderRadius:9999,border:"1.5px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.07)",color:aText,fontSize:14,fontFamily:ff}}/>
+                          <input value={quoteEmail} onChange={e=>setQuoteEmail(e.target.value)} placeholder="Your email" style={{padding:"14px 20px",borderRadius:9999,border:"1.5px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.07)",color:aText,fontSize:14,fontFamily:ff}}/>
+                          <textarea value={quoteMessage} onChange={e=>setQuoteMessage(e.target.value)} placeholder="Your message..." rows={3} style={{padding:"14px 20px",borderRadius:16,border:"1.5px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.07)",color:aText,fontSize:14,fontFamily:ff,resize:"none" as const}}/>
+                          <button onClick={async()=>{
+                            if(!quoteName.trim()||!quoteEmail.includes("@")||!quoteMessage.trim())return;
+                            setQuoteSubmitting(true);
+                            try{
+                              const {addDoc,collection:col,serverTimestamp}=await import("firebase/firestore");
+                              const {firestore:db}=await import("@/lib/firebase");
+                              await addDoc(col(db,"inquiries"),{creatorId:profile.uid,name:quoteName,email:quoteEmail,message:quoteMessage,createdAt:serverTimestamp(),read:false});
+                              setQuoteSent(true);
+                            }catch(e){console.error(e);}
+                            setQuoteSubmitting(false);
+                          }} className="pill hi" style={{animationDelay:"0s",background:aBtn,color:aBtnText}}>
+                            {quoteSubmitting?"Sending...":"Send Message"}
+                          </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-
-        {/* Press */}
-        {pages.press&&pages.press.length>0&&(
-          <div id="press" style={{borderBottom:"1px solid "+text+"10"}}>
-            <div className="lp-wrap lp-section lp-reveal">
-              <div className="lp-section-title">Press</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:24}}>
-                {pages.press.map((p:any,i:number)=>(
-                  <a key={i} href={p.url||"#"} target="_blank" rel="noopener noreferrer"
-                    style={{padding:32,borderRadius:4,border:"1px solid "+text+"12",textDecoration:"none",color:text,display:"block",transition:"transform .2s"}}
-                    onMouseEnter={e=>(e.currentTarget.style.transform="translateY(-2px)")}
-                    onMouseLeave={e=>(e.currentTarget.style.transform="translateY(0)")}>
-                    <div style={{fontSize:11,fontWeight:800,letterSpacing:".12em",textTransform:"uppercase" as const,opacity:.4,marginBottom:12}}>{p.outlet||p.source}</div>
-                    <div style={{fontSize:18,fontWeight:700,lineHeight:1.4,marginBottom:8}}>{p.headline||p.title}</div>
-                    {p.date&&<div style={{fontSize:12,opacity:.35,fontWeight:600}}>{p.date}</div>}
-                  </a>
-                ))}
+        )}
+        {quoteModal&&(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setQuoteModal(null)}>
+            <div style={{background:aBg,color:aText,borderRadius:24,padding:32,maxWidth:440,width:"100%",border:"1px solid rgba(255,255,255,.1)"}} onClick={e=>e.stopPropagation()}>
+              <div style={{fontWeight:900,fontSize:20,marginBottom:4}}>{quoteModal.title}</div>
+              <div style={{opacity:.4,fontSize:13,marginBottom:24}}>Request a quote</div>
+              <div style={{display:"flex",flexDirection:"column" as const,gap:10}}>
+                <input value={quoteName} onChange={e=>setQuoteName(e.target.value)} placeholder="Your name" style={{padding:"12px 18px",borderRadius:9999,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",color:aText,fontSize:14,fontFamily:ff}}/>
+                <input value={quoteEmail} onChange={e=>setQuoteEmail(e.target.value)} placeholder="Email" style={{padding:"12px 18px",borderRadius:9999,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",color:aText,fontSize:14,fontFamily:ff}}/>
+                <textarea value={quoteMessage} onChange={e=>setQuoteMessage(e.target.value)} placeholder="Tell me about your project..." rows={3} style={{padding:"12px 18px",borderRadius:16,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",color:aText,fontSize:14,fontFamily:ff,resize:"none" as const}}/>
+                <button onClick={async()=>{
+                  if(!quoteName.trim()||!quoteEmail.includes("@")||!quoteMessage.trim())return;
+                  setQuoteSubmitting(true);
+                  try{
+                    const {addDoc,collection:col,serverTimestamp}=await import("firebase/firestore");
+                    const {firestore:db}=await import("@/lib/firebase");
+                    await addDoc(col(db,"inquiries"),{creatorId:profile.uid,serviceId:quoteModal.id,serviceName:quoteModal.title,name:quoteName,email:quoteEmail,message:quoteMessage,createdAt:serverTimestamp(),read:false});
+                    setQuoteSent(true);
+                  }catch(e){console.error(e);}
+                  setQuoteSubmitting(false);
+                }} style={{padding:"14px",borderRadius:9999,background:aBtn,color:aBtnText,fontWeight:800,fontSize:13,border:"none",cursor:"pointer",textTransform:"uppercase" as const}}>
+                  {quoteSubmitting?"Sending...":"Send Request"}
+                </button>
               </div>
             </div>
           </div>
         )}
-
-        {/* Contact */}
-        <div id="contact" style={{borderBottom:"1px solid "+text+"10"}}>
-          <div className="lp-wrap lp-section lp-reveal">
-            <div className="lp-section-title">Get In Touch</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:64}}>
-              <div>
-                <h2 style={{fontSize:"clamp(28px,4vw,48px)",fontWeight:900,letterSpacing:"-.02em",lineHeight:1.1,marginBottom:16}}>Let's create something legendary.</h2>
-                <p style={{fontSize:15,opacity:.5,lineHeight:1.7}}>Fill out the form and I'll get back to you within 48 hours.</p>
-              </div>
-              <div>
-                {quoteSent?(
-                  <div style={{padding:40,textAlign:"center"}}><div style={{fontSize:32,marginBottom:12}}>✅</div><div style={{fontWeight:800,fontSize:18,marginBottom:8}}>Message sent!</div><div style={{opacity:.5,fontSize:14}}>I'll be in touch soon.</div></div>
-                ):(
-                  <div style={{display:"flex",flexDirection:"column" as const,gap:12}}>
-                    <input value={quoteName} onChange={e=>setQuoteName(e.target.value)} placeholder="Your name" style={{padding:"14px 16px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily}}/>
-                    <input value={quoteEmail} onChange={e=>setQuoteEmail(e.target.value)} placeholder="Your email" style={{padding:"14px 16px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily}}/>
-                    <textarea value={quoteMessage} onChange={e=>setQuoteMessage(e.target.value)} placeholder="Tell me about your project..." rows={4} style={{padding:"14px 16px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily,resize:"vertical" as const}}/>
-                    <button onClick={async()=>{
-                      if(!quoteName.trim()||!quoteEmail.includes("@")||!quoteMessage.trim())return;
-                      setQuoteSubmitting(true);
-                      try{
-                        const {addDoc,collection:col,serverTimestamp}=await import("firebase/firestore");
-                        const {firestore:db}=await import("@/lib/firebase");
-                        await addDoc(col(db,"inquiries"),{creatorId:profile.uid,name:quoteName,email:quoteEmail,message:quoteMessage,createdAt:serverTimestamp(),read:false});
-                        setQuoteSent(true);
-                      }catch(e){console.error(e);}
-                      setQuoteSubmitting(false);
-                    }} style={{padding:"16px",borderRadius:4,background:btn,color:btnText,fontWeight:800,fontSize:14,border:"none",cursor:"pointer",letterSpacing:".04em",textTransform:"uppercase" as const}}>
-                      {quoteSubmitting?"Sending...":"Send Message"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{padding:"40px 0",borderTop:"1px solid "+text+"10"}}>
-          <div className="lp-wrap" style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap" as const,gap:16}}>
-            <div style={{fontSize:13,fontWeight:800}}>{profile.displayName}</div>
-            <div style={{fontSize:11,opacity:.3,fontWeight:600}}>Powered by GEMM</div>
-          </div>
-        </div>
-
-        {/* Brock color theme tabs */}
         {isBrock&&(
-          <div style={{position:"fixed",bottom:24,right:24,zIndex:999,background:"rgba(0,0,0,.85)",borderRadius:16,padding:"12px",backdropFilter:"blur(12px)",display:"flex",flexWrap:"wrap" as const,gap:6,maxWidth:200}}>
-            {[
-              {key:"clean",bg:"#ffffff"},{key:"midnight",bg:"#09090b"},{key:"slate",bg:"#1e293b"},
-              {key:"charcoal",bg:"#27272a"},{key:"cream",bg:"#fefce8"},{key:"lemon",bg:"#fef9c3"},
-              {key:"grape",bg:"#2e1065"},{key:"cherry",bg:"#ef4444"},{key:"noir",bg:"#000000"},
-              {key:"ink",bg:"#0f172a"},{key:"forest",bg:"#022c22"},{key:"emerald",bg:"#064e3b"},
-              {key:"ocean",bg:"#082f49"},{key:"navy",bg:"#1e1b4b"},{key:"teal",bg:"#134e4a"},
-              {key:"mint",bg:"#f0fdf4"},{key:"sage",bg:"#dcfce7"},{key:"lavender",bg:"#f5f3ff"},
-              {key:"blush",bg:"#fdf2f8"},{key:"rose",bg:"#fff1f2"},{key:"sand",bg:"#fdfbf7"},
-              {key:"sky",bg:"#e0f2fe"},{key:"dracula",bg:"#282a36"},{key:"cyber",bg:"#09090b"},
-              {key:"velvet",bg:"#4a044e"},
-            ].map(p=>(
-              <button key={p.key} onClick={()=>setColorTheme(p.key)}
-                style={{width:28,height:28,borderRadius:"50%",background:p.bg,border:colorTheme===p.key?"3px solid #7c3aed":"2px solid rgba(255,255,255,.2)",cursor:"pointer",transition:"transform .15s",transform:colorTheme===p.key?"scale(1.2)":"scale(1)"}}
-                title={p.key}/>
+          <div style={{position:"fixed",bottom:24,left:24,zIndex:20,display:"flex",gap:18,alignItems:"center"}}>
+            <a href="https://www.instagram.com/palettebyseals" target="_blank" rel="noopener noreferrer" style={{color:aText,opacity:.6,transition:"opacity .2s"}} onMouseOver={e=>(e.currentTarget as HTMLAnchorElement).style.opacity="1"} onMouseOut={e=>(e.currentTarget as HTMLAnchorElement).style.opacity=".6"}><IgIcon/></a>
+            <a href="https://www.youtube.com/@palettebyseals" target="_blank" rel="noopener noreferrer" style={{color:aText,opacity:.6,transition:"opacity .2s"}} onMouseOver={e=>(e.currentTarget as HTMLAnchorElement).style.opacity="1"} onMouseOut={e=>(e.currentTarget as HTMLAnchorElement).style.opacity=".6"}><YtIcon/></a>
+          </div>
+        )}
+        {isBrock&&(
+          <div style={{position:"fixed",bottom:24,right:24,zIndex:99,background:"rgba(0,0,0,.85)",borderRadius:16,padding:"10px",backdropFilter:"blur(12px)",display:"flex",flexWrap:"wrap" as const,gap:6,maxWidth:160}}>
+            {[{k:"noir",bg:"#080808",label:"Noir"},{k:"red",bg:"#E8263A",label:"Red"},{k:"gold",bg:"#F5A623",label:"Gold"},{k:"clean",bg:"#F8F6F2",label:"Clean"}].map(p=>(
+              <button key={p.k} onClick={()=>setColorTheme(p.k)} className="theme-btn" title={p.label}
+                style={{width:colorTheme===p.k?28:22,height:colorTheme===p.k?28:22,borderRadius:"50%",background:p.bg,border:colorTheme===p.k?"2.5px solid "+aAccent:"1.5px solid rgba(255,255,255,.25)",cursor:"pointer",boxShadow:colorTheme===p.k?"0 0 12px "+p.bg+"99":"none"}}/>
             ))}
           </div>
         )}
-
-        {/* Scroll observer */}
-        <script dangerouslySetInnerHTML={{__html:"(function(){var o=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.style.animation='slideUp .6s ease forwards';o.unobserve(e.target);}})},{threshold:0.1});document.querySelectorAll('.lp-reveal').forEach(function(el){o.observe(el);});})()"}}/>
-
-        {/* Quote Modal */}
-        {quoteModal&&(
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setQuoteModal(null)}>
-            <div style={{background:bg,color:text,borderRadius:8,padding:32,maxWidth:480,width:"100%"}} onClick={e=>e.stopPropagation()}>
-              <div style={{fontWeight:900,fontSize:20,marginBottom:4}}>{quoteModal.title}</div>
-              <div style={{opacity:.5,fontSize:13,marginBottom:24}}>Request a quote</div>
-              {quoteSent?(
-                <div style={{textAlign:"center",padding:20}}><div style={{fontSize:28,marginBottom:8}}>✅</div><div style={{fontWeight:700}}>Request sent!</div></div>
-              ):(
-                <div style={{display:"flex",flexDirection:"column" as const,gap:12}}>
-                  <input value={quoteName} onChange={e=>setQuoteName(e.target.value)} placeholder="Your name" style={{padding:"12px 14px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily}}/>
-                  <input value={quoteEmail} onChange={e=>setQuoteEmail(e.target.value)} placeholder="Email" style={{padding:"12px 14px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily}}/>
-                  <textarea value={quoteMessage} onChange={e=>setQuoteMessage(e.target.value)} placeholder="Tell me about your project..." rows={3} style={{padding:"12px 14px",borderRadius:4,border:"1px solid "+text+"20",background:"transparent",color:text,fontSize:14,fontFamily,resize:"vertical" as const}}/>
-                  <button onClick={async()=>{
-                    if(!quoteName.trim()||!quoteEmail.includes("@")||!quoteMessage.trim())return;
-                    setQuoteSubmitting(true);
-                    try{
-                      const {addDoc,collection:col,serverTimestamp}=await import("firebase/firestore");
-                      const {firestore:db}=await import("@/lib/firebase");
-                      await addDoc(col(db,"inquiries"),{creatorId:profile.uid,serviceId:quoteModal.id,serviceName:quoteModal.title,name:quoteName,email:quoteEmail,message:quoteMessage,createdAt:serverTimestamp(),read:false});
-                      setQuoteSent(true);
-                    }catch(e){console.error(e);}
-                    setQuoteSubmitting(false);
-                  }} style={{padding:"14px",borderRadius:4,background:btn,color:btnText,fontWeight:800,fontSize:13,border:"none",cursor:"pointer",letterSpacing:".04em",textTransform:"uppercase" as const}}>
-                    {quoteSubmitting?"Sending...":"Send Request"}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",fontSize:10,opacity:.2,fontWeight:700,letterSpacing:".1em",color:aText,pointerEvents:"none",zIndex:1}}>POWERED BY GEMM</div>
       </div>
       </>
     );
   }
+
   return (
     <>
     {latestEvent && (()=>{
@@ -478,7 +346,29 @@ export default function ProfileView({ username }: { username: string }) {
       return null;
     })()}
     <div style={{minHeight:"100vh",background:bg,color:text,display:"flex",flexDirection:"column",alignItems:"center",fontFamily,padding:"60px 24px 40px"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes pageIn{from{opacity:0}to{opacity:1}}@keyframes pageIn{from{opacity:0}to{opacity:1}}.link-fade{animation:fadeIn .5s ease forwards;opacity:0}.port-item{position:relative;overflow:hidden;border-radius:12px;cursor:pointer}.port-item img{transition:transform .4s ease}.port-item:hover img{transform:scale(1.05)}.port-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;flex-direction:column;justify-content:flex-end;padding:16px;transition:background .3s}.port-item:hover .port-overlay{background:rgba(0,0,0,.6)}.port-cta{color:#fff;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:0;transform:translateY(8px);transition:all .3s}.port-item:hover .port-cta{opacity:1;transform:translateY(0)}.pv-fadein{animation:pageIn .5s ease forwards}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+   @keyframes fadeInFast{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+   @keyframes pageIn{from{opacity:0}to{opacity:1}}
+   @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+   @keyframes pillIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+   @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+   .link-fade{animation:fadeIn .5s ease forwards;opacity:0}
+   .pill{transition:all .18s ease!important}
+   .pill:hover{transform:scale(1.03)!important;filter:brightness(1.08)}
+   .pill:active{transform:scale(.97)!important}
+   .port-item{position:relative;overflow:hidden;border-radius:16px;cursor:pointer;transition:transform .3s ease,box-shadow .3s ease}
+   .port-item:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+   .port-item img{transition:transform .5s ease}
+   .port-item:hover img{transform:scale(1.08)}
+   .port-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 60%);display:flex;flex-direction:column;justify-content:flex-end;padding:16px}
+   .port-cta{color:#fff;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:0;transform:translateY(6px);transition:all .3s}
+   .port-item:hover .port-cta{opacity:1;transform:translateY(0)}
+   .pv-fadein{animation:pageIn .6s ease forwards}
+   .theme-btn{transition:all .2s ease!important}
+   .theme-btn:hover{transform:scale(1.25)!important}
+   .marquee-track{display:flex;width:max-content;animation:marquee 20s linear infinite}
+   .corner{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;opacity:.55;transition:opacity .2s;position:fixed;z-index:20}
+   .corner:hover{opacity:1}`}</style>
       <div style={{width:"100%",maxWidth:420,display:"flex",flexDirection:"column",alignItems:"center",gap:spacing*1.5}}>
         {/* Hero Banner */}
         {(profile as any).heroBanner && (
@@ -562,22 +452,31 @@ export default function ProfileView({ username }: { username: string }) {
             <div style={{fontSize:11,fontWeight:800,letterSpacing:"0.15em",opacity:.4,marginBottom:16,textTransform:"uppercase"}}>Shop</div>
             {shops.map(shop => (
               shop.products?.filter(p => p.active !== false).map(product => (
-                <div key={product.id} style={{display:"flex",alignItems:"center",gap:12,padding:12,borderRadius:12,background:`${text}08`,marginBottom:10,border:`1px solid ${text}12`}}>
-                  <div style={{width:56,height:56,borderRadius:8,overflow:"hidden",flexShrink:0,background:`${text}10`}}>
-                    {product.imageURL ? <img src={product.imageURL} alt={product.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>🛍️</div>}
+                <div key={product.id} style={{borderRadius:12,background:`${text}08`,marginBottom:10,border:`1px solid ${text}12`,overflow:"hidden"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12,padding:12}}>
+                    <div style={{width:56,height:56,borderRadius:8,overflow:"hidden",flexShrink:0,background:`${text}10`}}>
+                      {product.imageURL ? <img src={product.imageURL} alt={product.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>🛍️</div>}
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:700,fontSize:14,color:text}}>{product.name}</div>
+                      <div style={{fontSize:14,fontWeight:900,color:text,marginTop:2}}>${product.price.toFixed(2)}</div>
+                    </div>
+                    <button
+                      disabled={buyingProduct === product.id}
+                      onClick={() => { setEmailModal({ product, shop }); setEmailInput(""); }}
+                      style={{flexShrink:0,padding:"8px 16px",borderRadius:8,border:"none",background:btn,color:btnText,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit",opacity:buyingProduct===product.id?0.6:1}}
+                    >
+                      {buyingProduct === product.id ? "..." : "Buy"}
+                    </button>
                   </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:14,color:text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{product.name}</div>
-                    {product.description && <div style={{fontSize:12,opacity:.5,color:text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{product.description}</div>}
-                    <div style={{fontSize:14,fontWeight:900,color:text,marginTop:2}}>${product.price.toFixed(2)}</div>
-                  </div>
-                  <button
-                    disabled={buyingProduct === product.id}
-                    onClick={() => { setEmailModal({ product, shop }); setEmailInput(""); }}
-                    style={{flexShrink:0,padding:"8px 16px",borderRadius:8,border:"none",background:btn,color:btnText,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit",opacity:buyingProduct===product.id?0.6:1}}
-                  >
-                    {buyingProduct === product.id ? "..." : "Buy"}
-                  </button>
+                  {product.description && (
+                    <details style={{borderTop:`1px solid ${text}12`}}>
+                      <summary style={{padding:"6px 12px",fontSize:11,fontWeight:700,color:text,opacity:.5,letterSpacing:".05em",textTransform:"uppercase" as const,cursor:"pointer",listStyle:"none",display:"flex",justifyContent:"space-between"}}>
+                        <span>About this piece</span><span>▼</span>
+                      </summary>
+                      <div style={{padding:"8px 12px 12px",fontSize:13,color:text,opacity:.7,lineHeight:1.6}}>{product.description}</div>
+                    </details>
+                  )}
                 </div>
               ))
             ))}

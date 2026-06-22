@@ -13,6 +13,8 @@ import { getUserShops, ShopData } from "@/lib/shop";
 const css = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;background:#f8f8f8}::selection{background:#a855f7;color:#fff}button:active{transform:scale(.98)!important}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`;
 const ArrowLeft=()=>(<svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>);
 
+const ADMIN_UIDS = ["3eWTfkVvdRcUTAiHPawy0WSHm1O2"];
+
 export default function AnalyticsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -21,18 +23,55 @@ export default function AnalyticsPage() {
   const [events, setEvents] = useState<EventData[]>([]);
   const [shops, setShops] = useState<ShopData[]>([]);
   const [ready, setReady] = useState(false);
+  const [eventStats, setEventStats] = useState<Record<string, {count: number; revenue: number; net: number}>>({});
 
   useEffect(() => { if (!loading && !user) router.push("/dashboard"); }, [user, loading, router]);
 
   useEffect(() => {
     if (!user) return;
+    const isAdmin = ADMIN_UIDS.includes(user.uid);
     Promise.all([
       getUserProfile(user.uid),
       getUserLinks(user.uid),
-      getUserEvents(user.uid),
+      isAdmin
+        ? import("@/lib/firebase").then(({firestore}) =>
+            import("firebase/firestore").then(({collection, getDocs, query, orderBy}) =>
+              getDocs(query(collection(firestore, "events"), orderBy("createdAt","desc"))).then(snap =>
+                snap.docs.map(d => ({id: d.id, ...d.data()} as EventData))
+              )
+            )
+          )
+        : getUserEvents(user.uid),
       getUserShops(user.uid),
-    ]).then(([p, l, e, s]) => {
-      setProfile(p); setLinks(l); setEvents(e); setShops(s); setReady(true);
+    ]).then(async ([p, l, e, s]) => {
+      setProfile(p); setLinks(l); setEvents(e as EventData[]); setShops(s);
+
+      // Fetch order totals for each event
+      const { firestore } = await import("@/lib/firebase");
+      const { collection, getDocs, query, where } = await import("firebase/firestore");
+      const stats: Record<string, { count: number; revenue: number; net: number }> = {};
+      for (const ev of (e as EventData[])) {
+        const idsToCheck = [ev.id, (ev as any).altEventId].filter(Boolean) as string[];
+        let count = 0, revenue = 0, net = 0;
+        for (const eid of idsToCheck) {
+          const ordersQ = isAdmin
+            ? query(collection(firestore, "orders"), where("eventId", "==", eid))
+            : query(collection(firestore, "orders"), where("eventId", "==", eid), where("creatorUid", "==", user.uid));
+          const ordersSnap = await getDocs(ordersQ);
+          ordersSnap.forEach(d => {
+            count += 1;
+            const gross = d.data().amount || 0;          // buyer total, cents
+            revenue += gross;
+            // Creator net = ticket price minus GEMM 5%. Strip the $1.50 service fee if present.
+            const SERVICE_FEE = 260;
+            const ticketCents = gross >= SERVICE_FEE ? gross - SERVICE_FEE : gross;
+            net += Math.round(ticketCents * 0.95);
+          });
+        }
+        stats[ev.id] = { count, revenue, net };
+      }
+      setEventStats(stats);
+      setReady(true);
     });
   }, [user]);
 
@@ -134,6 +173,47 @@ export default function AnalyticsPage() {
             </div>
           </>
         )}
+        {/* Event Sales */}
+        {events.length > 0 && (
+          <div style={{ marginTop: 32 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, marginBottom: 12 }}>Event Sales</h2>
+            <div style={{ borderRadius: 16, background: "#fff", border: "1px solid rgba(0,0,0,0.06)", overflow: "hidden" }}>
+              {events.map((ev, i) => {
+                const stat = eventStats[ev.id] || { count: 0, revenue: 0, net: 0 };
+                return (
+                  <button
+                    key={ev.id}
+                    onClick={() => router.push(`/dashboard/event-detail?id=${ev.id}`)}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "2fr 1fr 1fr",
+                      width: "100%",
+                      padding: "16px 20px",
+                      background: "transparent",
+                      border: "none",
+                      borderBottom: i < events.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      alignItems: "center",
+                      transition: "background .15s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#f9f9f9"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 2 }}>{ev.title}</div>
+                      <div style={{ fontSize: 12, opacity: 0.5 }}>{ev.venueName || ev.location || ""}</div>
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>{stat.count} ticket{stat.count !== 1 ? "s" : ""}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>${(stat.net / 100).toFixed(2)}<span style={{ fontSize: 10, opacity: 0.4, fontWeight: 600, display: "block" }}>net after fees</span></div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

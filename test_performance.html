@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GEMM Performance Test</title>
+    <link rel="preload" href="/js/checkout-performance-monitor.js" as="script">
+    <link rel="preload" href="/js/optimized-checkout.js" as="script">
+    <link rel="stylesheet" href="/assets/performance-styles.css">
+</head>
+<body>
+    <h1>Performance Test Page</h1>
+    <button 
+        class="ticket-button" 
+        data-event-id="test123"
+        data-price="25"
+        onclick="optimizedCheckoutFlow(this)"
+    >
+        TEST TICKET BUTTON
+    </button>
+    
+    <script src="/js/checkout-performance-monitor.js"></script>
+    <script src="/js/optimized-checkout.js"></script>
+    
+    <script>
+        console.log('✅ Performance test page loaded');
+        console.log('📊 GemmMonitor available:', !!window.gemmMonitor);
+    </script>
+</body>
+</html>

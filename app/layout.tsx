@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://joingemm.com"),
   icons: { icon: "/favicon.svg" },
   title: "GEMM | The Operating System for Creators",
   description:
@@ -19,12 +20,22 @@ export const metadata: Metadata = {
     siteName: "GEMM",
     locale: "en_US",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "GEMM — The Operating System for Creators",
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "GEMM | The Operating System for Creators",
     description:
       "Sell products, host events, and customize your brand with a technology that feels alive.",
+    images: ["/og-image.png"],
   },
 };
 

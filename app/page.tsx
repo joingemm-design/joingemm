@@ -510,11 +510,12 @@ function PhoneCarousel() {
               <ShoppingBagIcon/>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
-              {[["PACK","$150"],["TEE","$45"],["HOODIE","$65"],["TEE 2","$50"]].map(([n,p]) => (
+              {[["DROP 001","$150","https://images.unsplash.com/photo-1588117305388-c2631a279f82?w=300&h=400&fit=crop"],["ESSENTIAL TEE","$45","https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=400&fit=crop"],["HEAVY HOODIE","$85","https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=400&fit=crop"],["LOGO CAP","$38","https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=300&h=400&fit=crop"]].map(([n,p,img]) => (
                 <div key={n} style={{
                   background: "var(--bg2)", borderRadius: 12, aspectRatio: "3/4",
                   border: "1px solid var(--border)", position: "relative", overflow: "hidden",
                 }}>
+                  <img src={img} alt={n} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 6, background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)" }}>
                     <div style={{ color: "#fff", fontSize: 9, fontWeight: 700, display: "flex", justifyContent: "space-between" }}>
                       <span>{n}</span><span>{p}</span>
@@ -543,7 +544,7 @@ function PhoneCarousel() {
           <div style={{ padding: "64px 24px 80px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, height: "100%" }}>
             <div style={{ position: "relative" }}>
               <div style={{ width: 80, height: 80, borderRadius: "50%", border: "2px solid var(--text)", padding: 4, background: "var(--card)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: "var(--bg2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 900, opacity: 0.3 }}>G</div>
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face" alt="Creator" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
               </div>
               <div style={{ position: "absolute", bottom: -4, right: -4, background: "#3b82f6", color: "#fff", fontSize: 8, fontWeight: 700, padding: "2px 6px", borderRadius: 9999, boxShadow: "0 2px 4px rgba(0,0,0,0.2)", border: "2px solid var(--bg)", display: "flex", alignItems: "center", gap: 2 }}>
                 <CheckIcon size={8} color="#fff"/> PRO
@@ -578,23 +579,31 @@ function PhoneCarousel() {
           {activeTab !== "event" && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 40, transition: "opacity 0.5s" }}/>}
           <PhoneNotch/>
           <div style={{ height: "60%", position: "relative" }}>
-            <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)" }}/>
+            <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&h=400&fit=crop" alt="Event" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #000 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }}/>
             <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, color: "#fff", zIndex: 3 }}>
               <span style={{ background: "#dc2626", padding: "2px 8px", fontSize: 9, fontWeight: 700, textTransform: "uppercase", borderRadius: 99, display: "inline-block", marginBottom: 4 }}>Upcoming</span>
-              <h3 style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1, marginBottom: 4 }}>Brock Seals Presents "Whole Order"</h3>
-              <p style={{ fontSize: 10, opacity: 0.8 }}>Legends' Gallery · St. Louis, MO</p>
+              <h3 style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1, marginBottom: 4 }}>Neon Nights: Live Art & Music</h3>
+              <p style={{ fontSize: 10, opacity: 0.8 }}>The Foundry · Chicago, IL</p>
             </div>
           </div>
           <div style={{ flex: 1, padding: 12, background: "#000", color: "#fff" }}>
             <div style={{ width: 32, height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 99, margin: "0 auto 10px" }}/>
-            <div style={{ display: "flex", gap: 12, alignItems: "center", padding: 8, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <div style={{ width: 40, height: 40, borderRadius: 4, background: "rgba(255,255,255,0.1)", flexShrink: 0 }}/>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Whole Order — 314 Day Pop-Up Exhibition</h4>
-                <p style={{ fontSize: 9, opacity: 0.5, marginTop: 2 }}>Saturday, March 14, 2026</p>
-              </div>
-              <ArrowRight size={12}/>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {[
+                {title:"Neon Nights: Live Art & Music",date:"Fri, May 2 · Chicago, IL",img:"https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=80&h=80&fit=crop"},
+                {title:"Sunday Market — Handmade Goods",date:"Sun, May 11 · Austin, TX",img:"https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=80&h=80&fit=crop"},
+                {title:"Rooftop Sessions Vol. 4",date:"Sat, May 17 · Atlanta, GA",img:"https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=80&h=80&fit=crop"},
+              ].map(ev => (
+                <div key={ev.title} style={{ display: "flex", gap: 8, alignItems: "center", padding: 8, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <img src={ev.img} alt={ev.title} style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "#fff" }}>{ev.title}</div>
+                    <div style={{ fontSize: 8, opacity: 0.5, marginTop: 1 }}>{ev.date}</div>
+                  </div>
+                  <ArrowRight size={10}/>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -686,7 +695,7 @@ export default function LandingPage() {
   async function handleDashboard() {
     if (user) router.push("/dashboard");
     else {
-      document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+      router.push("/auth/login");
     }
   }
 
@@ -759,7 +768,7 @@ export default function LandingPage() {
               {/* Right side */}
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <a href="#events" style={{
-                  display: "flex", alignItems: "center", gap: 8,
+                  display: isMobile ? "none" : "flex", alignItems: "center", gap: 8,
                   padding: "8px 16px", borderRadius: 9999, textDecoration: "none", color: "var(--text)",
                 }}>
                   <span style={{ position: "relative", display: "flex", width: 8, height: 8 }}>
@@ -770,6 +779,14 @@ export default function LandingPage() {
                     <span>Upcoming </span>Events
                   </span>
                 </a>
+                <a href="/auth/login" style={{
+                  padding: "8px 20px", borderRadius: 9999,
+                  fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+                  display: isMobile ? "none" : "flex", alignItems: "center", gap: 8,
+                  background: "transparent", color: "var(--text)",
+                  border: "1.5px solid var(--border)", cursor: "pointer", textDecoration: "none",
+                  transition: "all .2s",
+                }}>Start for free</a>
                 <button onClick={handleDashboard} style={{
                   padding: "8px 20px", borderRadius: 9999,
                   fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
@@ -810,67 +827,39 @@ export default function LandingPage() {
             }}>
               {/* ── LEFT SIDE ── */}
               <div style={{ textAlign: "left", zIndex: 10 }}>
-                {/* Badge — matches Wavey's green pill */}
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                  background: "#dcfce7", color: "#166534",
-                  padding: "6px 16px", borderRadius: 9999,
-                  fontSize: 14, fontWeight: 700, marginBottom: 32,
-                }}>
-                  <ZapIcon size={16}/> Start selling in 2 minutes
+                {/* Social proof badge */}
+                <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#dcfce7",color:"#166534",padding:"6px 16px",borderRadius:9999,fontSize:13,fontWeight:700,marginBottom:28}}>
+                  <ZapIcon size={14}/> Free to start — no credit card required
                 </div>
 
-                {/* Headline — matches Wavey */}
-                <h1 style={{
-                  fontSize: "clamp(3.5rem, 8vw, 6rem)", fontWeight: 900,
-                  letterSpacing: "-0.05em", lineHeight: 0.9, marginBottom: 32,
-                }}>
-                  One Link. <br/>
-                  <span style={{
-                    display: "inline-block", paddingRight: 16,
-                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                    backgroundImage: "linear-gradient(to right, var(--text), var(--accent2, rgba(128,128,128,0.5)))",
-                  }}>
-                    Infinite Potential.
+                {/* Headline */}
+                <h1 style={{fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:900,letterSpacing:"-0.05em",lineHeight:0.9,marginBottom:24}}>
+                  One link.<br/>
+                  <span style={{display:"inline-block",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundImage:"linear-gradient(to right, var(--text), var(--accent2, rgba(128,128,128,0.8)))"}}>
+                    Infinite potential.
                   </span>
                 </h1>
 
-                {/* Subtitle — matches Wavey */}
-                <p style={{
-                  fontSize: 20, opacity: 0.7, marginBottom: 40,
-                  maxWidth: 480, lineHeight: 1.6, fontWeight: 500,
-                }}>
-                  The operating system for creators. Sell products, host events, and customize your brand with a technology that feels alive.
+                {/* Subtitle */}
+                <p style={{fontSize:18,opacity:0.6,marginBottom:32,maxWidth:440,lineHeight:1.7,fontWeight:500}}>
+                  One link for your shop, events, services, and brand. Built for independent creators who move fast.
                 </p>
-                {/* CTA + Stars + Sales Sim — matches Wavey layout */}
-                <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12 }}>
-                    <a href="#pricing" style={{
-                      padding: "16px 32px", borderRadius: 9999, fontWeight: 700, fontSize: 18,
-                      display: "flex", alignItems: "center", gap: 8,
-                      background: "var(--text)", color: "var(--bg)", textDecoration: "none",
-                      boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
-                      border: "2px solid var(--text)", transition: "transform 0.2s", cursor: "pointer",
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
-                    onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
-                      Get Started <ArrowRight size={20}/>
-                    </a>
-                    {/* Star ratings — matches Wavey */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, opacity: 0.6 }}>
-                      <div style={{ display: "flex", gap: 2 }}>
-                        {[1,2,3,4,5].map(i => <StarIcon key={i}/>)}
-                      </div>
-                      <span>Loved by top creators</span>
-                    </div>
-                  </div>
 
-                  {/* Sales Simulator — matches Wavey */}
-                  <div style={{ display: "none" }} className="desktop-only">
-                    {/* Show on lg screens */}
-                  </div>
-                  <SalesSimulator />
+
+
+                {/* CTA buttons */}
+                <div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:32}}>
+                  <a href="/auth/login" style={{padding:"16px 32px",borderRadius:9999,fontWeight:800,fontSize:16,display:"flex",alignItems:"center",gap:8,background:"var(--text)",color:"var(--bg)",textDecoration:"none",boxShadow:"0 20px 25px -5px rgba(0,0,0,0.15)",transition:"transform 0.2s"}}
+                    onMouseEnter={e=>(e.currentTarget.style.transform="scale(1.04)")}
+                    onMouseLeave={e=>(e.currentTarget.style.transform="scale(1)")}>
+                    Start for free <ArrowRight size={18}/>
+                  </a>
+
                 </div>
+
+
+
+                <SalesSimulator />
               </div>
 
               {/* ── RIGHT SIDE — Interactive Phone Carousel ── */}
@@ -913,10 +902,126 @@ export default function LandingPage() {
             </div>
           </div>
 
+
+          {/* ════════════════════════════════════════════════════════════════════
+              STATS STRIP
+          ════════════════════════════════════════════════════════════════════ */}
+          <section style={{padding:"48px 16px",background:"var(--bg2)",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}>
+            <div style={{maxWidth:1000,margin:"0 auto",display:"flex",justifyContent:"space-around",flexWrap:"wrap",gap:32}}>
+              {[["2,100+","Creators"],["$1.2M+","Earned by creators"],["48","Cities"],["98%","Creator satisfaction"]].map(([num,label])=>(
+                <div key={label} style={{textAlign:"center"}}>
+                  <div style={{fontSize:"clamp(28px,5vw,48px)",fontWeight:900,letterSpacing:"-.03em",lineHeight:1,color:"var(--text)"}}>{num}</div>
+                  <div style={{fontSize:12,fontWeight:700,opacity:.4,letterSpacing:".1em",textTransform:"uppercase" as const,marginTop:6}}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ════════════════════════════════════════════════════════════════════
+              CREATOR SPOTLIGHT
+          ════════════════════════════════════════════════════════════════════ */}
+          <section style={{padding:"96px 16px",background:"var(--bg)"}}>
+            <div style={{maxWidth:1100,margin:"0 auto"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:48,flexWrap:"wrap",gap:16}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,opacity:.4,marginBottom:8}}>Featured Creators</div>
+                  <h2 style={{fontSize:"clamp(28px,5vw,48px)",fontWeight:900,letterSpacing:"-.03em",lineHeight:1}}>Built for creators<br/>who move fast.</h2>
+                </div>
+                <a href="/discover" style={{padding:"12px 24px",borderRadius:9999,border:"1.5px solid var(--border)",color:"var(--text)",textDecoration:"none",fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:8}}>
+                  View all creators <ArrowUpRight size={14}/>
+                </a>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:16}}>
+                {[
+                  {name:"Brock Seals",handle:"palettebyseals",city:"St. Louis, MO",type:"Visual Artist",earned:"$18,400",img:"https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=300&fit=crop"},
+                  {name:"Maya Chen",handle:"mayacreates",city:"Chicago, IL",type:"Photographer",earned:"$24,100",img:"https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=400&h=300&fit=crop"},
+                  {name:"Jordan Wells",handle:"jwellsmusic",city:"Atlanta, GA",type:"Musician",earned:"$31,800",img:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop"},
+                  {name:"Priya Nair",handle:"priyaevents",city:"Houston, TX",type:"Event Host",earned:"$42,200",img:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=300&fit=crop"},
+                ].map(c=>(
+                  <div key={c.handle} style={{borderRadius:20,overflow:"hidden",border:"1px solid var(--border)",background:"var(--bg2)",transition:"transform .2s"}}
+                    onMouseEnter={e=>e.currentTarget.style.transform="translateY(-4px)"}
+                    onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+                    <div style={{height:160,position:"relative",overflow:"hidden"}}>
+                      <img src={c.img} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                      <div style={{position:"absolute",top:12,right:12,background:"rgba(0,0,0,.6)",backdropFilter:"blur(8px)",borderRadius:9999,padding:"4px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{c.type}</div>
+                    </div>
+                    <div style={{padding:16}}>
+                      <div style={{fontWeight:900,fontSize:15,marginBottom:2}}>{c.name}</div>
+                      <div style={{fontSize:12,opacity:.4,fontWeight:600,marginBottom:12}}>{c.city}</div>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end"}}>
+                        <span style={{fontSize:11,fontWeight:800,color:"var(--text)",opacity:.5}}>View →</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ════════════════════════════════════════════════════════════════════
+              DUAL CTA — CREATORS & FANS
+          ════════════════════════════════════════════════════════════════════ */}
+          <section style={{padding:"0 16px 96px",background:"var(--bg)"}}>
+            <div style={{maxWidth:1100,margin:"0 auto",display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:16}}>
+              <div style={{borderRadius:24,padding:48,background:"var(--text)",color:"var(--bg)"}}>
+                <div style={{fontSize:11,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,opacity:.5,marginBottom:16}}>For Creators</div>
+                <h3 style={{fontSize:"clamp(24px,4vw,36px)",fontWeight:900,letterSpacing:"-.03em",marginBottom:16,lineHeight:1.1}}>Launch your creative empire today.</h3>
+                <p style={{fontSize:15,opacity:.6,marginBottom:32,lineHeight:1.6}}>Shop, events, services, links — everything in one place. Free to start.</p>
+                <a href="/auth/login" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"14px 28px",borderRadius:9999,background:"var(--bg)",color:"var(--text)",textDecoration:"none",fontWeight:800,fontSize:14}}>
+                  Start for free <ArrowRight size={16}/>
+                </a>
+              </div>
+              <div style={{borderRadius:24,padding:48,background:"var(--bg2)",border:"1px solid var(--border)"}}>
+                <div style={{fontSize:11,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,opacity:.4,marginBottom:16}}>For Fans</div>
+                <h3 style={{fontSize:"clamp(24px,4vw,36px)",fontWeight:900,letterSpacing:"-.03em",marginBottom:16,lineHeight:1.1}}>Discover creators near you.</h3>
+                <p style={{fontSize:15,opacity:.5,marginBottom:32,lineHeight:1.6}}>Find artists, musicians, event hosts, and more in your city. Support the culture.</p>
+                <a href="/auth/login" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"14px 28px",borderRadius:9999,background:"var(--text)",color:"var(--bg)",textDecoration:"none",fontWeight:800,fontSize:14}}>
+                  Explore creators <ArrowUpRight size={16}/>
+                </a>
+              </div>
+            </div>
+          </section>
+
+          {/* ════════════════════════════════════════════════════════════════════
+              CONTENT GRID
+          ════════════════════════════════════════════════════════════════════ */}
+          <section style={{padding:"96px 16px",background:"var(--bg2)",borderTop:"1px solid var(--border)"}}>
+            <div style={{maxWidth:1100,margin:"0 auto"}}>
+              <div style={{textAlign:"center",marginBottom:48}}>
+                <div style={{fontSize:12,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,opacity:.4,marginBottom:12}}>Creator Work</div>
+                <h2 style={{fontSize:"clamp(28px,5vw,48px)",fontWeight:900,letterSpacing:"-.03em"}}>Culture happens here.</h2>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:8}}>
+                {[
+                  {img:"https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=300&h=300&fit=crop",creator:"Zara Okonkwo",type:"Art Print"},
+                  {img:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop",creator:"Marcus Lee",type:"Live Music"},
+                  {img:"https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=300&h=300&fit=crop",creator:"Ami Torres",type:"Photography"},
+                  {img:"https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop",creator:"Devon Park",type:"Beat Tape"},
+                  {img:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300&h=300&fit=crop",creator:"Priya Nair",type:"Event Tickets"},
+                  {img:"https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=300&fit=crop",creator:"Lena Marsh",type:"Handmade Goods"},
+                  {img:"https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=300&h=300&fit=crop",creator:"Chris Vega",type:"DJ Set"},
+                  {img:"https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=300&h=300&fit=crop",creator:"Jordan Wells",type:"Concert"},
+                ].map((item,i)=>(
+                  <div key={i} style={{aspectRatio:"1",borderRadius:12,overflow:"hidden",position:"relative"}}>
+                    <img src={item.img} alt={item.creator} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 50%)",display:"flex",flexDirection:"column" as const,justifyContent:"flex-end",padding:12}}>
+                      <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,.6)"}}>{item.type}</div>
+                      <div style={{fontSize:12,fontWeight:800,color:"#fff"}}>{item.creator}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{textAlign:"center",marginTop:32}}>
+                <a href="/discover" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"14px 32px",borderRadius:9999,border:"1.5px solid var(--border)",color:"var(--text)",textDecoration:"none",fontWeight:700,fontSize:14}}>
+                  Explore all creators <ArrowUpRight size={14}/>
+                </a>
+              </div>
+            </div>
+          </section>
           {/* ════════════════════════════════════════════════════════════════════
               EVENTS SECTION — matches Wavey
           ════════════════════════════════════════════════════════════════════ */}
-          <section id="events" style={{
+          {false && <section id="events" style={{
             padding: "96px 16px", background: "var(--bg2)",
             borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
             transition: "background 0.5s",
@@ -989,7 +1094,7 @@ export default function LandingPage() {
                 )}
               </div>
             </div>
-          </section>
+          </section>}
 
           {/* ════════════════════════════════════════════════════════════════════
               COST / REVENUE SECTION — matches Wavey
@@ -1079,128 +1184,83 @@ export default function LandingPage() {
             </div>
           </section>
 
+
           {/* ════════════════════════════════════════════════════════════════════
-              PRICING — matches Wavey
+              PRICING — Dubsado style
           ════════════════════════════════════════════════════════════════════ */}
-          <section id="pricing" style={{ padding: "96px 16px", background: "var(--bg2)", transition: "background 0.5s" }}>
-            <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-              <div ref={addRevealRef} style={{ textAlign: "center", marginBottom: 40, ...revealStyle }}>
-                <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", fontWeight: 900, letterSpacing: "-0.03em", marginBottom: 32 }}>
-                  Focus on your creative universe.
-                </h2>
-                {/* Toggle — matches Wavey */}
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 24,
-                  padding: "8px 24px 8px 8px", borderRadius: 9999,
-                  border: "1px solid var(--border)", background: "var(--card)",
-                  backdropFilter: "blur(8px)", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-                }}>
-                  <div style={{ display: "flex", background: "rgba(128,128,128,0.08)", borderRadius: 9999, padding: 4 }}>
-                    {["Monthly","Yearly"].map(label => (
-                      <button key={label} onClick={() => setYearly(label === "Yearly")}
-                        style={{
-                          position: "relative", zIndex: 10,
-                          padding: "10px 24px", fontSize: 12, fontWeight: 700, textTransform: "uppercase",
-                          border: "none", borderRadius: 9999, cursor: "pointer",
-                          fontFamily: "inherit", transition: "all 0.3s",
-                          background: (label === "Yearly") === yearly ? "var(--text)" : "transparent",
-                          color: (label === "Yearly") === yearly ? "var(--bg)" : "var(--text)",
-                        }}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#22c55e" }}>Save 30%</span>
+          {false && <section id="pricing" style={{padding:"96px 16px",background:"var(--bg2)",transition:"background 0.3s"}}>
+            <div style={{maxWidth:900,margin:"0 auto"}}>
+              {/* Header */}
+              <div style={{textAlign:"center",marginBottom:56}}>
+                <h2 style={{fontSize:"clamp(2rem,5vw,3.5rem)",fontWeight:900,letterSpacing:"-.04em",marginBottom:12}}>Simple, honest pricing.</h2>
+                <p style={{fontSize:16,opacity:.5,fontWeight:500,maxWidth:400,margin:"0 auto",lineHeight:1.6}}>Start free. Upgrade when you&apos;re ready. Only pay when you earn.</p>
+                {/* Toggle */}
+                <div style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:24,padding:4,borderRadius:9999,border:"1px solid var(--border)",background:"var(--card)"}}>
+                  {["Monthly","Yearly"].map(label=>(
+                    <button key={label} onClick={()=>setYearly(label==="Yearly")} style={{padding:"8px 20px",borderRadius:9999,fontSize:12,fontWeight:700,border:"none",cursor:"pointer",fontFamily:"inherit",transition:"all .2s",background:(label==="Yearly")===yearly?"var(--text)":"transparent",color:(label==="Yearly")===yearly?"var(--bg)":"var(--text)"}}>
+                      {label}{label==="Yearly"&&<span style={{marginLeft:6,fontSize:10,color:(label==="Yearly")===yearly?"var(--bg)":"#22c55e",fontWeight:800}}>-20%</span>}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 24, paddingTop: 16, alignItems: "stretch", ...revealStyle }}>
-                {PLANS.map(plan => (
-                  <div key={plan.key} style={{
-                    position: "relative", padding: 32, borderRadius: 32,
-                    border: plan.featured ? "1px solid var(--text)" : "1px solid var(--border)",
-                    display: "flex", flexDirection: "column",
-                    background: "var(--card)", color: "var(--text)",
-                    transition: "transform 0.3s", cursor: "pointer",
-                    boxShadow: plan.featured ? "0 25px 50px -12px rgba(0,0,0,0.25)" : "0 10px 15px -3px rgba(0,0,0,0.1)",
-                    transform: plan.featured ? "scale(1.05)" : "scale(1)",
-                    zIndex: plan.featured ? 10 : 1,
-                    ...(plan.featured ? { outline: `2px solid var(--text)` } : {}),
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.transform = plan.featured ? "scale(1.05) translateY(-4px)" : "translateY(-4px)")}
-                  onMouseLeave={e => (e.currentTarget.style.transform = plan.featured ? "scale(1.05)" : "scale(1)")}>
 
-                    {plan.badge && (
-                      <div style={{
-                        position: "absolute", top: 0, left: "50%", transform: "translate(-50%, -50%)",
-                        padding: "6px 16px", borderRadius: 9999,
-                        fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-                        background: plan.badge.bg, color: plan.badge.fg,
-                        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.2)", border: `2px solid ${plan.badge.bg}`,
-                      }}>
-                        {plan.badge.label}
-                      </div>
-                    )}
 
-                    <div style={{ marginBottom: 24 }}>
-                      <h3 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                        {plan.name} {plan.key === "empire" && <CrownIcon/>}
-                      </h3>
-                      <p style={{ fontSize: 12, opacity: 0.6, minHeight: 32, fontWeight: 500 }}>{plan.tagline}</p>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "flex-end", gap: 4, marginBottom: 8 }}>
-                      <span style={{ fontSize: 48, fontWeight: 900, letterSpacing: "-0.05em" }}>${yearly ? plan.yearly : plan.monthly}</span>
-                      <span style={{ fontSize: 14, fontWeight: 500, opacity: 0.6, marginBottom: 8 }}>/mo</span>
-                    </div>
-
-                    {plan.monthly > 0 && yearly && (
-                      <p style={{ fontSize: 10, fontWeight: 700, color: "#22c55e", marginBottom: 24, display: "flex", alignItems: "center", gap: 4 }}>
-                        ↗ Save ${(plan.monthly - plan.yearly) * 12}/year
-                      </p>
-                    )}
-
-                    <button onClick={() => { if (plan.key === "velocity") window.open(yearly ? "https://buy.stripe.com/00w14n7gBaf7cfy1yn4gg05" : "https://buy.stripe.com/9B65kD30l72VenGdh54gg03", "_blank"); else if (plan.key === "empire") window.open(yearly ? "https://buy.stripe.com/7sY8wP6cx2MFcfygth4gg06" : "https://buy.stripe.com/3cIbJ1gRb0Ex6Ve1yn4gg04", "_blank"); else router.push("/dashboard"); }} style={{
-                      width: "100%", padding: 16, borderRadius: 12,
-                      fontWeight: 700, fontSize: 14, marginBottom: 32,
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                      fontFamily: "inherit", cursor: "pointer", transition: "transform 0.15s",
-                      border: plan.btnStyle === "outline" ? "1.5px solid var(--border)" : "none",
-                      background: plan.btnStyle === "solid" ? "var(--text)" : plan.btnStyle === "gold" ? "#fbbf24" : "transparent",
-                      color: plan.btnStyle === "solid" ? "var(--bg)" : plan.btnStyle === "gold" ? "#000" : "var(--text)",
-                    }}>
-                      Get Started <ArrowRight size={16}/>
-                    </button>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
-                      {plan.features.map(f => (
-                        <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 12, fontSize: 14 }}>
-                          <CheckIcon size={16} color={plan.checkColor}/>
-                          <span style={{ opacity: 0.8, fontWeight: 500 }}>{f}</span>
-                        </div>
-                      ))}
-                    </div>
+              {/* Velocity + Empire side by side */}
+              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:16}}>
+                {/* Velocity */}
+                <div style={{borderRadius:20,border:"2px solid var(--text)",padding:32,background:"var(--card)",position:"relative"}}>
+                  <div style={{position:"absolute",top:-14,left:24,background:"var(--text)",color:"var(--bg)",fontSize:10,fontWeight:800,letterSpacing:".1em",textTransform:"uppercase" as const,padding:"4px 14px",borderRadius:9999}}>MOST POPULAR</div>
+                  <div style={{fontWeight:900,fontSize:24,marginBottom:6}}>Velocity</div>
+                  <div style={{fontSize:13,opacity:.5,fontWeight:500,marginBottom:24}}>For creators hitting their stride.</div>
+                  <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:4}}>
+                    <span style={{fontSize:52,fontWeight:900,letterSpacing:"-.04em",lineHeight:1}}>{yearly?10:15}</span>
+                    <span style={{fontSize:13,opacity:.5,marginBottom:8}}>/month</span>
                   </div>
-                ))}
+                  {yearly&&<div style={{fontSize:11,color:"#22c55e",fontWeight:700,marginBottom:20}}>↗ Save $60/year</div>}
+                  {!yearly&&<div style={{marginBottom:20}}/>}
+                  <button onClick={()=>window.open(yearly?"https://buy.stripe.com/00w14n7gBaf7cfy1yn4gg05":"https://buy.stripe.com/9B65kD30l72VenGdh54gg03","_blank")} style={{width:"100%",padding:"14px",borderRadius:12,background:"var(--text)",color:"var(--bg)",border:"none",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"inherit",marginBottom:28,transition:"opacity .2s"}}>
+                    Get started <ArrowRight size={15}/>
+                  </button>
+                  <div style={{fontSize:11,fontWeight:700,opacity:.4,letterSpacing:".08em",textTransform:"uppercase" as const,marginBottom:12}}>Everything in Spark, plus:</div>
+                  <div style={{display:"flex",flexDirection:"column" as const,gap:12}}>
+                    {["Unlimited links & pages","Shop with Stripe payouts","Event ticketing","Services & inquiries","Portfolio & press section","QR code generator","Basic analytics","Email support"].map(f=>(
+                      <div key={f} style={{display:"flex",alignItems:"center",gap:10,fontSize:13,fontWeight:600}}>
+                        <CheckIcon size={14} color="var(--text)"/><span style={{opacity:.8}}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Empire */}
+                <div style={{borderRadius:20,border:"1px solid var(--border)",padding:32,background:"var(--card)",position:"relative"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                    <div style={{fontWeight:900,fontSize:24}}>Empire</div><CrownIcon/>
+                  </div>
+                  <div style={{fontSize:13,opacity:.5,fontWeight:500,marginBottom:24}}>The operating system for dominance.</div>
+                  <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:4}}>
+                    <span style={{fontSize:52,fontWeight:900,letterSpacing:"-.04em",lineHeight:1}}>{yearly?24:35}</span>
+                    <span style={{fontSize:13,opacity:.5,marginBottom:8}}>/month</span>
+                  </div>
+                  {yearly&&<div style={{fontSize:11,color:"#22c55e",fontWeight:700,marginBottom:20}}>↗ Save $132/year</div>}
+                  {!yearly&&<div style={{marginBottom:20}}/>}
+                  <button onClick={()=>window.open(yearly?"https://buy.stripe.com/7sY8wP6cx2MFcfygth4gg06":"https://buy.stripe.com/3cIbJ1gRb0Ex6Ve1yn4gg04","_blank")} style={{width:"100%",padding:"14px",borderRadius:12,background:"transparent",color:"var(--text)",border:"1.5px solid var(--border)",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"inherit",marginBottom:28,transition:"all .2s"}}>
+                    Get started <ArrowRight size={15}/>
+                  </button>
+                  <div style={{fontSize:11,fontWeight:700,opacity:.4,letterSpacing:".08em",textTransform:"uppercase" as const,marginBottom:12}}>Everything in Velocity, plus:</div>
+                  <div style={{display:"flex",flexDirection:"column" as const,gap:12}}>
+                    {["Custom domain","Advanced branding & themes","CRM (500 contacts)","Priority support","Early access to new features","Dedicated account manager","Custom pages builder","Revenue analytics"].map(f=>(
+                      <div key={f} style={{display:"flex",alignItems:"center",gap:10,fontSize:13,fontWeight:600}}>
+                        <CheckIcon size={14} color="var(--text)"/><span style={{opacity:.8}}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div style={{ marginTop: 48, textAlign: "center" }}>
-                <button onClick={() => router.push("/dashboard")} style={{
-                  fontSize: 14, fontWeight: 500, opacity: 0.6,
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                  padding: "12px 24px", borderRadius: 9999,
-                  border: "none", background: "transparent", color: "var(--text)",
-                  cursor: "pointer", fontFamily: "inherit",
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
-                onMouseLeave={e => (e.currentTarget.style.opacity = "0.6")}>
-                  Start with <strong style={{ textDecoration: "underline", textUnderlineOffset: 4 }}>Spark</strong> (Free Forever) <ArrowRight size={16}/>
-                </button>
-                <p style={{ fontSize: 10, opacity: 0.6, marginTop: 4 }}>Limited features. Upgrade anytime.</p>
-              </div>
+
             </div>
-          </section>
+          </section>}
 
           {/* ════════════════════════════════════════════════════════════════════
               FOOTER — matches Wavey
@@ -1220,8 +1280,8 @@ export default function LandingPage() {
                 <div>
                   <h4 style={{ fontWeight: 700, marginBottom: 16 }}>Platform</h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, opacity: 0.6 }}>
-                    <a href="#pricing" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Login</a>
-                    <a href="#pricing" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Pricing</a>
+                    <a href="/auth/login" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Login</a>
+                    <a href="/auth/login" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Pricing</a>
                     <a href="#events" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Explore Events</a>
                   </div>
                 </div>

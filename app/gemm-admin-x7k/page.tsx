@@ -7,7 +7,7 @@ import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, query, orderBy 
 
 const ADMIN_UID = "3eWTfkVvdRcUTAiHPawy0WSHm1O2";
 
-type Tab = "overview" | "users" | "events" | "orders" | "shops" | "quotes";
+type Tab = "overview" | "users" | "events" | "orders" | "shops" | "quotes" | "inquiries";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -21,6 +21,7 @@ export default function AdminPage() {
   const [shops, setShops] = useState<any[]>([]);
   const [shopOrders, setShopOrders] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
+  const [inquiries, setInquiries] = useState<any[]>([]);
   const [banned, setBanned] = useState<string[]>([]);
   const [suspended, setSuspended] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
@@ -37,13 +38,14 @@ export default function AdminPage() {
 
   async function fetchAll() {
     try {
-      const [uSnap, eSnap, oSnap, sSnap, soSnap, qSnap] = await Promise.all([
+      const [uSnap, eSnap, oSnap, sSnap, soSnap, qSnap, iSnap] = await Promise.all([
         getDocs(query(collection(db, "users"), orderBy("createdAt", "desc"))),
         getDocs(query(collection(db, "events"), orderBy("createdAt", "desc"))),
         getDocs(query(collection(db, "orders"), orderBy("createdAt", "desc"))),
         getDocs(query(collection(db, "shops"), orderBy("createdAt", "desc"))),
         getDocs(query(collection(db, "shop_orders"), orderBy("createdAt", "desc"))),
         getDocs(query(collection(db, "quote_requests"), orderBy("createdAt", "desc"))),
+        getDocs(query(collection(db, "inquiries"), orderBy("createdAt", "desc"))),
         getDocs(collection(db, "banned")),
         getDocs(collection(db, "suspended")),
       ]);
@@ -53,6 +55,7 @@ export default function AdminPage() {
       setShops(sSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       setShopOrders(soSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       setQuotes(qSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setInquiries(iSnap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) { console.error(e); }
   }
 
@@ -161,7 +164,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.04)", borderRadius: 100, padding: 4, marginBottom: 24, width: "fit-content" }}>
-          {(["overview","users","events","orders"] as Tab[]).map(t => (
+          {(["overview","users","events","orders","inquiries","shops","quotes"] as Tab[]).map(t => (
             <button key={t} style={tabStyle(t)} onClick={() => setTab(t)}>{t.charAt(0).toUpperCase() + t.slice(1)}</button>
           ))}
         </div>
@@ -375,6 +378,42 @@ export default function AdminPage() {
               </tbody>
             </table>
             {orders.length === 0 && <div style={{ textAlign: "center", padding: 40, opacity: 0.3 }}>No orders yet</div>}
+          </div>
+        )}
+
+        {/* Inquiries */}
+        {tab === "inquiries" && (
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div style={{fontWeight:900,fontSize:18}}>Inquiries ({inquiries.length})</div>
+              <div style={{fontSize:13,opacity:.4}}>{inquiries.filter(i=>!i.read).length} unread</div>
+            </div>
+            {inquiries.length===0&&<div style={{textAlign:"center",padding:60,opacity:.3}}>No inquiries yet</div>}
+            {inquiries.map(inq=>(
+              <div key={inq.id} style={{padding:20,borderRadius:12,background:"rgba(255,255,255,0.04)",border:"1px solid "+(inq.read?"rgba(255,255,255,0.06)":"rgba(99,102,241,0.4)"),position:"relative"}}>
+                {!inq.read&&<div style={{position:"absolute",top:16,right:16,width:8,height:8,borderRadius:"50%",background:"#6366f1"}}/>}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,flexWrap:"wrap",gap:8}}>
+                  <div>
+                    <div style={{fontWeight:900,fontSize:16}}>{inq.firstName&&inq.lastName?inq.firstName+" "+inq.lastName:inq.name||"—"}</div>
+                    <a href={"mailto:"+inq.email} style={{fontSize:13,color:"#818cf8",textDecoration:"none"}}>{inq.email}</a>
+                    {inq.phone&&<span style={{fontSize:13,opacity:.5,marginLeft:12}}>📞 {inq.phone}</span>}
+                  </div>
+                  <div style={{fontSize:12,opacity:.4}}>{inq.createdAt?.toDate?.()?.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"})||"—"}</div>
+                </div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+                  {inq.serviceType&&<span style={{padding:"4px 12px",borderRadius:9999,background:"rgba(99,102,241,0.2)",color:"#818cf8",fontSize:12,fontWeight:700}}>{inq.serviceType}</span>}
+                  {inq.deadline&&<span style={{padding:"4px 12px",borderRadius:9999,background:"rgba(255,255,255,0.06)",fontSize:12,fontWeight:600,opacity:.7}}>📅 {inq.deadline}</span>}
+                  {inq.budget&&<span style={{padding:"4px 12px",borderRadius:9999,background:"rgba(34,197,94,0.15)",color:"#22c55e",fontSize:12,fontWeight:700}}>💰 {inq.budget}</span>}
+                  {inq.referral&&<span style={{padding:"4px 12px",borderRadius:9999,background:"rgba(255,255,255,0.04)",fontSize:12,opacity:.5}}>via {inq.referral}</span>}
+                </div>
+                {inq.message&&<div style={{fontSize:14,lineHeight:1.7,opacity:.7,marginBottom:inq.extra?12:0,padding:16,background:"rgba(255,255,255,0.03)",borderRadius:8}}>{inq.message}</div>}
+                {inq.extra&&<div style={{fontSize:13,lineHeight:1.6,opacity:.5,marginTop:8,padding:"12px 16px",background:"rgba(255,255,255,0.02)",borderRadius:8,fontStyle:"italic"}}>{inq.extra}</div>}
+                <div style={{display:"flex",gap:8,marginTop:12}}>
+                  <a href={"mailto:"+inq.email+"?subject=Re: Your inquiry&body=Hi "+(inq.firstName||inq.name)+","} style={{padding:"8px 16px",borderRadius:8,background:"rgba(99,102,241,0.2)",color:"#818cf8",fontSize:12,fontWeight:700,textDecoration:"none"}}>Reply →</a>
+                  <span style={{padding:"8px 16px",borderRadius:8,background:"rgba(255,255,255,0.04)",fontSize:12,opacity:.4}}>Creator: {users.find(u=>u.id===inq.creatorId)?.displayName||inq.creatorId?.slice(0,8)||"—"}</span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

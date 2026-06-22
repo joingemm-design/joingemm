@@ -57,7 +57,7 @@ export default function ContactPage() {
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", opacity: 0.4, marginBottom: 8 }}>YOUR NAME</div>
-                <input type="text" placeholder="Crystal B" value={name} onChange={e => setName(e.target.value)}
+                <input type="text" placeholder="Nicole S" value={name} onChange={e => setName(e.target.value)}
                   style={{ width: "100%", padding: "14px 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", fontSize: 14, fontFamily: "inherit" }}/>
               </div>
               <div>

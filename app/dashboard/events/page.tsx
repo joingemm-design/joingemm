@@ -17,6 +17,8 @@ const MapIcon=()=>(<svg width={14} height={14} viewBox="0 0 24 24" fill="none" s
 const SparkIcon=()=>(<svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>);
 const ImgPlaceholder=()=>(<svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>);
 
+const ADMIN_UIDS = ["3eWTfkVvdRcUTAiHPawy0WSHm1O2"];
+
 export default function EventPortalPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -27,10 +29,26 @@ export default function EventPortalPage() {
 
   useEffect(() => { if (!loading && !user) router.push("/dashboard"); }, [user, loading, router]);
 
+  const isAdmin = !!user && ADMIN_UIDS.includes(user.uid);
+
   useEffect(() => {
     if (!user) return;
-    getUserEvents(user.uid).then(e => { setEvents(e); setEventsLoading(false); });
-  }, [user]);
+    if (isAdmin) {
+      // Admin sees all events
+      import("@/lib/firebase").then(({ firestore }) => {
+        import("firebase/firestore").then(({ collection, getDocs, query, orderBy }) => {
+          const q = query(collection(firestore, "events"), orderBy("createdAt", "desc"));
+          getDocs(q).then(snap => {
+            const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as EventData));
+            setEvents(list);
+            setEventsLoading(false);
+          });
+        });
+      });
+    } else {
+      getUserEvents(user.uid).then(e => { setEvents(e); setEventsLoading(false); });
+    }
+  }, [user, isAdmin]);
 
   function getEventStatus(event: EventData): "upcoming"|"active"|"passed" {
     if (!event.published) return "upcoming";
@@ -129,7 +147,7 @@ export default function EventPortalPage() {
             {filtered.map(event => {
               const status = getEventStatus(event);
               return (
-                <button key={event.id} onClick={() => router.push(`/dashboard/events/new?edit=${event.id}`)}
+                <button key={event.id} onClick={() => router.push(`/dashboard/event-detail?id=${event.id}`)}
                   style={{
                     padding:16, borderRadius:16, border:"1px solid #e5e5e5", background:"#fff",
                     cursor:"pointer", textAlign:"left", fontFamily:"inherit", color:"#000",

@@ -1,0 +1,116 @@
+{
+  "__collections__": {
+    "shops": {
+      "brockseals-shop-001": {
+        "uid": "9ppSAQTMFchFf8JrACZg0S3OFXj1",
+        "name": "Seals Shop",
+        "description": "Original art, prints, and custom sneakers by Brock Seals",
+        "isPublic": true,
+        "active": true,
+        "products": [
+          {
+            "id": "p_1",
+            "name": "\"Cheers\"",
+            "price": 25,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2026/01/IMG_4866-300x300.jpg",
+            "category": "Art Print",
+            "active": true
+          },
+          {
+            "id": "p_2",
+            "name": "\"Look Ma, I can fly\" (Print)",
+            "price": 25,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2025/11/IMG_4798-300x300.jpg",
+            "category": "Art Print",
+            "active": true
+          },
+          {
+            "id": "p_3",
+            "name": "Tay Tay's Beads (Print)",
+            "price": 25,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2025/10/15D57276-193E-422A-B07E-EC076B3093A9-300x300.jpg",
+            "category": "Art Print",
+            "active": true
+          },
+          {
+            "id": "p_4",
+            "name": "\"WE ARE ONE\" (Print)",
+            "price": 25,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2025/05/weareone-300x300.png",
+            "category": "Art Print",
+            "active": true
+          },
+          {
+            "id": "p_5",
+            "name": "314 Day 2023",
+            "price": 25,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2026/03/314Day-300x300.jpg",
+            "category": "Art Print",
+            "active": true
+          },
+          {
+            "id": "p_6",
+            "name": "314 Day Print Sale",
+            "price": 25,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2026/03/53FEC2FE-8340-4C0C-A87B-2909E20B68D9-300x300.jpg",
+            "category": "Art Print",
+            "active": true
+          },
+          {
+            "id": "p_7",
+            "name": "Have A Nice Day (Leather Converse)",
+            "price": 222.22,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2025/11/IMG_4795-300x300.jpg",
+            "category": "Custom Sneakers",
+            "active": true
+          },
+          {
+            "id": "p_8",
+            "name": "REBEL",
+            "price": 498,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2026/01/IMG_4878-300x300.jpg",
+            "category": "Original Art",
+            "active": true
+          },
+          {
+            "id": "p_9",
+            "name": "Scientists & Engineers — One-of-One Display Piece",
+            "price": 314,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2025/12/2-300x300.png",
+            "category": "Custom Sneakers",
+            "active": true
+          },
+          {
+            "id": "p_10",
+            "name": "Sella",
+            "price": 111.11,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2025/12/sella-300x300.png",
+            "category": "Original Art",
+            "active": true
+          },
+          {
+            "id": "p_11",
+            "name": "Tito",
+            "price": 222.22,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2025/12/IMG_6188.heic",
+            "category": "Original Art",
+            "active": true
+          },
+          {
+            "id": "p_12",
+            "name": "What High School you went to? (Print)",
+            "price": 25,
+            "imageURL": "https://palettebyseals.com/wp-content/uploads/2026/03/IMG_4961-300x300.jpg",
+            "category": "Art Print",
+            "active": true
+          }
+        ],
+        "createdAt": {
+          "__datatype__": "timestamp",
+          "value": "2026-04-04T03:15:38.712Z"
+        },
+        "__collections__": {}
+      }
+    }
+  }
+}

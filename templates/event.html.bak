@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{event_title}} - GEMM Event</title>
+    
+    <!-- PERFORMANCE OPTIMIZATIONS START -->
+    <link rel="preload" href="/js/checkout-performance-monitor.js" as="script">
+    <link rel="preload" href="/js/optimized-checkout.js" as="script">
+    <link rel="stylesheet" href="/assets/performance-styles.css">
+    
+    <!-- Prefetch checkout pages -->
+    <link rel="prefetch" href="/checkout">
+    <!-- PERFORMANCE OPTIMIZATIONS END -->
+    
+    <!-- Your existing CSS files -->
+    <link rel="stylesheet" href="/assets/main.css">
+</head>
+
+<body>
+    <main>
+        <header>
+            <h1>{{event_title}}</h1>
+            <p>{{event_description}}</p>
+        </header>
+        
+        <section class="event-details">
+            <div class="event-info">
+                <p><strong>Date:</strong> {{event_date}}</p>
+                <p><strong>Time:</strong> {{event_time}}</p>
+                <p><strong>Location:</strong> {{event_location}}</p>
+                <p><strong>Price:</strong> ${{ticket_price}}</p>
+            </div>
+            
+            <div class="ticket-section">
+                <div class="ticket-status">
+                    <span>{{tickets_remaining}}</span> tickets remaining
+                </div>
+                
+                <!-- OPTIMIZED TICKET BUTTON -->
+                <button 
+                    class="ticket-button" 
+                    data-event-id="{{event_id}}"
+                    data-price="{{ticket_price}}"
+                    onclick="optimizedCheckoutFlow(this)"
+                >
+                    GET TICKETS - {{event_date}}
+                </button>
+                
+                <p class="powered-by">
+                    Tickets sold & processed securely through GEMM
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- PERFORMANCE SCRIPTS START -->
+    <script src="/js/checkout-performance-monitor.js"></script>
+    <script src="/js/optimized-checkout.js"></script>
+    <!-- PERFORMANCE SCRIPTS END -->
+    
+    <!-- Your existing JavaScript -->
+    <script src="/js/main.js"></script>
+</body>
+</html>

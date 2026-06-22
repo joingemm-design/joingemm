@@ -207,21 +207,3 @@ export async function sendOrderConfirmationEmail(params: {
   return;
 }
 
-// ── Debug wrapper to test Resend ─────────────────────────────────────────────
-export async function testResend(email: string): Promise<void> {
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.NEXT_PUBLIC_RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "GEMM <hello@joingemm.com>",
-      to: email,
-      subject: "GEMM Test Email",
-      html: "<p>Test email from GEMM</p>",
-    }),
-  });
-  const data = await res.json();
-  console.log("Resend response:", JSON.stringify(data));
-}

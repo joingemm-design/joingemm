@@ -1,0 +1,308 @@
+import Paywall from "@/components/Paywall";
+"use client";
+
+// app/dashboard/event-detail/page.tsx
+// Creator-facing event detail: lists buyers, shows totals.
+// Reads event ID from query string ?id=...
+
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { firestore } from "@/lib/firebase";
+
+const css = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;background:#f8f8f8;color:#000}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`;
+
+interface Order {
+  id: string;
+  eventId: string;
+  ticketType: string;
+  customerEmail: string | null;
+  customerName?: string | null;
+  amount: number;
+  stripeSessionId: string;
+  checkedIn: boolean;
+  createdAt: any;
+}
+
+const ADMIN_UIDS = ["3eWTfkVvdRcUTAiHPawy0WSHm1O2"];
+
+function EventDetailInner() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const sp = useSearchParams();
+  const eventId = sp.get("id");
+
+  const [event, setEvent] = useState<any>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [balanceData, setBalanceData] = useState<{available: number; pending: number; payouts: any[]} | null>(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [payoutPending, setPayoutPending] = useState(false);
+  const [payoutMessage, setPayoutMessage] = useState<string>("");
+  const [pageLoading, setPageLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => { if (!loading && !user) router.push("/dashboard"); }, [user, loading, router]);
+
+  // Fetch creator balance from Stripe via Cloud Function
+  const fetchBalance = async () => {
+    if (!user || !event?.uid) return;
+    setBalanceLoading(true);
+    try {
+      const r = await fetch("https://us-central1-gemm-8cda2.cloudfunctions.net/getCreatorBalance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ creatorUid: event.uid, requesterUid: user.uid }),
+      });
+      const j = await r.json();
+      if (j.data) setBalanceData(j.data);
+    } catch (e) { console.error("balance fetch error", e); }
+    setBalanceLoading(false);
+  };
+  useEffect(() => { fetchBalance(); /* eslint-disable-next-line */ }, [user, event]);
+
+
+  useEffect(() => {
+    if (!user || !eventId) return;
+    (async () => {
+      try {
+        const evSnap = await getDoc(doc(firestore, "events", eventId));
+        if (!evSnap.exists()) {
+          setError("Event not found.");
+          setPageLoading(false);
+          return;
+        }
+        const ev = { id: evSnap.id, ...evSnap.data() };
+        if ((ev as any).uid !== user.uid && (ev as any).creatorUid !== user.uid && !ADMIN_UIDS.includes(user.uid)) {
+          setError("You don't have access to this event.");
+          setPageLoading(false);
+          return;
+        }
+        setEvent(ev);
+
+        // Query orders by either the Firestore doc ID OR a custom eventId field on the event doc
+        const altId = (ev as any).altEventId || (ev as any).slug || null;
+        const eventIdsToCheck = altId ? [eventId, altId] : [eventId];
+        const ordersQ = query(collection(firestore, "orders"), where("eventId", "in", eventIdsToCheck));
+        const ordersSnap = await getDocs(ordersQ);
+        const list = ordersSnap.docs
+          .map(d => ({ id: d.id, ...d.data() } as Order))
+          .sort((a, b) => {
+            const ta = a.createdAt?.toDate?.()?.getTime?.() || 0;
+            const tb = b.createdAt?.toDate?.()?.getTime?.() || 0;
+            return tb - ta;
+          });
+        setOrders(list);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Something went wrong.");
+      }
+      setPageLoading(false);
+    })();
+  }, [user, eventId]);
+
+  function exportCSV() {
+    const header = ["Name","Email","Ticket Type","Amount","Checked In","Date","Stripe Session"];
+    const rows = orders.map(o => [
+      o.customerName || "",
+      o.customerEmail || "",
+      o.ticketType,
+      "$" + ((o.amount || 0) / 100).toFixed(2),
+      o.checkedIn ? "Yes" : "No",
+      o.createdAt?.toDate?.()?.toISOString?.() || "",
+      o.stripeSessionId,
+    ]);
+    const csv = [header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${event?.title || "event"}-orders.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  if (loading || pageLoading || !eventId) return (
+    <div style={{minHeight:"100vh",background:"#f8f8f8",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <style>{css}</style>
+      <div style={{width:24,height:24,borderRadius:"50%",background:"#000",animation:"pulse 1.5s ease infinite"}}/>
+      <Paywall onUnlock={() => window.location.href = "/dashboard/billing"} />
+    </div>
+  );
+
+  if (error) return (
+    <div style={{minHeight:"100vh",background:"#f8f8f8",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif",padding:24,gap:16}}>
+      <style>{css}</style>
+      <div style={{fontSize:48}}>⚠️</div>
+      <h1 style={{fontSize:22,fontWeight:900}}>{error}</h1>
+      <button onClick={()=>router.push("/dashboard/events")} style={{padding:"12px 24px",borderRadius:999,background:"#000",color:"#fff",border:"none",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>Back to Events</button>
+    </div>
+  );
+
+  const totalRevenue = orders.reduce((s, o) => s + (o.amount || 0), 0);
+
+
+
+  const handlePayout = async () => {
+    if (!user || !event?.uid || !balanceData?.available) return;
+    if (!confirm(`Withdraw ${balanceData.available.toFixed(2)} to your bank? Funds typically arrive within 2 business days.`)) return;
+    setPayoutPending(true);
+    setPayoutMessage("");
+    try {
+      const r = await fetch("https://us-central1-gemm-8cda2.cloudfunctions.net/createCreatorPayout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ creatorUid: event.uid, requesterUid: user.uid }),
+      });
+      const j = await r.json();
+      if (j.error) { setPayoutMessage("Error: " + j.error); }
+      else if (j.data?.success) {
+        setPayoutMessage(`✓ Payout of ${j.data.amount.toFixed(2)} initiated. Arriving in your bank soon.`);
+        await fetchBalance();
+      }
+    } catch (e: any) {
+      setPayoutMessage("Error: " + (e.message || "unknown"));
+    }
+    setPayoutPending(false);
+  };
+
+    const ticketsSold = orders.length;
+  const checkedIn = orders.filter(o => o.checkedIn).length;
+
+  return (
+    <div style={{minHeight:"100vh",background:"#f8f8f8",fontFamily:"'DM Sans',sans-serif",color:"#000"}}>
+      <style>{css}</style>
+      <div style={{maxWidth:1100,margin:"0 auto",padding:"32px 24px 64px"}}>
+        <button onClick={()=>router.push("/dashboard/events")} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",fontSize:12,fontWeight:700,color:"#888",cursor:"pointer",fontFamily:"inherit",marginBottom:24,textTransform:"uppercase",letterSpacing:"0.08em"}}>
+          ← Back to Events
+        </button>
+
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:32,gap:16,flexWrap:"wrap"}}>
+          <div>
+            <h1 style={{fontSize:36,fontWeight:900,letterSpacing:"-0.03em",marginBottom:4}}>{event?.title}</h1>
+            <p style={{fontSize:14,opacity:.5}}>{event?.venueName || event?.location || ""} · {event?.date || event?.startDate || ""}</p>
+          </div>
+          <button onClick={() => router.push(`/dashboard/events/new?edit=${eventId}`)} style={{padding:"10px 18px",borderRadius:999,background:"#fff",color:"#000",border:"1px solid #ddd",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>Edit Event</button>
+        </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16,marginBottom:32}}>
+          <div style={{padding:24,borderRadius:16,background:"#fff",border:"1px solid rgba(0,0,0,0.06)"}}>
+            <div style={{fontSize:11,fontWeight:800,opacity:.4,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Tickets Sold</div>
+            <div style={{fontSize:36,fontWeight:900,letterSpacing:"-0.03em"}}>{ticketsSold}</div>
+          </div>
+          <div style={{padding:24,borderRadius:16,background:"#fff",border:"1px solid rgba(0,0,0,0.06)"}}>
+            <div style={{fontSize:11,fontWeight:800,opacity:.4,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Gross Revenue</div>
+            <div style={{fontSize:36,fontWeight:900,letterSpacing:"-0.03em"}}>${(totalRevenue/100).toFixed(2)}</div>
+            <div style={{fontSize:11,opacity:.4,marginTop:4}}>Before Stripe & platform fees</div>
+          </div>
+          <div style={{padding:24,borderRadius:16,background:"#fff",border:"1px solid rgba(0,0,0,0.06)"}}>
+            <div style={{fontSize:11,fontWeight:800,opacity:.4,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Checked In</div>
+            <div style={{fontSize:36,fontWeight:900,letterSpacing:"-0.03em"}}>{checkedIn}<span style={{fontSize:18,opacity:.3}}> / {ticketsSold}</span></div>
+          </div>
+        </div>
+
+        {/* PAYOUTS */}
+        {balanceData && (
+          <div style={{marginBottom:32,padding:24,borderRadius:16,background:"#fff",border:"1px solid rgba(0,0,0,0.06)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
+              <div>
+                <h2 style={{fontSize:18,fontWeight:900,marginBottom:4}}>Your Balance</h2>
+                <p style={{fontSize:12,opacity:.5}}>Available to withdraw to your bank</p>
+              </div>
+              <button
+                onClick={handlePayout}
+                disabled={payoutPending || !balanceData.available || balanceData.available <= 0 || (user?.uid !== event?.uid)}
+                style={{
+                  padding:"12px 24px",borderRadius:999,
+                  background: (balanceData.available > 0 && user?.uid === event?.uid) ? "#000" : "#e5e5e5",
+                  color: (balanceData.available > 0 && user?.uid === event?.uid) ? "#fff" : "#999",
+                  border:"none",fontSize:13,fontWeight:800,cursor:(balanceData.available > 0 && user?.uid === event?.uid)?"pointer":"not-allowed",fontFamily:"inherit"
+                }}
+              >
+                {payoutPending ? "Processing..." : "Pay Out to Bank"}
+              </button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:payoutMessage?16:0}}>
+              <div style={{padding:16,borderRadius:12,background:"#f8f8f8"}}>
+                <div style={{fontSize:11,fontWeight:800,opacity:.4,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Available</div>
+                <div style={{fontSize:28,fontWeight:900,letterSpacing:"-0.02em"}}>${balanceData.available.toFixed(2)}</div>
+              </div>
+              <div style={{padding:16,borderRadius:12,background:"#f8f8f8"}}>
+                <div style={{fontSize:11,fontWeight:800,opacity:.4,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Pending</div>
+                <div style={{fontSize:28,fontWeight:900,letterSpacing:"-0.02em",opacity:.7}}>${balanceData.pending.toFixed(2)}</div>
+                <div style={{fontSize:10,opacity:.4,marginTop:4}}>Clears in ~2 days</div>
+              </div>
+            </div>
+            {payoutMessage && (
+              <div style={{padding:"10px 14px",borderRadius:8,background:payoutMessage.startsWith("✓")?"#dcfce7":"#fee2e2",color:payoutMessage.startsWith("✓")?"#166534":"#991b1b",fontSize:12,fontWeight:600,marginBottom:16}}>
+                {payoutMessage}
+              </div>
+            )}
+            {balanceData.payouts && balanceData.payouts.length > 0 && (
+              <div>
+                <div style={{fontSize:11,fontWeight:800,opacity:.4,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>Recent Payouts</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {balanceData.payouts.map((p:any) => (
+                    <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:13,padding:"8px 0",borderBottom:"1px solid #f0f0f0"}}>
+                      <div style={{fontWeight:700}}>${p.amount.toFixed(2)}</div>
+                      <div style={{fontSize:11,opacity:.5}}>{new Date(p.arrivalDate).toLocaleDateString()}</div>
+                      <div>
+                        <span style={{fontSize:10,fontWeight:800,padding:"3px 10px",borderRadius:999,background:p.status==="paid"?"#dcfce7":p.status==="pending"||p.status==="in_transit"?"#fef3c7":"#fee2e2",color:p.status==="paid"?"#166534":p.status==="pending"||p.status==="in_transit"?"#92400e":"#991b1b"}}>
+                          {p.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+          <h2 style={{fontSize:20,fontWeight:900}}>Attendees</h2>
+          {orders.length > 0 && (
+            <button onClick={exportCSV} style={{padding:"8px 16px",borderRadius:999,background:"#000",color:"#fff",border:"none",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>Export CSV</button>
+          )}
+        </div>
+
+        {orders.length === 0 ? (
+          <div style={{textAlign:"center",padding:64,borderRadius:20,border:"1px dashed #ddd",background:"#fff"}}>
+            <div style={{fontSize:48,marginBottom:16}}>🎟️</div>
+            <h3 style={{fontSize:18,fontWeight:900,marginBottom:8}}>No tickets sold yet</h3>
+            <p style={{fontSize:13,opacity:.5}}>When someone buys a ticket, they'll appear here.</p>
+          </div>
+        ) : (
+          <div style={{borderRadius:16,background:"#fff",border:"1px solid rgba(0,0,0,0.06)",overflow:"hidden"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1.5fr 2fr 1fr 1fr 1fr 1fr",padding:"14px 20px",fontSize:11,fontWeight:800,letterSpacing:"0.1em",textTransform:"uppercase",opacity:.4,borderBottom:"1px solid rgba(0,0,0,0.06)"}}>
+              <div>Name</div><div>Email</div><div>Type</div><div>Amount</div><div>Status</div><div>Date</div>
+            </div>
+            {orders.map(o => (
+              <div key={o.id} style={{display:"grid",gridTemplateColumns:"1.5fr 2fr 1fr 1fr 1fr 1fr",padding:"14px 20px",fontSize:13,borderBottom:"1px solid rgba(0,0,0,0.04)",alignItems:"center"}}>
+                <div style={{fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.customerName || <span style={{opacity:.3}}>—</span>}</div>
+                <div style={{fontWeight:500,opacity:.85,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.customerEmail || <span style={{opacity:.3}}>no email</span>}</div>
+                <div style={{opacity:.7}}>{o.ticketType}</div>
+                <div style={{fontWeight:700}}>${((o.amount||0)/100).toFixed(2)}</div>
+                <div>
+                  <span style={{padding:"3px 10px",borderRadius:999,fontSize:10,fontWeight:800,background:o.checkedIn?"#dcfce7":"#f3f4f6",color:o.checkedIn?"#166534":"#666"}}>
+                    {o.checkedIn ? "Checked In" : "Pending"}
+                  </span>
+                </div>
+                <div style={{fontSize:12,opacity:.5}}>{o.createdAt?.toDate?.()?.toLocaleDateString?.() || "—"}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+export default function EventDetailPage() {
+  return (
+    <Suspense fallback={<div style={{minHeight:"100vh",background:"#f8f8f8"}} />}>
+      <EventDetailInner />
+    </Suspense>
+  );
+}

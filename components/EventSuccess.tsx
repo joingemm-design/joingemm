@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { firestore } from "@/lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import QRCode from "react-qr-code";
 
 function formatTime(t?: string): string {
@@ -223,20 +223,40 @@ export default function EventSuccess() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const orderId = params.get("orderId");
+    const sessionId = params.get("session_id") || params.get("orderId");
 
-    if (!orderId) {
-      setError("No order ID found. Please check your confirmation email for the correct link.");
+    if (!sessionId) {
+      setError("No session ID found. Please check your confirmation email for the correct link.");
       setLoading(false);
       return;
     }
 
-    const fetchOrder = async () => {
+    const fetchOrder = async (attempt = 0): Promise<void> => {
       try {
-        const snap = await getDoc(doc(firestore, "orders", orderId));
+        // Look up the order by stripeSessionId (set by webhook)
+        let snap: any = null;
+        // Primary: order doc id IS the Stripe session id (webhook writes it that way).
+        const direct = await getDoc(doc(firestore, "orders", sessionId));
+        if (direct.exists()) {
+          snap = direct;
+        } else {
+          // Fallback for legacy orders created before id-keying.
+          const q = query(
+            collection(firestore, "orders"),
+            where("stripeSessionId", "==", sessionId),
+            limit(1)
+          );
+          const snaps = await getDocs(q);
+          if (!snaps.empty) snap = snaps.docs[0];
+        }
 
-        if (!snap.exists()) {
-          setError("This order doesn't exist or may have been removed.");
+        if (!snap) {
+          // Webhook may still be processing — retry 3x at 2s intervals
+          if (attempt < 3) {
+            setTimeout(() => fetchOrder(attempt + 1), 2000);
+            return;
+          }
+          setError("Your payment was successful, but we're still processing your order. Check your email for confirmation, or refresh this page in a moment.");
           setLoading(false);
           return;
         }
@@ -276,6 +296,17 @@ export default function EventSuccess() {
 
         setLoading(false);
         requestAnimationFrame(() => setAnimIn(true));
+
+        // GA4 purchase conversion (fires once per order load)
+        try {
+          if (typeof window !== "undefined" && (window as any).gtag) {
+            (window as any).gtag("event", "purchase", {
+              transaction_id: data.stripeSessionId || snap.id,
+              value: (data.amount || 0) / 100,
+              currency: "USD",
+            });
+          }
+        } catch (e) { /* tracking must never break the page */ }
       } catch (err) {
         console.error("Error fetching order:", err);
         setError("Something went wrong loading your order. Please try again.");
