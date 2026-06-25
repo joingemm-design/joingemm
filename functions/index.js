@@ -159,7 +159,7 @@ exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
     if (!stripeAccountId) {
       return res.status(400).json({ error: "Creator has not connected Stripe yet" });
     }
-    const SERVICE_FEE_CENTS = 260; // $2.60 buyer-paid service fee, kept by platform
+    const SERVICE_FEE_CENTS = eventId === "tiiChMzV9uNneyDZjcIN" ? 385 : 260; // AMP event $3.85, all others $2.60
     const priceInCents = Math.round(ticketPrice * 100);
     const platformFee = Math.round(priceInCents * PLATFORM_FEE);
     const session = await getStripe().checkout.sessions.create({
