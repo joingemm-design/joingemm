@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import ClientRouter from "@/components/ClientRouter";
 
 type Pt = { x: number; y: number; z: number };
 
@@ -99,22 +100,20 @@ export default function Page() {
     };
   }, []);
 
-  // email capture + smooth scroll
-  const ctaRef = useRef<HTMLDivElement>(null);
+  // navigation + email capture
   const router = useRouter();
   const emailRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
-  const goToCta = () => {
-    ctaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    setTimeout(() => emailRef.current?.focus(), 500);
-  };
   const submit = () => {
-    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) router.push(`/dashboard/events/new?email=${encodeURIComponent(email)}`);
-    else emailRef.current?.focus();
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      router.push(`/create?email=${encodeURIComponent(email)}`);
+    } else {
+      emailRef.current?.focus();
+    }
   };
 
   return (
+    <ClientRouter>
     <div className="gemm-root" ref={rootRef}>
       <nav className={scrolled ? "scrolled" : ""}>
         <div className="wrap nav-inner">
@@ -124,7 +123,7 @@ export default function Page() {
             <a href="/contact">Book Demo</a>
           </div>
           <div className="nav-right">
-            <button className="btn btn-primary" onClick={() => router.push("/dashboard/events/new")}>Create Event</button>
+            <button className="btn btn-primary" onClick={() => router.push("/create")}>Create Event</button>
           </div>
         </div>
       </nav>
@@ -133,7 +132,7 @@ export default function Page() {
         <h1 className="display">Your Free All-in-One<br />Ticketing platform</h1>
         <p>gemm is an all-in-one modern event dashboard built for the modern generation.</p>
         <div className="hero-cta">
-          <button className="btn btn-primary" onClick={() => router.push("/dashboard/events/new")}>Create Event</button>
+          <button className="btn btn-primary" onClick={() => router.push("/create")}>Create Event</button>
           <button className="btn btn-ghost" onClick={() => router.push("/contact")}>▦ Book Demo</button>
         </div>
 
@@ -317,25 +316,21 @@ export default function Page() {
 
       {/* FINAL CTA */}
       <section className="cta">
-        <div className="wrap reveal" ref={ctaRef}>
+        <div className="wrap reveal">
           <h2 className="display">Ready to host with gemm?</h2>
           <p>Create your first event, connect with your audience, and start selling tickets in minutes—no tech skills required.</p>
-          {sent ? (
-            <div className="cta-done">🎉 You&apos;re on the list — check your inbox to get started.</div>
-          ) : (
-            <div className="cta-form">
-              <input
-                ref={emailRef}
-                type="email"
-                placeholder="Your Work Email"
-                aria-label="Your work email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
-              />
-              <button className="btn btn-primary" onClick={submit}>Get started</button>
-            </div>
-          )}
+          <div className="cta-form">
+            <input
+              ref={emailRef}
+              type="email"
+              placeholder="Your Work Email"
+              aria-label="Your work email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+            />
+            <button className="btn btn-primary" onClick={submit}>Get started</button>
+          </div>
           <div className="cta-sales">Not sure where to start? <a href="/contact">Talk to sales</a></div>
         </div>
       </section>
@@ -545,5 +540,6 @@ export default function Page() {
         }
       `}</style>
     </div>
+    </ClientRouter>
   );
 }
