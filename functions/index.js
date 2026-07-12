@@ -178,7 +178,7 @@ exports.getConnectStatus = onRequest({ cors: true }, async (req, res) => {
 });
 
 // ── 5. Stripe Checkout — Create Session for Paid Tickets ────────────────
-exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
+exports.createCheckoutSession = onRequest({ cors: true, minInstances: 1, memory: "256MiB" }, async (req, res) => {
   // SECURITY: price + creator are read from Firestore. Client price is ignored.
   const { eventId: rawEventId, ticketType, ticketId, customerEmail, quantity: rawQty } = req.body;
     const qty = Math.min(Math.max(parseInt(rawQty, 10) || 1, 1), 10);
