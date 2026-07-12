@@ -110,7 +110,7 @@ export default function Page() {
     setTimeout(() => emailRef.current?.focus(), 500);
   };
   const submit = () => {
-    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) router.push(`/create?email=${encodeURIComponent(email)}`);
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) router.push(`/dashboard/events/new?email=${encodeURIComponent(email)}`);
     else emailRef.current?.focus();
   };
 
@@ -124,7 +124,7 @@ export default function Page() {
             <a href="/contact">Book Demo</a>
           </div>
           <div className="nav-right">
-            <button className="btn btn-primary" onClick={() => router.push("/create")}>Create Event</button>
+            <button className="btn btn-primary" onClick={() => router.push("/dashboard/events/new")}>Create Event</button>
           </div>
         </div>
       </nav>
@@ -133,7 +133,7 @@ export default function Page() {
         <h1 className="display">Your Free All-in-One<br />Ticketing platform</h1>
         <p>gemm is an all-in-one modern event dashboard built for the modern generation.</p>
         <div className="hero-cta">
-          <button className="btn btn-primary" onClick={() => router.push("/create")}>Create Event</button>
+          <button className="btn btn-primary" onClick={() => router.push("/dashboard/events/new")}>Create Event</button>
           <button className="btn btn-ghost" onClick={() => router.push("/contact")}>▦ Book Demo</button>
         </div>
 
