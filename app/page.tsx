@@ -1,1350 +1,515 @@
 "use client";
-import { getPublishedEvents, EventData } from "@/lib/events";
 
-// app/page.tsx — GEMM Landing Page
+import { useEffect, useRef, useState } from "react";
 
-// ─────────────────────────────────────────────
+type Pt = { x: number; y: number; z: number };
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
-import { useIsMobile } from "@/hooks/useIsMobile";
-import ClientRouter from "@/components/ClientRouter";
+export default function Page() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const globeRef = useRef<HTMLCanvasElement>(null);
+  const [scrolled, setScrolled] = useState(false);
 
-// ── SVG Icons ───────────────────────────────────────────────────────────────
-const ZapIcon = ({ size = 14, className = "" }: { size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
-  </svg>
-);
-const ArrowRight = ({ size = 14 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
-  </svg>
-);
-const ArrowUpRight = ({ size = 14 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M7 7h10v10"/><path d="M7 17 17 7"/>
-  </svg>
-);
-const CheckIcon = ({ size = 14, color = "currentColor" }: { size?: number; color?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
-    <path d="M20 6 9 17l-5-5"/>
-  </svg>
-);
-const StarIcon = ({ size = 12 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="#facc15" stroke="#facc15" strokeWidth="2">
-    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>
-  </svg>
-);
-const CrownIcon = () => (
-  <svg width={20} height={20} viewBox="0 0 24 24" fill="#facc15" stroke="#facc15" strokeWidth="2">
-    <path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/>
-    <path d="M5 21h14"/>
-  </svg>
-);
-const CalendarIcon = () => (
-  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
-  </svg>
-);
-const UsersIcon = ({ size = 24 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>
-  </svg>
-);
-const ChartIcon = () => (
-  <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
-  </svg>
-);
-const ShoppingBagIcon = () => (
-  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 10a4 4 0 0 1-8 0"/><path d="M3.103 6.034h17.794"/><path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"/>
-  </svg>
-);
-
-// ── Theme config (matches Wavey's theme system) ─────────────────────────────
-const THEMES: Record<string, Record<string, string>> = {
-  clean:    { "--bg":"#ffffff","--bg2":"#f5f5f5","--text":"#0a0a0a","--muted":"rgba(10,10,10,0.45)","--border":"#e5e5e5","--card":"#ffffff","--nav":"rgba(255,255,255,0.95)","--accent":"#000000","--accent2":"#525252" },
-  midnight: { "--bg":"#09090b","--bg2":"#111113","--text":"#f4f4f5","--muted":"rgba(244,244,245,0.4)","--border":"#27272a","--card":"#111113","--nav":"rgba(9,9,11,0.95)","--accent":"#ffffff","--accent2":"#a1a1aa" },
-  forest:   { "--bg":"#022c22","--bg2":"#033a2c","--text":"#ecfdf5","--muted":"rgba(236,253,245,0.4)","--border":"#047857","--card":"#033a2c","--nav":"rgba(2,44,34,0.95)","--accent":"#34d399","--accent2":"#6ee7b7" },
-  cotton:   { "--bg":"#fdf2f8","--bg2":"#fce7f3","--text":"#4a044e","--muted":"rgba(74,4,78,0.4)","--border":"#fbcfe8","--card":"#ffffff","--nav":"rgba(253,242,248,0.95)","--accent":"#ff9a9e","--accent2":"#fecdd3" },
-  cyber:    { "--bg":"#09090b","--bg2":"#0d0d1a","--text":"#00f0ff","--muted":"rgba(0,240,255,0.4)","--border":"#1a1a3e","--card":"#0d0d1a","--nav":"rgba(9,9,11,0.95)","--accent":"#ff0099","--accent2":"#00f0ff" },
-  ocean:    { "--bg":"#082f49","--bg2":"#0c4a6e","--text":"#f0f9ff","--muted":"rgba(240,249,255,0.4)","--border":"#0369a1","--card":"#0c4a6e","--nav":"rgba(12,74,110,0.95)","--accent":"#38bdf8","--accent2":"#7dd3fc" },
-  sunset:   { "--bg":"#fff1f2","--bg2":"#ffe4e6","--text":"#881337","--muted":"rgba(136,19,55,0.4)","--border":"#fecdd3","--card":"#ffffff","--nav":"rgba(255,241,242,0.95)","--accent":"#fb7185","--accent2":"#fda4af" },
-  sand:     { "--bg":"#fdfbf7","--bg2":"#fef3c7","--text":"#451a03","--muted":"rgba(69,26,3,0.4)","--border":"#fde68a","--card":"#ffffff","--nav":"rgba(253,251,247,0.95)","--accent":"#d97706","--accent2":"#f59e0b" },
-  royal:    { "--bg":"#1e1b4b","--bg2":"#23205a","--text":"#e0e7ff","--muted":"rgba(224,231,255,0.4)","--border":"#4338ca","--card":"#23205a","--nav":"rgba(30,27,75,0.95)","--accent":"#818cf8","--accent2":"#a5b4fc" },
-  dracula:  { "--bg":"#282a36","--bg2":"#2e3044","--text":"#f8f8f2","--muted":"rgba(248,248,242,0.4)","--border":"#44475a","--card":"#2e3044","--nav":"rgba(40,42,54,0.95)","--accent":"#bd93f9","--accent2":"#ff79c6" },
-  matcha:   { "--bg":"#f0fdf4","--bg2":"#dcfce7","--text":"#14532d","--muted":"rgba(20,83,45,0.4)","--border":"#bbf7d0","--card":"#ffffff","--nav":"rgba(240,253,244,0.95)","--accent":"#22c55e","--accent2":"#4ade80" },
-  velvet:   { "--bg":"#4a044e","--bg2":"#5b0a60","--text":"#fae8ff","--muted":"rgba(250,232,255,0.4)","--border":"#701a75","--card":"#5b0a60","--nav":"rgba(74,4,78,0.95)","--accent":"#e879f9","--accent2":"#d946ef" },
-};
-
-const SWATCHES = [
-  { key:"clean",    bg:"#000000" },
-  { key:"midnight", bg:"linear-gradient(135deg,#050505,#18181b)" },
-  { key:"forest",   bg:"linear-gradient(135deg,#022c22,#064e3b)" },
-  { key:"cotton",   bg:"linear-gradient(135deg,#fff1eb,#fdf2f8)" },
-  { key:"cyber",    bg:"linear-gradient(135deg,#09090b,#2e0249)" },
-  { key:"ocean",    bg:"linear-gradient(135deg,#082f49,#0c4a6e)" },
-  { key:"sunset",   bg:"linear-gradient(135deg,#fff1f2,#ffe4e6)" },
-  { key:"sand",     bg:"linear-gradient(135deg,#fdfbf7,#fef3c7)" },
-  { key:"royal",    bg:"linear-gradient(135deg,#1e1b4b,#312e81)" },
-  { key:"dracula",  bg:"linear-gradient(135deg,#282a36,#44475a)" },
-  { key:"matcha",   bg:"linear-gradient(135deg,#f0fdf4,#dcfce7)" },
-  { key:"velvet",   bg:"linear-gradient(135deg,#4a044e,#701a75)" },
-];
-
-const PLANS = [
-  {
-    key: "spark", name: "Spark", tagline: "Free forever.",
-    monthly: 0, yearly: 0,
-    badge: null, featured: false, btnStyle: "outline",
-    features: ["Unlimited Event Publishing","1 Link-in-Bio Page","Up to 5 Links","1 Dynamic QR Code","Basic Analytics","GEMM Watermark"],
-    checkColor: "currentColor",
-  },
-  {
-    key: "velocity", name: "Velocity", tagline: "For creators hitting their stride.",
-    monthly: 15, yearly: 10,
-    badge: { label: "Most Popular", bg: "var(--text)", fg: "var(--bg)" },
-    featured: true, btnStyle: "solid",
-    features: ["Everything in Spark","No Watermark","Unlimited Links","5 Link-in-Bio Pages","1 E-commerce Shop (10 products)","Portfolio","Services & Quote Requests","CRM — 500 Contacts","Business Analytics","10 Dynamic QR Codes"],
-    checkColor: "currentColor",
-  },
-  {
-    key: "empire", name: "Empire", tagline: "The operating system for dominance.",
-    monthly: 35, yearly: 24,
-    badge: { label: "Best Value", bg: "#fbbf24", fg: "#000" },
-    featured: true, btnStyle: "gold",
-    features: ["Everything in Velocity","Custom Branding","Custom Domain","Press Section","5 E-commerce Shops","Unlimited Products","Full CRM (Unlimited + Export)","Advanced Analytics","Unlimited QR Codes","Advanced Affiliate Network","10 Link-in-Bio Pages","Priority Support"],
-    checkColor: "#fbbf24",
-  },
-];
-
-// ── Loading Screen (matches Wavey) ──────────────────────────────────────────
-function LoadingScreen({ progress, visible }: { progress: number; visible: boolean }) {
-  return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 9999,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      background: "#000", cursor: "wait",
-      opacity: visible ? 1 : 0, pointerEvents: visible ? "all" : "none",
-      transition: "opacity 0.6s ease",
-    }}>
-      <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{
-          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-          width: 192, height: 192, borderRadius: "50%", opacity: 0.3,
-          background: "radial-gradient(circle, rgba(147,51,234,1) 0%, rgba(0,0,0,0) 70%)",
-        }}/>
-        <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#fff", boxShadow: "0 0 20px rgba(255,255,255,0.8)" }}/>
-            <span style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-0.05em", color: "#fff" }}>GEMM</span>
-          </div>
-          <div style={{ height: 4, width: 192, background: "#111", borderRadius: 9999, overflow: "hidden", marginTop: 16 }}>
-            <div style={{
-              height: "100%", background: "#fff",
-              boxShadow: "0 0 10px rgba(255,255,255,0.8)",
-              width: `${Math.min(progress, 100)}%`, transition: "width 0.3s ease",
-            }}/>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Sales Simulator Card (matches Wavey with +$XX popup) ────────────────────
-function SalesSimulator() {
-  const isMobile = useIsMobile();
-  const [amount, setAmount] = useState(1240);
-  const [gain, setGain] = useState<number | null>(null);
-  const [showGain, setShowGain] = useState(false);
-
-  const handleClick = () => {
-    const add = Math.floor(Math.random() * 80) + 10;
-    setAmount(prev => prev + add);
-    setGain(add);
-    setShowGain(true);
-    setTimeout(() => setShowGain(false), 1200);
-  };
-
-  return (
-    <div style={{
-      width: "100%", maxWidth: 280, padding: 24, borderRadius: 32,
-      boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
-      display: "flex", flexDirection: "column", gap: 16,
-      background: "var(--card)", border: "1px solid var(--border)", color: "var(--text)",
-      transition: "transform 0.3s", cursor: "default", position: "relative",
-    }}>
-      {/* Floating gain badge */}
-      {gain !== null && (
-        <div style={{
-          position: "absolute", top: 12, right: 16,
-          background: "var(--text)", color: "var(--bg)",
-          padding: "4px 10px", borderRadius: 99,
-          fontSize: 12, fontWeight: 900, display: "flex", alignItems: "center", gap: 4,
-          opacity: showGain ? 1 : 0, transform: showGain ? "translateY(0)" : "translateY(-10px)",
-          transition: "all 0.4s ease", pointerEvents: "none",
-        }}>
-          ↗ +${gain}
-        </div>
-      )}
-      <div>
-        <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6, marginBottom: 4 }}>Sales Simulator</div>
-        <div style={{ fontSize: 36, fontFamily: "'DM Mono', monospace", fontWeight: 900, letterSpacing: "-0.05em", transition: "all 0.3s" }}>${amount.toLocaleString()}</div>
-      </div>
-      <button onClick={handleClick}
-        style={{
-          width: "100%", padding: 12, borderRadius: 12, fontWeight: 700,
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          border: "1px solid var(--border)", background: "var(--bg2)", color: "var(--text)",
-          cursor: "pointer", fontSize: 14, fontFamily: "inherit",
-          transition: "transform 0.1s", position: "relative", overflow: "hidden",
-        }}
-        onMouseDown={e => (e.currentTarget.style.transform = "scale(0.95)")}
-        onMouseUp={e => (e.currentTarget.style.transform = "scale(1)")}>
-        <ZapIcon size={16}/> Try Me
-      </button>
-    </div>
-  );
-}
-
-// ── Phone Notch ─────────────────────────────────────────────────────────────
-function PhoneNotch() {
-  return (
-    <div style={{
-      position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)",
-      width: 80, height: 24, background: "#000", borderRadius: 99, zIndex: 50,
-      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-    }}>
-      <span className="pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }}/>
-      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#f97316", opacity: 0.5 }}/>
-    </div>
-  );
-}
-
-// ── Feature Card (for Team section) ─────────────────────────────────────────
-function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
-  return (
-    <div style={{
-      padding: 24, borderRadius: 24,
-      border: "1px solid var(--border)", background: "rgba(128,128,128,0.03)",
-    }}>
-      <div style={{ marginBottom: 12, color: "var(--text)" }}>{icon}</div>
-      <p style={{ fontWeight: 700, fontSize: 18, lineHeight: 1.3 }}>{title}</p>
-      <p style={{ fontSize: 12, opacity: 0.6, fontWeight: 500, marginTop: 4 }}>{desc}</p>
-    </div>
-  );
-}
-
-// ── Revenue Chart — Interactive Simulator (matches Wavey) ────────────────────
-function RevenueChart() {
-  const isMobile = useIsMobile();
-  const [products, setProducts] = useState(3);
-  const [avgPrice, setAvgPrice] = useState(45);
-  const [followers, setFollowers] = useState(5000);
-  const [animated, setAnimated] = useState(false);
-  const chartRef = useRef<HTMLDivElement>(null);
-
-  // Calculate revenue projections
-  const conversionRate = 0.02 + (products * 0.003);
-  const monthlyData = Array.from({ length: 6 }, (_, i) => {
-    const month = i + 1;
-    const growth = Math.pow(1.35 + (products * 0.05), month);
-    const sales = Math.floor(followers * conversionRate * growth * (avgPrice / 40));
-    return { month, revenue: Math.min(sales, 50000) };
-  });
-  const maxRev = Math.max(...monthlyData.map(d => d.revenue), 100);
-  const totalProjected = monthlyData.reduce((s, d) => s + d.revenue, 0);
-
-  // Animate on scroll into view
+  // nav border on scroll
   useEffect(() => {
-    const el = chartRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) { setAnimated(true); io.disconnect(); }
-    }, { threshold: 0.3 });
-    io.observe(el);
-    return () => io.disconnect();
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Build SVG path from data
-  const chartW = 500, chartH = 220, padTop = 10, padBot = 30;
-  const usableH = chartH - padTop - padBot;
-  const points = monthlyData.map((d, i) => ({
-    x: (i / (monthlyData.length - 1)) * chartW,
-    y: padTop + usableH - (d.revenue / maxRev) * usableH,
-  }));
-
-  // Smooth curve through points
-  function buildCurve(pts: {x:number;y:number}[]) {
-    if (pts.length < 2) return "";
-    let d = `M${pts[0].x} ${pts[0].y}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[Math.max(i - 1, 0)];
-      const p1 = pts[i];
-      const p2 = pts[i + 1];
-      const p3 = pts[Math.min(i + 2, pts.length - 1)];
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-      d += ` C${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
-    }
-    return d;
-  }
-
-  const curvePath = buildCurve(points);
-  const fillPath = curvePath + ` L${chartW} ${chartH - padBot} L0 ${chartH - padBot} Z`;
-  const costY = padTop + usableH - (24 * 6 / maxRev) * usableH; // $24/mo * 6 = $144 total cost line
-
-  const sliderTrack: React.CSSProperties = {
-    width: "100%", height: 4, borderRadius: 99, appearance: "none",
-    background: "var(--border)", outline: "none", cursor: "pointer",
-    accentColor: "var(--text)",
-  };
-
-  return (
-    <div ref={chartRef} style={{
-      borderRadius: 32, border: "1px solid var(--border)",
-      background: "var(--card)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
-      position: "relative", overflow: "hidden",
-      transition: "transform 0.3s", padding: "24px 28px 20px",
-      display: "flex", flexDirection: "column",
-    }}
-    onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.01)")}
-    onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
-
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 12, height: 12, borderRadius: "50%", background: "rgba(128,128,128,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text)" }}/>
-          </div>
-          <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6 }}>Revenue Engine</span>
-        </div>
-        <div style={{ fontSize: 11, fontWeight: 800, opacity: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
-          Est. <span style={{ color: "#22c55e", fontWeight: 900, fontSize: 14 }}>${totalProjected.toLocaleString()}</span>
-          <span style={{ fontSize: 10, opacity: 0.5 }}>/6mo</span>
-        </div>
-      </div>
-
-      {/* Interactive sliders */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
-        <div>
-          <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.4, marginBottom: 6 }}>
-            Products: <span style={{ opacity: 1, color: "var(--text)" }}>{products}</span>
-          </div>
-          <input type="range" min={1} max={10} value={products} onChange={e => setProducts(+e.target.value)} style={sliderTrack}/>
-        </div>
-        <div>
-          <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.4, marginBottom: 6 }}>
-            Avg Price: <span style={{ opacity: 1, color: "var(--text)" }}>${avgPrice}</span>
-          </div>
-          <input type="range" min={10} max={200} step={5} value={avgPrice} onChange={e => setAvgPrice(+e.target.value)} style={sliderTrack}/>
-        </div>
-        <div>
-          <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.4, marginBottom: 6 }}>
-            Followers: <span style={{ opacity: 1, color: "var(--text)" }}>{(followers / 1000).toFixed(1)}k</span>
-          </div>
-          <input type="range" min={500} max={100000} step={500} value={followers} onChange={e => setFollowers(+e.target.value)} style={sliderTrack}/>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div style={{ flex: 1, position: "relative", minHeight: 200 }}>
-        <svg width="100%" height="100%" viewBox={`0 0 ${chartW} ${chartH}`} preserveAspectRatio="none" style={{ overflow: "visible" }}>
-          <defs>
-            <linearGradient id="revGrad2" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="currentColor" stopOpacity="0.25"/>
-              <stop offset="100%" stopColor="currentColor" stopOpacity="0"/>
-            </linearGradient>
-            <clipPath id="revealClip">
-              <rect x="0" y="0" width={animated ? chartW : 0} height={chartH} style={{ transition: "width 1.5s cubic-bezier(0.4,0,0.2,1)" }}/>
-            </clipPath>
-          </defs>
-
-          {/* Dotted grid lines */}
-          {[0.25, 0.5, 0.75].map(pct => {
-            const y = padTop + usableH * (1 - pct);
-            return <line key={pct} x1="0" y1={y} x2={chartW} y2={y} stroke="currentColor" strokeWidth="0.5" strokeDasharray="4 4" opacity="0.12"/>;
-          })}
-
-          {/* Red cost baseline */}
-          <line x1="0" y1={Math.min(costY, chartH - padBot)} x2={chartW} y2={Math.min(costY, chartH - padBot)} stroke="#ef4444" strokeWidth="2" opacity="0.5" strokeDasharray="6 4"/>
-
-          {/* Revenue curve + fill (animated reveal) */}
-          <g clipPath="url(#revealClip)">
-            <path d={fillPath} fill="url(#revGrad2)"/>
-            <path d={curvePath} fill="none" stroke="currentColor" strokeWidth="2.5"/>
-            {/* Data points */}
-            {points.map((p, i) => (
-              <g key={i}>
-                <circle cx={p.x} cy={p.y} r={4} fill="var(--card)" stroke="currentColor" strokeWidth="2"/>
-                {/* Tooltip */}
-                <text x={p.x} y={p.y - 12} textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="700" opacity="0.5">
-                  ${monthlyData[i].revenue.toLocaleString()}
-                </text>
-              </g>
-            ))}
-          </g>
-
-          {/* Bottom axis */}
-          <line x1="0" y1={chartH - padBot} x2={chartW} y2={chartH - padBot} stroke="currentColor" strokeWidth="0.5" opacity="0.15"/>
-        </svg>
-
-        {/* Month labels */}
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0,
-          display: "flex", justifyContent: "space-between",
-          fontSize: 9, fontWeight: 600, opacity: 0.3,
-          textTransform: "uppercase", letterSpacing: "0.05em",
-        }}>
-          {monthlyData.map(d => <span key={d.month}>Month {d.month}</span>)}
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border)" }}>
-        <div style={{ display: "flex", gap: 16, fontSize: 9, fontWeight: 700, opacity: 0.5 }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ width: 12, height: 2, background: "#ef4444", borderRadius: 99, display: "inline-block" }}/> Cost ($24/mo)
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ width: 12, height: 2, background: "var(--text)", borderRadius: 99, display: "inline-block" }}/> Projected Revenue
-          </span>
-        </div>
-        <div style={{ fontSize: 9, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.3 }}>
-          Interactive Simulator
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Phone Carousel (interactive — matches Wavey) ────────────────────────────
-function PhoneCarousel() {
-  const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<"shop"|"bio"|"event">("bio");
-  const tabs: ("shop"|"bio"|"event")[] = ["shop","bio","event"];
-
-  // Position configs for each phone based on which tab is active
-  function getPhoneStyle(phone: "shop"|"bio"|"event") {
-    const isCenter = phone === activeTab;
-    const centerIdx = tabs.indexOf(activeTab);
-    const phoneIdx = tabs.indexOf(phone);
-    const diff = phoneIdx - centerIdx;
-
-    if (isCenter) {
-      return {
-        transform: "translateX(0) scale(1) rotateY(0deg)",
-        opacity: 1,
-        zIndex: 20,
-        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.4)",
-      };
-    } else if (diff < 0 || (diff > 1)) {
-      // Left position
-      return {
-        transform: "translateX(-110%) scale(0.85) rotateY(-20deg)",
-        opacity: 0.5,
-        zIndex: 10,
-        boxShadow: "none",
-      };
-    } else {
-      // Right position
-      return {
-        transform: "translateX(110%) scale(0.85) rotateY(20deg)",
-        opacity: 0.5,
-        zIndex: 10,
-        boxShadow: "none",
-      };
-    }
-  }
-
-  // For 3 items, figure out left/center/right
-  function getPosition(phone: "shop"|"bio"|"event"): "left"|"center"|"right" {
-    if (phone === activeTab) return "center";
-    const centerIdx = tabs.indexOf(activeTab);
-    const phoneIdx = tabs.indexOf(phone);
-    // Wrap around
-    const diff = ((phoneIdx - centerIdx) + 3) % 3;
-    return diff === 1 ? "right" : "left";
-  }
-
-  const phoneBase: React.CSSProperties = {
-    position: "absolute", top: 0, width: 280, height: 560, borderRadius: 48,
-    border: "8px solid #121212", overflow: "hidden",
-    transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
-    cursor: "pointer", willChange: "transform",
-  };
-
-  return (
-    <div style={{
-      display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
-      height: 650, position: "relative",
-    }}>
-      <div style={{ position: "relative", width: 280, height: 580 }}>
-
-        {/* ── SHOP PHONE ── */}
-        <div onClick={() => setActiveTab("shop")} style={{
-          ...phoneBase, background: "var(--bg)",
-          ...(() => {
-            const pos = getPosition("shop");
-            return pos === "center" 
-              ? { transform: "translateX(0) scale(1)", opacity: 1, zIndex: 20, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.4)" }
-              : pos === "left"
-              ? { transform: "translateX(-110%) scale(0.85) rotateY(-20deg)", opacity: 0.5, zIndex: 10, boxShadow: "none" }
-              : { transform: "translateX(110%) scale(0.85) rotateY(20deg)", opacity: 0.5, zIndex: 10, boxShadow: "none" };
-          })(),
-        }}>
-          {activeTab !== "shop" && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 40, transition: "opacity 0.5s" }}/>}
-          <PhoneNotch/>
-          <div style={{ padding: "56px 12px 12px", height: "100%" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 12, borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
-              <div>
-                <div style={{ fontWeight: 900, fontSize: "1rem", textTransform: "uppercase", letterSpacing: "-0.02em" }}>Merch</div>
-                <div style={{ fontSize: 9, opacity: 0.4, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>GEMM Collection</div>
-              </div>
-              <ShoppingBagIcon/>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
-              {[["DROP 001","$150","https://images.unsplash.com/photo-1588117305388-c2631a279f82?w=300&h=400&fit=crop"],["ESSENTIAL TEE","$45","https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=400&fit=crop"],["HEAVY HOODIE","$85","https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=400&fit=crop"],["LOGO CAP","$38","https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=300&h=400&fit=crop"]].map(([n,p,img]) => (
-                <div key={n} style={{
-                  background: "var(--bg2)", borderRadius: 12, aspectRatio: "3/4",
-                  border: "1px solid var(--border)", position: "relative", overflow: "hidden",
-                }}>
-                  <img src={img} alt={n} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
-                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 6, background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)" }}>
-                    <div style={{ color: "#fff", fontSize: 9, fontWeight: 700, display: "flex", justifyContent: "space-between" }}>
-                      <span>{n}</span><span>{p}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── BIO PHONE ── */}
-        <div onClick={() => setActiveTab("bio")} style={{
-          ...phoneBase, background: "var(--bg)",
-          ...(() => {
-            const pos = getPosition("bio");
-            return pos === "center"
-              ? { transform: "translateX(0) scale(1)", opacity: 1, zIndex: 20, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.4)" }
-              : pos === "left"
-              ? { transform: "translateX(-110%) scale(0.85) rotateY(-20deg)", opacity: 0.5, zIndex: 10, boxShadow: "none" }
-              : { transform: "translateX(110%) scale(0.85) rotateY(20deg)", opacity: 0.5, zIndex: 10, boxShadow: "none" };
-          })(),
-        }}>
-          {activeTab !== "bio" && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 40, transition: "opacity 0.5s" }}/>}
-          <PhoneNotch/>
-          <div style={{ padding: "64px 24px 80px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, height: "100%" }}>
-            <div style={{ position: "relative" }}>
-              <div style={{ width: 80, height: 80, borderRadius: "50%", border: "2px solid var(--text)", padding: 4, background: "var(--card)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face" alt="Creator" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
-              </div>
-              <div style={{ position: "absolute", bottom: -4, right: -4, background: "#3b82f6", color: "#fff", fontSize: 8, fontWeight: 700, padding: "2px 6px", borderRadius: 9999, boxShadow: "0 2px 4px rgba(0,0,0,0.2)", border: "2px solid var(--bg)", display: "flex", alignItems: "center", gap: 2 }}>
-                <CheckIcon size={8} color="#fff"/> PRO
-              </div>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>@yourname</h2>
-              <p style={{ fontSize: 10, opacity: 0.6, marginTop: 2, fontWeight: 500 }}>Digital Creator & Model</p>
-            </div>
-            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
-              {["Latest Drop","My Portfolio","Join Discord","Book Me"].map(label => (
-                <div key={label} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, fontWeight: 700, fontSize: 12, display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg2)", border: "1px solid var(--border)" }}>
-                  {label} <ArrowRight size={12}/>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── EVENT PHONE ── */}
-        <div onClick={() => setActiveTab("event")} style={{
-          ...phoneBase, background: "#000",
-          ...(() => {
-            const pos = getPosition("event");
-            return pos === "center"
-              ? { transform: "translateX(0) scale(1)", opacity: 1, zIndex: 20, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.4)" }
-              : pos === "left"
-              ? { transform: "translateX(-110%) scale(0.85) rotateY(-20deg)", opacity: 0.5, zIndex: 10, boxShadow: "none" }
-              : { transform: "translateX(110%) scale(0.85) rotateY(20deg)", opacity: 0.5, zIndex: 10, boxShadow: "none" };
-          })(),
-        }}>
-          {activeTab !== "event" && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 40, transition: "opacity 0.5s" }}/>}
-          <PhoneNotch/>
-          <div style={{ height: "60%", position: "relative" }}>
-            <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&h=400&fit=crop" alt="Event" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #000 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }}/>
-            <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, color: "#fff", zIndex: 3 }}>
-              <span style={{ background: "#dc2626", padding: "2px 8px", fontSize: 9, fontWeight: 700, textTransform: "uppercase", borderRadius: 99, display: "inline-block", marginBottom: 4 }}>Upcoming</span>
-              <h3 style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1, marginBottom: 4 }}>Neon Nights: Live Art & Music</h3>
-              <p style={{ fontSize: 10, opacity: 0.8 }}>The Foundry · Chicago, IL</p>
-            </div>
-          </div>
-          <div style={{ flex: 1, padding: 12, background: "#000", color: "#fff" }}>
-            <div style={{ width: 32, height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 99, margin: "0 auto 10px" }}/>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {[
-                {title:"Neon Nights: Live Art & Music",date:"Fri, May 2 · Chicago, IL",img:"https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=80&h=80&fit=crop"},
-                {title:"Sunday Market — Handmade Goods",date:"Sun, May 11 · Austin, TX",img:"https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=80&h=80&fit=crop"},
-                {title:"Rooftop Sessions Vol. 4",date:"Sat, May 17 · Atlanta, GA",img:"https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=80&h=80&fit=crop"},
-              ].map(ev => (
-                <div key={ev.title} style={{ display: "flex", gap: 8, alignItems: "center", padding: 8, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                  <img src={ev.img} alt={ev.title} style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "#fff" }}>{ev.title}</div>
-                    <div style={{ fontSize: 8, opacity: 0.5, marginTop: 1 }}>{ev.date}</div>
-                  </div>
-                  <ArrowRight size={10}/>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── TAB SELECTOR ── */}
-      <div style={{
-        marginTop: 32, display: "flex", gap: 2, padding: 6,
-        background: "var(--nav)", border: "1.5px solid var(--border)",
-        borderRadius: 9999, backdropFilter: "blur(8px)", zIndex: 50,
-        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-      }}>
-        {tabs.map(t => (
-          <button key={t} onClick={() => setActiveTab(t)} style={{
-            padding: "8px 16px", borderRadius: 9999,
-            fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-            border: "none", cursor: "pointer", transition: "all 0.3s", fontFamily: "inherit",
-            background: t === activeTab ? "var(--text)" : "transparent",
-            color: t === activeTab ? "var(--bg)" : "var(--text)",
-          }}>
-            {t}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// MAIN PAGE COMPONENT
-// ══════════════════════════════════════════════════════════════════════════════
-export default function LandingPage() {
-  const { user, loading: authLoading, signIn } = useAuth();
-  const router = useRouter();
-  const isMobile = useIsMobile();
-  const [liveEvents, setLiveEvents] = useState<EventData[]>([]);
-  useEffect(() => { getPublishedEvents().then(e => setLiveEvents(e.slice(0, 4))).catch(() => {}); }, []);
-  const [theme, setTheme] = useState("clean");
-  const [yearly, setYearly] = useState(true);
-  const [loaded, setLoaded] = useState(false);
-  const [showLoading, setShowLoading] = useState(true);
-  const [loadProgress, setLoadProgress] = useState(0);
-  const revealRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // Redirect logged in users
-  useEffect(() => {
-    if (!authLoading && user) router.push("/dashboard");
-  }, [user, authLoading, router]);
-
-  // Loading screen
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setLoadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(timer);
-          setTimeout(() => {
-            setShowLoading(false);
-            setTimeout(() => setLoaded(true), 200);
-          }, 300);
-          return 100;
-        }
-        return prev + Math.random() * 15 + 5;
-      });
-    }, 120);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Scroll reveal
+  // reveal on scroll
   useEffect(() => {
     const io = new IntersectionObserver(
-      entries => entries.forEach(e => {
-        if (e.isIntersecting) {
-          (e.target as HTMLElement).style.opacity = "1";
-          (e.target as HTMLElement).style.transform = "translateY(0)";
-        }
-      }),
+      (es) =>
+        es.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("in");
+            io.unobserve(e.target);
+          }
+        }),
       { threshold: 0.12 }
     );
-    revealRefs.current.forEach(el => el && io.observe(el));
+    rootRef.current?.querySelectorAll(".reveal").forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [loaded]);
+  }, []);
 
-  function addRevealRef(el: HTMLDivElement | null) {
-    if (el && !revealRefs.current.includes(el)) revealRefs.current.push(el);
-  }
+  // dotted globe
+  useEffect(() => {
+    const cv = globeRef.current;
+    if (!cv) return;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+    let W = 0, H = 0, R = 0, cx = 0, cy = 0, pts: Pt[] = [], raf = 0;
 
-  const vars = THEMES[theme];
-
-  async function handleDashboard() {
-    if (user) router.push("/dashboard");
-    else {
-      router.push("/auth/login");
+    function build() {
+      W = Math.min(window.innerWidth - 48, 760); H = 200;
+      cv!.style.width = W + "px"; cv!.style.height = H + "px";
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv!.width = W * dpr; cv!.height = H * dpr; ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+      R = Math.max(W * 0.5, 260); cx = W / 2; cy = H + R * 0.22; // center below view -> shallow dome
+      pts = [];
+      const rings = 54;
+      for (let i = 0; i <= rings; i++) {
+        const lat = -Math.PI / 2 + (Math.PI * i) / rings;
+        const r = Math.cos(lat), y = Math.sin(lat);
+        const n = Math.max(3, Math.round(Math.cos(lat) * rings * 2));
+        for (let j = 0; j < n; j++) {
+          const lon = (2 * Math.PI * j) / n;
+          pts.push({ x: r * Math.cos(lon), y, z: r * Math.sin(lon) });
+        }
+      }
     }
-  }
 
-  function scrollToPricing() {
-    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
-  }
+    function frame(t: number) {
+      ctx!.clearRect(0, 0, W, H);
+      const a = reduce ? 0.6 : t * 0.00007;
+      const ca = Math.cos(a), sa = Math.sin(a);
+      for (const p of pts) {
+        const x = p.x * ca - p.z * sa;
+        const z = p.x * sa + p.z * ca;
+        const px = cx + x * R;
+        const py = cy - p.y * R;
+        if (py > H + 4 || py < -4) continue;
+        const front = z > -0.05;
+        const depth = (z + 1) / 2;
+        const top = (p.y + 1) / 2;
+        const alpha = (front ? 0.85 : 0.12) * (0.25 + top * 0.9) * (0.4 + depth * 0.7);
+        if (alpha <= 0.02) continue;
+        const size = front ? 0.7 + depth * 1.0 : 0.6;
+        const cyan = Math.min(1, top * 1.2);
+        const rC = Math.round(47 + (38 - 47) * cyan);
+        const gC = Math.round(107 + (211 - 107) * cyan);
+        const bC = Math.round(255 + (238 - 255) * cyan);
+        ctx!.beginPath();
+        ctx!.fillStyle = "rgba(" + rC + "," + gC + "," + bC + "," + Math.min(1, alpha) + ")";
+        ctx!.arc(px, py, size, 0, 6.283);
+        ctx!.fill();
+      }
+      raf = requestAnimationFrame(frame);
+    }
 
-  const revealStyle: React.CSSProperties = {
-    opacity: 0, transform: "translateY(24px)",
-    transition: "opacity 0.7s ease, transform 0.7s ease",
-  };
+    build();
+    const onResize = () => build();
+    window.addEventListener("resize", onResize);
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
 
   return (
-    <ClientRouter>
-      <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,700;0,9..40,900;1,9..40,700;1,9..40,900&family=DM+Mono:wght@400;500&display=swap');
-          *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-          html{scroll-behavior:smooth;}
-          body{font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;}
-          ::selection{background:#a855f7;color:white;}
-          @keyframes ping{0%{transform:scale(1);opacity:.3}70%,100%{transform:scale(1.6);opacity:0}}
-          @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-          @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-          @keyframes shimmer{100%{transform:translateX(100%)}}
-          @keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-          .marquee-track{display:flex;gap:40px;white-space:nowrap;animation:marquee 35s linear infinite;will-change:transform;}
-          .ping{animation:ping 2s ease infinite;}
-          .pulse{animation:pulse 1.5s ease infinite;}
-          .no-scrollbar::-webkit-scrollbar{display:none;}
-          .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
-          button:active{transform:scale(.97)!important;}
-        `}</style>
-
-        <LoadingScreen progress={loadProgress} visible={showLoading} />
-
-        <div style={{ ...vars, background: "var(--bg)", color: "var(--text)", minHeight: "100vh", overflowX: "hidden", fontFamily: "'DM Sans',sans-serif", transition: "background .5s, color .5s" }}>
-
-          {/* ════════════════════════════════════════════════════════════════════
-              NAV — matches Wavey's glassmorphism pill nav
-          ════════════════════════════════════════════════════════════════════ */}
-          <nav style={{
-            position: "fixed", top: 0, width: "100%", zIndex: 100, padding: "16px 8px",
-            pointerEvents: "none",
-            opacity: loaded ? 1 : 0, transform: loaded ? "none" : "translateY(-50px)",
-            transition: "opacity .6s ease .3s, transform .6s ease .3s",
-          }}>
-            <div style={{
-              maxWidth: 1200, margin: "0 auto", width: "100%",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              background: "var(--nav)", border: "1px solid var(--border)", borderRadius: 9999,
-              padding: "6px 8px 6px 12px", backdropFilter: "blur(12px)",
-              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", pointerEvents: "auto",
-            }}>
-              {/* Logo */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", flexShrink: 0 }}
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: "50%",
-                  background: "rgba(128,128,128,0.05)", border: "1px solid rgba(128,128,0.1)",
-                  display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
-                }}>
-                  <div className="ping" style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "var(--text)" }}/>
-                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: "var(--text)" }}/>
-                </div>
-                <span style={{ fontSize: "1.25rem", fontWeight: 900, letterSpacing: "-0.05em", color: "var(--text)", display: "none" }} className="nav-logo-text">GEMM</span>
-                <span style={{ fontSize: "1.25rem", fontWeight: 900, letterSpacing: "-0.05em", color: "var(--text)" }}>GEMM</span>
-              </div>
-
-              {/* Right side */}
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <a href="#events" style={{
-                  display: isMobile ? "none" : "flex", alignItems: "center", gap: 8,
-                  padding: "8px 16px", borderRadius: 9999, textDecoration: "none", color: "var(--text)",
-                }}>
-                  <span style={{ position: "relative", display: "flex", width: 8, height: 8 }}>
-                    <span className="ping" style={{ position: "absolute", display: "inline-flex", width: "100%", height: "100%", borderRadius: "50%", background: "#f87171", opacity: 0.75 }}/>
-                    <span style={{ position: "relative", display: "inline-flex", borderRadius: "50%", width: 8, height: 8, background: "#ef4444" }}/>
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    <span>Upcoming </span>Events
-                  </span>
-                </a>
-                <a href="/auth/login" style={{
-                  padding: "8px 20px", borderRadius: 9999,
-                  fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-                  display: isMobile ? "none" : "flex", alignItems: "center", gap: 8,
-                  background: "transparent", color: "var(--text)",
-                  border: "1.5px solid var(--border)", cursor: "pointer", textDecoration: "none",
-                  transition: "all .2s",
-                }}>Start for free</a>
-                <button onClick={handleDashboard} style={{
-                  padding: "8px 20px", borderRadius: 9999,
-                  fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-                  display: "flex", alignItems: "center", gap: 8,
-                  background: "var(--text)", color: "var(--bg)",
-                  border: "2px solid var(--text)", cursor: "pointer",
-                  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
-                  transition: "transform .2s", overflow: "hidden", position: "relative",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
-                onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
-                  {user ? "Dashboard" : "Dashboard"}
-                  <ZapIcon size={12}/>
-                </button>
-              </div>
-            </div>
-          </nav>
-
-          {/* ════════════════════════════════════════════════════════════════════
-              HERO — matches Wavey exactly
-          ════════════════════════════════════════════════════════════════════ */}
-          <section style={{
-            position: "relative", paddingTop: isMobile ? 64 : 128, paddingBottom: 80, paddingLeft: 16, paddingRight: 16,
-            minHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            maxWidth: 1280, margin: "0 auto",
-          }}>
-            {/* Background glow */}
-            <div style={{
-              position: "absolute", top: "25%", left: "25%", width: 800, height: 800, borderRadius: "50%",
-              opacity: 0.04, zIndex: -1, pointerEvents: "none",
-              background: "radial-gradient(circle, var(--text) 0%, transparent 70%)",
-            }}/>
-
-            <div style={{
-              display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 32 : 96, alignItems: "center", width: "100%",
-              opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(30px)",
-              transition: "all 0.8s ease 0.2s",
-            }}>
-              {/* ── LEFT SIDE ── */}
-              <div style={{ textAlign: "left", zIndex: 10 }}>
-                {/* Social proof badge */}
-                <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#dcfce7",color:"#166534",padding:"6px 16px",borderRadius:9999,fontSize:13,fontWeight:700,marginBottom:28}}>
-                  <ZapIcon size={14}/> Free to start — no credit card required
-                </div>
-
-                {/* Headline */}
-                <h1 style={{fontSize:"clamp(3rem,7vw,5.5rem)",fontWeight:900,letterSpacing:"-0.05em",lineHeight:0.9,marginBottom:24}}>
-                  One link.<br/>
-                  <span style={{display:"inline-block",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundImage:"linear-gradient(to right, var(--text), var(--accent2, rgba(128,128,128,0.8)))"}}>
-                    Infinite potential.
-                  </span>
-                </h1>
-
-                {/* Subtitle */}
-                <p style={{fontSize:18,opacity:0.6,marginBottom:32,maxWidth:440,lineHeight:1.7,fontWeight:500}}>
-                  One link for your shop, events, services, and brand. Built for independent creators who move fast.
-                </p>
-
-
-
-                {/* CTA buttons */}
-                <div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:32}}>
-                  <a href="/auth/login" style={{padding:"16px 32px",borderRadius:9999,fontWeight:800,fontSize:16,display:"flex",alignItems:"center",gap:8,background:"var(--text)",color:"var(--bg)",textDecoration:"none",boxShadow:"0 20px 25px -5px rgba(0,0,0,0.15)",transition:"transform 0.2s"}}
-                    onMouseEnter={e=>(e.currentTarget.style.transform="scale(1.04)")}
-                    onMouseLeave={e=>(e.currentTarget.style.transform="scale(1)")}>
-                    Start for free <ArrowRight size={18}/>
-                  </a>
-
-                </div>
-
-
-
-                <SalesSimulator />
-              </div>
-
-              {/* ── RIGHT SIDE — Interactive Phone Carousel ── */}
-              <PhoneCarousel />
-            </div>
-          </section>
-
-          {/* ════════════════════════════════════════════════════════════════════
-              MARQUEE BANNER — matches Wavey
-          ════════════════════════════════════════════════════════════════════ */}
-          <div style={{
-            position: "relative", padding: "16px 0", overflow: "hidden",
-            transform: "rotate(-1deg)", cursor: "pointer",
-            borderTop: "2px solid rgba(0,0,0,0.1)", borderBottom: "2px solid rgba(0,0,0,0.1)",
-            margin: "32px 0",
-          }}>
-            <div style={{
-              position: "absolute", inset: 0,
-              background: "linear-gradient(to right, var(--text), var(--accent2, #666), var(--text))",
-              backgroundSize: "200% 200%",
-            }}/>
-            <div style={{ display: "flex", position: "relative", overflow: "hidden" }}>
-              <div className="marquee-track">
-                {[...Array(3)].flatMap((_, setIdx) =>
-                  ["SELL MERCH INSTANTLY","NO CODE REQUIRED","OWN YOUR AUDIENCE","UNLOCK YOUR CITY","EXCLUSIVE EVENTS","LIVE EXPERIENCES","CLICK TO FIND YOUR CITY","DISCOVER NOW","NO FOMO","START FOR FREE","MAXIMIZE ROI"].map((txt, j) => (
-                    <span key={`${setIdx}-${j}`} style={{
-                      display: "inline-flex", alignItems: "center", gap: 16,
-                      fontSize: "clamp(18px, 3vw, 28px)", fontWeight: 900, fontStyle: "italic",
-                      letterSpacing: "-0.03em", textTransform: "uppercase", color: "var(--bg)",
-                      textShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                    }}>
-                      {txt}
-                      {j % 2 === 0
-                        ? <ZapIcon size={20} className="pulse"/>
-                        : <span style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.6)", display: "inline-block" }}/>}
-                    </span>
-                  ))
-                )}
-              </div>
-            </div>
+    <div className="gemm-root" ref={rootRef}>
+      <nav className={scrolled ? "scrolled" : ""}>
+        <div className="wrap nav-inner">
+          <div className="brand"><span className="logo">g</span>gemm</div>
+          <div className="nav-links">
+            <a href="#">Login</a>
+            <a href="#">Book Demo</a>
           </div>
-
-
-          {/* ════════════════════════════════════════════════════════════════════
-              STATS STRIP
-          ════════════════════════════════════════════════════════════════════ */}
-          <section style={{padding:"48px 16px",background:"var(--bg2)",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}>
-            <div style={{maxWidth:1000,margin:"0 auto",display:"flex",justifyContent:"space-around",flexWrap:"wrap",gap:32}}>
-              {[["2,100+","Creators"],["$1.2M+","Earned by creators"],["48","Cities"],["98%","Creator satisfaction"]].map(([num,label])=>(
-                <div key={label} style={{textAlign:"center"}}>
-                  <div style={{fontSize:"clamp(28px,5vw,48px)",fontWeight:900,letterSpacing:"-.03em",lineHeight:1,color:"var(--text)"}}>{num}</div>
-                  <div style={{fontSize:12,fontWeight:700,opacity:.4,letterSpacing:".1em",textTransform:"uppercase" as const,marginTop:6}}>{label}</div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* ════════════════════════════════════════════════════════════════════
-              CREATOR SPOTLIGHT
-          ════════════════════════════════════════════════════════════════════ */}
-          <section style={{padding:"96px 16px",background:"var(--bg)"}}>
-            <div style={{maxWidth:1100,margin:"0 auto"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:48,flexWrap:"wrap",gap:16}}>
-                <div>
-                  <div style={{fontSize:12,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,opacity:.4,marginBottom:8}}>Featured Creators</div>
-                  <h2 style={{fontSize:"clamp(28px,5vw,48px)",fontWeight:900,letterSpacing:"-.03em",lineHeight:1}}>Built for creators<br/>who move fast.</h2>
-                </div>
-                <a href="/discover" style={{padding:"12px 24px",borderRadius:9999,border:"1.5px solid var(--border)",color:"var(--text)",textDecoration:"none",fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:8}}>
-                  View all creators <ArrowUpRight size={14}/>
-                </a>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:16}}>
-                {[
-                  {name:"Brock Seals",handle:"palettebyseals",city:"St. Louis, MO",type:"Visual Artist",earned:"$18,400",img:"https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=300&fit=crop"},
-                  {name:"Maya Chen",handle:"mayacreates",city:"Chicago, IL",type:"Photographer",earned:"$24,100",img:"https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=400&h=300&fit=crop"},
-                  {name:"Jordan Wells",handle:"jwellsmusic",city:"Atlanta, GA",type:"Musician",earned:"$31,800",img:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop"},
-                  {name:"Priya Nair",handle:"priyaevents",city:"Houston, TX",type:"Event Host",earned:"$42,200",img:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=300&fit=crop"},
-                ].map(c=>(
-                  <div key={c.handle} style={{borderRadius:20,overflow:"hidden",border:"1px solid var(--border)",background:"var(--bg2)",transition:"transform .2s"}}
-                    onMouseEnter={e=>e.currentTarget.style.transform="translateY(-4px)"}
-                    onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
-                    <div style={{height:160,position:"relative",overflow:"hidden"}}>
-                      <img src={c.img} alt={c.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                      <div style={{position:"absolute",top:12,right:12,background:"rgba(0,0,0,.6)",backdropFilter:"blur(8px)",borderRadius:9999,padding:"4px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{c.type}</div>
-                    </div>
-                    <div style={{padding:16}}>
-                      <div style={{fontWeight:900,fontSize:15,marginBottom:2}}>{c.name}</div>
-                      <div style={{fontSize:12,opacity:.4,fontWeight:600,marginBottom:12}}>{c.city}</div>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end"}}>
-                        <span style={{fontSize:11,fontWeight:800,color:"var(--text)",opacity:.5}}>View →</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ════════════════════════════════════════════════════════════════════
-              DUAL CTA — CREATORS & FANS
-          ════════════════════════════════════════════════════════════════════ */}
-          <section style={{padding:"0 16px 96px",background:"var(--bg)"}}>
-            <div style={{maxWidth:1100,margin:"0 auto",display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:16}}>
-              <div style={{borderRadius:24,padding:48,background:"var(--text)",color:"var(--bg)"}}>
-                <div style={{fontSize:11,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,opacity:.5,marginBottom:16}}>For Creators</div>
-                <h3 style={{fontSize:"clamp(24px,4vw,36px)",fontWeight:900,letterSpacing:"-.03em",marginBottom:16,lineHeight:1.1}}>Launch your creative empire today.</h3>
-                <p style={{fontSize:15,opacity:.6,marginBottom:32,lineHeight:1.6}}>Shop, events, services, links — everything in one place. Free to start.</p>
-                <a href="/auth/login" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"14px 28px",borderRadius:9999,background:"var(--bg)",color:"var(--text)",textDecoration:"none",fontWeight:800,fontSize:14}}>
-                  Start for free <ArrowRight size={16}/>
-                </a>
-              </div>
-              <div style={{borderRadius:24,padding:48,background:"var(--bg2)",border:"1px solid var(--border)"}}>
-                <div style={{fontSize:11,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,opacity:.4,marginBottom:16}}>For Fans</div>
-                <h3 style={{fontSize:"clamp(24px,4vw,36px)",fontWeight:900,letterSpacing:"-.03em",marginBottom:16,lineHeight:1.1}}>Discover creators near you.</h3>
-                <p style={{fontSize:15,opacity:.5,marginBottom:32,lineHeight:1.6}}>Find artists, musicians, event hosts, and more in your city. Support the culture.</p>
-                <a href="/auth/login" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"14px 28px",borderRadius:9999,background:"var(--text)",color:"var(--bg)",textDecoration:"none",fontWeight:800,fontSize:14}}>
-                  Explore creators <ArrowUpRight size={16}/>
-                </a>
-              </div>
-            </div>
-          </section>
-
-          {/* ════════════════════════════════════════════════════════════════════
-              CONTENT GRID
-          ════════════════════════════════════════════════════════════════════ */}
-          <section style={{padding:"96px 16px",background:"var(--bg2)",borderTop:"1px solid var(--border)"}}>
-            <div style={{maxWidth:1100,margin:"0 auto"}}>
-              <div style={{textAlign:"center",marginBottom:48}}>
-                <div style={{fontSize:12,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase" as const,opacity:.4,marginBottom:12}}>Creator Work</div>
-                <h2 style={{fontSize:"clamp(28px,5vw,48px)",fontWeight:900,letterSpacing:"-.03em"}}>Culture happens here.</h2>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:8}}>
-                {[
-                  {img:"https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=300&h=300&fit=crop",creator:"Zara Okonkwo",type:"Art Print"},
-                  {img:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop",creator:"Marcus Lee",type:"Live Music"},
-                  {img:"https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=300&h=300&fit=crop",creator:"Ami Torres",type:"Photography"},
-                  {img:"https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop",creator:"Devon Park",type:"Beat Tape"},
-                  {img:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300&h=300&fit=crop",creator:"Priya Nair",type:"Event Tickets"},
-                  {img:"https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=300&fit=crop",creator:"Lena Marsh",type:"Handmade Goods"},
-                  {img:"https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=300&h=300&fit=crop",creator:"Chris Vega",type:"DJ Set"},
-                  {img:"https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=300&h=300&fit=crop",creator:"Jordan Wells",type:"Concert"},
-                ].map((item,i)=>(
-                  <div key={i} style={{aspectRatio:"1",borderRadius:12,overflow:"hidden",position:"relative"}}>
-                    <img src={item.img} alt={item.creator} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                    <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 50%)",display:"flex",flexDirection:"column" as const,justifyContent:"flex-end",padding:12}}>
-                      <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,.6)"}}>{item.type}</div>
-                      <div style={{fontSize:12,fontWeight:800,color:"#fff"}}>{item.creator}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{textAlign:"center",marginTop:32}}>
-                <a href="/discover" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"14px 32px",borderRadius:9999,border:"1.5px solid var(--border)",color:"var(--text)",textDecoration:"none",fontWeight:700,fontSize:14}}>
-                  Explore all creators <ArrowUpRight size={14}/>
-                </a>
-              </div>
-            </div>
-          </section>
-          {/* ════════════════════════════════════════════════════════════════════
-              EVENTS SECTION — matches Wavey
-          ════════════════════════════════════════════════════════════════════ */}
-          {false && <section id="events" style={{
-            padding: "96px 16px", background: "var(--bg2)",
-            borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
-            transition: "background 0.5s",
-          }}>
-            <div ref={addRevealRef} style={{ maxWidth: 1200, margin: "0 auto", ...revealStyle }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 48, flexWrap: "wrap" }}>
-                <div style={{ flex: 1, minWidth: 300 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: 16 }}>
-                    <CalendarIcon/> Live Experiences
-                  </div>
-                  <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", fontWeight: 900, marginBottom: 24 }}>
-                    Don&apos;t just watch. <br/>
-                    <span style={{ textDecoration: "underline", textDecorationColor: "var(--text)", textUnderlineOffset: 8, textDecorationThickness: 4 }}>Be there.</span>
-                  </h2>
-                  <p style={{ fontSize: 18, opacity: 0.7, marginBottom: 32, maxWidth: 480, lineHeight: 1.6, fontWeight: 500 }}>
-                    Browse concerts, workshops, and exclusive events happening on GEMM.
-                  </p>
-                  <a href="#events" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 18, color: "var(--text)", textDecoration: "none", transition: "opacity 0.2s" }}
-                    onMouseEnter={e => (e.currentTarget.style.opacity = "0.6")}
-                    onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
-                    Discover Upcoming Events <ArrowRight size={20}/>
-                  </a>
-                </div>
-                {/* Featured event image — matches Wavey */}
-                <div style={{
-                  position: "relative", flex: 1, minWidth: 300, maxWidth: 480,
-                  aspectRatio: "16/9", borderRadius: 24, overflow: "hidden",
-                  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", cursor: "pointer",
-                }} onClick={() => { if(liveEvents[0]?.id) router.push(`/event/${liveEvents[0].id}`); }}>
-                  <div style={{ width: "100%", height: "100%", background: liveEvents[0]?.flyerURL ? `url(${liveEvents[0].flyerURL}) center/cover no-repeat` : "linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)", minHeight: 240 }}/>
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)" }}/>
-                  <div style={{ position: "absolute", bottom: 24, left: 24, zIndex: 20, color: "#fff" }}>
-                    <div style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", padding: "4px 12px", borderRadius: 9999, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 8, border: "1px solid rgba(255,255,255,0.3)" }}>Featured</div>
-                    <div style={{ fontSize: 24, fontWeight: 900 }}>{ liveEvents[0]?.title || "Featured Event" }</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, opacity: 0.9, marginTop: 4 }}>{ liveEvents[0]?.venueName ? ` • ${liveEvents[0].venueName}` : "" }</div>
-                  </div>
-                </div>
-              </div>
-              {/* Event cards — matches Wavey */}
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 48 }}>
-                {liveEvents.length > 0 ? liveEvents.map(e => (
-                  <div
-                    key={e.id}
-                    onClick={() => window.location.href = `/event/${e.id}`}
-                    style={{
-                      padding: 16, borderRadius: 12, border: "1px solid var(--border)",
-                      background: "var(--card)", cursor: "pointer", color: "var(--text)",
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                    }}
-                    onMouseEnter={el => { (el.currentTarget as HTMLDivElement).style.transform = "scale(1.02)"; (el.currentTarget as HTMLDivElement).style.boxShadow = "0 12px 40px rgba(0,0,0,0.08)"; }}
-                    onMouseLeave={el => { (el.currentTarget as HTMLDivElement).style.transform = "scale(1)"; (el.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
-                  >
-                    {e.flyerURL && (
-                      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
-                        <img src={e.flyerURL} alt={e.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      </div>
-                    )}
-                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{e.title}</div>
-                    <div style={{ fontSize: 12, opacity: 0.5, marginBottom: 4 }}>{e.venueName || ""}</div>
-                    {e.startDate && (
-                      <div style={{ fontSize: 11, opacity: 0.4, fontWeight: 600 }}>
-                        {new Date(e.startDate + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </div>
-                    )}
-                  </div>
-                )) : (
-                  <div style={{ padding: 16, borderRadius: 12, border: "1px dashed var(--border)", opacity: 0.4, fontSize: 14, fontWeight: 600 }}>
-                    No events yet — publish your first event
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>}
-
-          {/* ════════════════════════════════════════════════════════════════════
-              COST / REVENUE SECTION — matches Wavey
-          ════════════════════════════════════════════════════════════════════ */}
-          <section style={{ padding: "128px 16px", background: "var(--bg)", transition: "background 0.5s" }}>
-            <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 64, alignItems: "center" }}>
-              <div ref={addRevealRef} style={revealStyle}>
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 12px",
-                  borderRadius: 6, marginBottom: 24,
-                  border: "1px solid rgba(128,128,128,0.3)", background: "rgba(128,128,128,0.08)",
-                  fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em",
-                }}>
-                  ⚠️ The Cost of Doing Nothing
-                </div>
-                <h2 style={{ fontSize: "clamp(2.5rem, 5vw, 3.8rem)", fontWeight: 900, marginBottom: 24, lineHeight: 1, letterSpacing: "-0.03em" }}>
-                  Turn <span style={{ textDecoration: "underline", textDecorationColor: "#ef4444", textDecorationThickness: 4, textUnderlineOffset: 8 }}>$24</span> into<br/> an empire.
-                </h2>
-                <p style={{ fontSize: 20, marginBottom: 40, lineHeight: 1.6, fontWeight: 500, opacity: 0.7 }}>
-                  You have the fans. Now, get paid. For less than $1 a day, get a shop, sell tickets, and share one link for everything. Watch your sales grow while your cost stays the same.
-                </p>
-                {/* Cost comparison cards — matches Wavey */}
-                <a href="#pricing" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, cursor: "pointer", textDecoration: "none", color: "var(--text)" }}>
-                  <div style={{ padding: 24, borderRadius: 24, border: "1px solid var(--border)", background: "var(--bg2)", position: "relative", overflow: "hidden" }}>
-                    <div style={{ position: "absolute", top: 0, right: 0, width: 64, height: 64, background: "rgba(239,68,68,0.1)", borderRadius: "0 0 0 100%" }}/>
-                    <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6, marginBottom: 8 }}>Your Monthly Cost</p>
-                    <p style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-0.05em" }}>$24</p>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "#ef4444", marginTop: 8 }}>Static Friction</p>
-                  </div>
-                  <div style={{ padding: 24, borderRadius: 24, border: "2px solid var(--text)", background: "var(--card)", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)", position: "relative", overflow: "hidden" }}>
-                    <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      Est. Total Sales
-                      <span className="pulse" style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", display: "inline-block", boxShadow: "0 0 10px rgba(34,197,94,0.6)" }}/>
-                    </p>
-                    <p style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-0.05em" }}>$5.4k<span style={{ fontSize: 24, opacity: 0.5 }}>+</span></p>
-                    <p style={{ fontSize: 12, fontWeight: 700, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>Kinetic Breakout <ArrowUpRight size={12}/></p>
-                  </div>
-                </a>
-              </div>
-              {/* Revenue simulator box — matches Wavey */}
-              <div ref={addRevealRef} style={revealStyle}>
-                <RevenueChart />
-              </div>
-            </div>
-          </section>
-
-          {/* ════════════════════════════════════════════════════════════════════
-              TEAM SECTION — matches Wavey (THIS WAS MISSING)
-          ════════════════════════════════════════════════════════════════════ */}
-          <section style={{ padding: "96px 16px", background: "var(--bg2)", color: "var(--text)", transition: "background 0.5s" }}>
-            <div ref={addRevealRef} style={{ maxWidth: 1200, margin: "0 auto", ...revealStyle }}>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 48, alignItems: "center" }}>
-                {/* Left — Feature grid */}
-                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
-                  <FeatureCard icon={<UsersIcon/>} title="Custom Pages" desc="Give every fan their own page that matches their style and brand."/>
-                  <FeatureCard icon={<StarIcon size={24}/>} title="Connect Your Apps" desc="It works perfectly with tools you love like Eventbrite and Posh."/>
-                  <FeatureCard icon={<ChartIcon/>} title="Live Tracking" desc="See every sale happen across all your social apps in real time."/>
-                  <FeatureCard icon={<ZapIcon size={24}/>} title="Easy Growth" desc="Fans can join your team in minutes and start selling for you."/>
-                </div>
-
-                {/* Right — Copy */}
-                <div>
-                  <div style={{
-                    display: "inline-flex", alignItems: "center", gap: 8,
-                    padding: "6px 12px", borderRadius: 9999, marginBottom: 24,
-                    border: "1px solid rgba(128,128,128,0.3)", background: "rgba(128,128,128,0.08)",
-                    fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em",
-                  }}>
-                    <UsersIcon size={14}/> Team Up for Success
-                  </div>
-                  <h2 style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)", fontWeight: 900, marginBottom: 24, lineHeight: 1.1, letterSpacing: "-0.03em" }}>
-                    Get a team that <br/><span style={{ color: "var(--accent, var(--text))" }}>sells for you.</span>
-                  </h2>
-                  <p style={{ fontSize: 20, lineHeight: 1.6, fontWeight: 500, opacity: 0.8, marginBottom: 32 }}>
-                    You don&apos;t have to grow alone. Let your biggest fans help sell your work. Build a team of helpers who share your link with the world. You make more money, and you can see exactly who is helping you grow on one simple page.
-                  </p>
-                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <div style={{ display: "flex" }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "50%", border: "2px solid var(--text)", background: "var(--bg2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <UsersIcon size={20}/>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: 14, fontWeight: 700, opacity: 0.7 }}>Join 5,000+ creators building networks</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-
-          {/* ════════════════════════════════════════════════════════════════════
-              PRICING — Dubsado style
-          ════════════════════════════════════════════════════════════════════ */}
-          {false && <section id="pricing" style={{padding:"96px 16px",background:"var(--bg2)",transition:"background 0.3s"}}>
-            <div style={{maxWidth:900,margin:"0 auto"}}>
-              {/* Header */}
-              <div style={{textAlign:"center",marginBottom:56}}>
-                <h2 style={{fontSize:"clamp(2rem,5vw,3.5rem)",fontWeight:900,letterSpacing:"-.04em",marginBottom:12}}>Simple, honest pricing.</h2>
-                <p style={{fontSize:16,opacity:.5,fontWeight:500,maxWidth:400,margin:"0 auto",lineHeight:1.6}}>Start free. Upgrade when you&apos;re ready. Only pay when you earn.</p>
-                {/* Toggle */}
-                <div style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:24,padding:4,borderRadius:9999,border:"1px solid var(--border)",background:"var(--card)"}}>
-                  {["Monthly","Yearly"].map(label=>(
-                    <button key={label} onClick={()=>setYearly(label==="Yearly")} style={{padding:"8px 20px",borderRadius:9999,fontSize:12,fontWeight:700,border:"none",cursor:"pointer",fontFamily:"inherit",transition:"all .2s",background:(label==="Yearly")===yearly?"var(--text)":"transparent",color:(label==="Yearly")===yearly?"var(--bg)":"var(--text)"}}>
-                      {label}{label==="Yearly"&&<span style={{marginLeft:6,fontSize:10,color:(label==="Yearly")===yearly?"var(--bg)":"#22c55e",fontWeight:800}}>-20%</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-
-
-              {/* Velocity + Empire side by side */}
-              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:16}}>
-                {/* Velocity */}
-                <div style={{borderRadius:20,border:"2px solid var(--text)",padding:32,background:"var(--card)",position:"relative"}}>
-                  <div style={{position:"absolute",top:-14,left:24,background:"var(--text)",color:"var(--bg)",fontSize:10,fontWeight:800,letterSpacing:".1em",textTransform:"uppercase" as const,padding:"4px 14px",borderRadius:9999}}>MOST POPULAR</div>
-                  <div style={{fontWeight:900,fontSize:24,marginBottom:6}}>Velocity</div>
-                  <div style={{fontSize:13,opacity:.5,fontWeight:500,marginBottom:24}}>For creators hitting their stride.</div>
-                  <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:4}}>
-                    <span style={{fontSize:52,fontWeight:900,letterSpacing:"-.04em",lineHeight:1}}>{yearly?10:15}</span>
-                    <span style={{fontSize:13,opacity:.5,marginBottom:8}}>/month</span>
-                  </div>
-                  {yearly&&<div style={{fontSize:11,color:"#22c55e",fontWeight:700,marginBottom:20}}>↗ Save $60/year</div>}
-                  {!yearly&&<div style={{marginBottom:20}}/>}
-                  <button onClick={()=>window.open(yearly?"https://buy.stripe.com/00w14n7gBaf7cfy1yn4gg05":"https://buy.stripe.com/9B65kD30l72VenGdh54gg03","_blank")} style={{width:"100%",padding:"14px",borderRadius:12,background:"var(--text)",color:"var(--bg)",border:"none",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"inherit",marginBottom:28,transition:"opacity .2s"}}>
-                    Get started <ArrowRight size={15}/>
-                  </button>
-                  <div style={{fontSize:11,fontWeight:700,opacity:.4,letterSpacing:".08em",textTransform:"uppercase" as const,marginBottom:12}}>Everything in Spark, plus:</div>
-                  <div style={{display:"flex",flexDirection:"column" as const,gap:12}}>
-                    {["Unlimited links & pages","Shop with Stripe payouts","Event ticketing","Services & inquiries","Portfolio & press section","QR code generator","Basic analytics","Email support"].map(f=>(
-                      <div key={f} style={{display:"flex",alignItems:"center",gap:10,fontSize:13,fontWeight:600}}>
-                        <CheckIcon size={14} color="var(--text)"/><span style={{opacity:.8}}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Empire */}
-                <div style={{borderRadius:20,border:"1px solid var(--border)",padding:32,background:"var(--card)",position:"relative"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                    <div style={{fontWeight:900,fontSize:24}}>Empire</div><CrownIcon/>
-                  </div>
-                  <div style={{fontSize:13,opacity:.5,fontWeight:500,marginBottom:24}}>The operating system for dominance.</div>
-                  <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:4}}>
-                    <span style={{fontSize:52,fontWeight:900,letterSpacing:"-.04em",lineHeight:1}}>{yearly?24:35}</span>
-                    <span style={{fontSize:13,opacity:.5,marginBottom:8}}>/month</span>
-                  </div>
-                  {yearly&&<div style={{fontSize:11,color:"#22c55e",fontWeight:700,marginBottom:20}}>↗ Save $132/year</div>}
-                  {!yearly&&<div style={{marginBottom:20}}/>}
-                  <button onClick={()=>window.open(yearly?"https://buy.stripe.com/7sY8wP6cx2MFcfygth4gg06":"https://buy.stripe.com/3cIbJ1gRb0Ex6Ve1yn4gg04","_blank")} style={{width:"100%",padding:"14px",borderRadius:12,background:"transparent",color:"var(--text)",border:"1.5px solid var(--border)",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"inherit",marginBottom:28,transition:"all .2s"}}>
-                    Get started <ArrowRight size={15}/>
-                  </button>
-                  <div style={{fontSize:11,fontWeight:700,opacity:.4,letterSpacing:".08em",textTransform:"uppercase" as const,marginBottom:12}}>Everything in Velocity, plus:</div>
-                  <div style={{display:"flex",flexDirection:"column" as const,gap:12}}>
-                    {["Custom domain","Advanced branding & themes","CRM (500 contacts)","Priority support","Early access to new features","Dedicated account manager","Custom pages builder","Revenue analytics"].map(f=>(
-                      <div key={f} style={{display:"flex",alignItems:"center",gap:10,fontSize:13,fontWeight:600}}>
-                        <CheckIcon size={14} color="var(--text)"/><span style={{opacity:.8}}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-
-            </div>
-          </section>}
-
-          {/* ════════════════════════════════════════════════════════════════════
-              FOOTER — matches Wavey
-          ════════════════════════════════════════════════════════════════════ */}
-          <footer style={{ padding: "96px 24px", borderTop: "1px solid var(--border)", background: "var(--bg)", transition: "background 0.5s" }}>
-            <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-              <div ref={addRevealRef} style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr 1fr", gap: 48, ...revealStyle }}>
-                <div>
-                  <div style={{ fontWeight: 900, letterSpacing: "-0.05em", fontSize: 24, marginBottom: 16 }}>GEMM</div>
-                  <p style={{ opacity: 0.6, fontSize: 14, maxWidth: 320, marginBottom: 32, lineHeight: 1.5 }}>
-                    The complete operating system for the next generation of digital empires.
-                  </p>
-                  <div style={{ display: "flex", gap: 16 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(128,128,128,0.1)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.5 }}>🌐</div>
-                  </div>
-                </div>
-                <div>
-                  <h4 style={{ fontWeight: 700, marginBottom: 16 }}>Platform</h4>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, opacity: 0.6 }}>
-                    <a href="/auth/login" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Login</a>
-                    <a href="/auth/login" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Pricing</a>
-                    <a href="#events" style={{ textDecoration: "none", color: "inherit", transition: "opacity 0.2s" }}>Explore Events</a>
-                  </div>
-                </div>
-                <div>
-                  <h4 style={{ fontWeight: 700, marginBottom: 16 }}>Support</h4>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, opacity: 0.6 }}>
-                    <a href="/contact" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✉️ Contact Us</a>
-                    <a href="#" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>💬 Community</a>
-                    <a href="/privacy" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>🛡️ Privacy Policy</a>
-                  </div>
-                </div>
-              </div>
-              <div style={{
-                marginTop: 48, paddingTop: 32, borderTop: "1px solid var(--border)",
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                fontSize: 12, opacity: 0.4, fontWeight: 700, textTransform: "uppercase",
-              }}>
-                <div>© 2026 Gemm Inc.</div>
-                <div>All Systems Operational</div>
-              </div>
-            </div>
-          </footer>
-
-          {/* ════════════════════════════════════════════════════════════════════
-              THEME SWITCHER DOCK — matches Wavey
-          ════════════════════════════════════════════════════════════════════ */}
-          <div style={{
-            position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)",
-            zIndex: 100, display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 8px", borderRadius: 40,
-            background: "var(--nav)", backdropFilter: "blur(16px)",
-            border: "1px solid var(--border)",
-            boxShadow: "0 30px 60px -15px rgba(0,0,0,0.25)",
-            opacity: loaded ? 1 : 0, transition: "opacity 0.6s ease 1s",
-          }}>
-            {SWATCHES.map(s => (
-              <button key={s.key} onClick={() => setTheme(s.key)}
-                title={s.key.charAt(0).toUpperCase() + s.key.slice(1)}
-                style={{
-                  width: theme === s.key ? "auto" : 40, height: 40, borderRadius: 9999,
-                  border: theme === s.key ? "1px solid var(--border)" : "1px solid transparent",
-                  background: s.bg.includes("gradient") ? s.bg : s.bg,
-                  cursor: "pointer", transition: "all 0.3s",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  padding: theme === s.key ? "0 16px 0 4px" : 0,
-                  boxShadow: theme === s.key ? "0 4px 6px -1px rgba(0,0,0,0.1)" : "none",
-                }}>
-                <div style={{
-                  width: theme === s.key ? 28 : 24, height: theme === s.key ? 28 : 24,
-                  borderRadius: "50%", background: s.bg.includes("gradient") ? "rgba(255,255,255,0.3)" : s.bg === "#000000" ? "#000" : s.bg,
-                  boxShadow: "inset 0 2px 4px rgba(0,0,0,0.1)",
-                  transition: "all 0.3s",
-                }}/>
-                {theme === s.key && (
-                  <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: "0.05em", color: "var(--text)", whiteSpace: "nowrap" }}>
-                    {s.key.charAt(0).toUpperCase() + s.key.slice(1)}
-                  </span>
-                )}
-              </button>
-            ))}
+          <div className="nav-right">
+            <button className="btn btn-primary">Create Event</button>
           </div>
         </div>
-      </>
-    </ClientRouter>
+      </nav>
+
+      <header className="hero wrap">
+        <h1 className="display">Your Free All-in-One<br />Ticketing platform</h1>
+        <p>gemm is an all-in-one modern event dashboard built for the modern generation.</p>
+        <div className="hero-cta">
+          <button className="btn btn-primary">Create Event</button>
+          <button className="btn btn-ghost">▦ Book Demo</button>
+        </div>
+
+        {/* DASHBOARD MOCKUP */}
+        <div className="mock-shell reveal">
+          <div className="mock">
+            {/* sidebar */}
+            <aside className="side">
+              <div className="org">
+                <div className="org-ic" />
+                <div className="org-t">TurnUp LLC<span>Organization</span></div>
+                <div className="chev">⌄</div>
+              </div>
+              <div className="nav-label">General</div>
+              <div className="side-item active"><i />Overview</div>
+              <div className="side-item"><i />Attendees</div>
+              <div className="side-item"><i />Gallery</div>
+              <div className="side-item"><i />Team</div>
+              <div className="nav-label">Advanced</div>
+              <div className="side-item"><i />My Events</div>
+              <div className="side-item"><i />Marketing</div>
+              <div className="side-item arr"><i />Finance</div>
+              <div className="side-item arr"><i />Settings</div>
+              <div className="side-user">
+                <div className="av" />
+                <div className="t">Solomon G<span>eventiscaron@gmail.com</span></div>
+              </div>
+            </aside>
+
+            {/* main */}
+            <div className="main">
+              <div className="topbar">
+                <div className="crumb"><span className="sq" /> Overview / <b>Y2K Party</b> ⌄</div>
+                <div className="stripe">View Stripe Dashboard →</div>
+              </div>
+
+              {/* KPIs */}
+              <div className="kpis">
+                <div className="kpi">
+                  <div className="lb"><span className="d" />Total Revenue</div>
+                  <div className="v">$13,375</div>
+                  <div className="s">↑ 100.2% from last month</div>
+                </div>
+                <div className="kpi">
+                  <div className="dot-red" />
+                  <div className="lb"><span className="d" />Total Tickets Sold</div>
+                  <div className="v">450</div>
+                  <div className="s">↑ 63% from last month</div>
+                </div>
+                <div className="kpi">
+                  <div className="lb"><span className="d" />Checked In / Tickets</div>
+                  <div className="v">450/447</div>
+                  <div className="s">↑ 97% from last month</div>
+                </div>
+                <div className="kpi">
+                  <div className="lb"><span className="d" />Peak Sales Period</div>
+                  <div className="v">Apr 7th – 9th</div>
+                  <div className="s mut">Peak value: 651 tickets</div>
+                </div>
+              </div>
+
+              {/* Revenue + Tickets */}
+              <div className="row2">
+                <div className="panel">
+                  <div className="panel-h">
+                    <div><div className="tt">All Revenue ⌄</div><div className="st">Revenue across all your events</div></div>
+                    <div className="tabs"><span>All Time</span><span>Last Month</span><span>Last Week</span><span className="on">Today</span><span>Range</span></div>
+                  </div>
+                  <div className="chart">
+                    <svg viewBox="0 0 500 150" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0" stopColor="#2f6bff" stopOpacity=".55" />
+                          <stop offset="1" stopColor="#2f6bff" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M0,146 C140,144 250,138 320,120 C378,105 420,72 500,10 L500,150 L0,150 Z" fill="url(#rev)" />
+                      <path d="M0,146 C140,144 250,138 320,120 C378,105 420,72 500,10" fill="none" stroke="#4d8bff" strokeWidth="2" />
+                    </svg>
+                    <div className="xaxis"><span>31 Mar</span><span>1 Apr</span><span>4 Apr</span><span>7 Apr</span><span>8 Apr</span></div>
+                  </div>
+                </div>
+
+                <div className="panel">
+                  <div className="panel-h"><div><div className="tt">All Tickets ⌄</div><div className="st">Count / Share</div></div></div>
+                  <div className="donut-wrap">
+                    <div className="donut">
+                      <svg viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="48" fill="none" stroke="#161a22" strokeWidth="14" />
+                        <circle cx="60" cy="60" r="48" fill="none" stroke="#26d3ee" strokeWidth="14"
+                          strokeDasharray="153 302" strokeDashoffset="0" transform="rotate(-90 60 60)" strokeLinecap="round" />
+                        <circle cx="60" cy="60" r="48" fill="none" stroke="#2f6bff" strokeWidth="14"
+                          strokeDasharray="124 302" strokeDashoffset="-160" transform="rotate(-90 60 60)" strokeLinecap="round" />
+                      </svg>
+                      <div className="ctr">450</div>
+                    </div>
+                    <div className="legend">
+                      <div className="leg"><span className="dt" style={{ background: "#26d3ee" }} /><span className="nm">General Ticket <b>· Y2K Party</b></span><span className="rt">229</span><span className="pc">50.9%</span></div>
+                      <div className="leg"><span className="dt" style={{ background: "#2f6bff" }} /><span className="nm">Wave 1 Tickets <b>· Y2K Party</b></span><span className="rt">186</span><span className="pc">41.1%</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom row */}
+              <div className="rowbtm">
+                <div className="panel">
+                  <div className="panel-h">
+                    <div><div className="tt">Revenue from Top-Grossing Event ⌄</div><div className="st">Top grossing event</div></div>
+                    <div className="tabs"><span>All Time</span><span>Last Month</span><span>Last Week</span><span className="on">Today</span><span>Range</span></div>
+                  </div>
+                  <div className="bars">
+                    <div className="bargrp"><div className="bar" style={{ height: "82%" }} /></div>
+                    <div className="bargrp"><div className="bar" style={{ height: "58%" }} /></div>
+                    <div className="bargrp"><div className="bar" style={{ height: "70%" }} /></div>
+                    <div className="bargrp"><div className="bar" style={{ height: "40%" }} /></div>
+                    <div className="bargrp"><div className="bar" style={{ height: "64%" }} /></div>
+                    <div className="bargrp"><div className="bar" style={{ height: "50%" }} /></div>
+                  </div>
+                  <div className="btm-legend">
+                    <span><span className="dt" style={{ background: "#4d8bff" }} />VIP Tickets · $7K</span>
+                    <span><span className="dt" style={{ background: "#26d3ee" }} />Wave 2 Tickets · $6K</span>
+                    <span><span className="dt" style={{ background: "#2f6bff" }} />General Ticket · $2K</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* HOSTS CARD */}
+      <section className="hosts-sec wrap">
+        <div className="hosts-card reveal">
+          <span className="pill">Made for the hosts</span>
+          <h2 className="display">World&apos;s Best<span className="fade">Event Tickets</span></h2>
+          <div className="globe-box">
+            <div className="globe-glow" />
+            <canvas ref={globeRef} className="globe-canvas" />
+          </div>
+          <div className="cols3">
+            <div>
+              <h3>Reach the Right Crowd</h3>
+              <p>Promote your events to an audience that&apos;s ready to attend—no noise, just real turnout.</p>
+            </div>
+            <div>
+              <h3>Simple, Powerful Ticketing</h3>
+              <p>Trigger functions automatically for dynamic app behavior.</p>
+            </div>
+            <div>
+              <h3>Real-Time Insights</h3>
+              <p>Track sales, optimize performance, and make data-driven decisions—all in one place.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="feat4 wrap reveal">
+        <div className="f">
+          <div className="fi">📣</div>
+          <h4>Built-In Marketing Tools</h4>
+          <p>Send targeted SMS and email blasts to boost attendance and keep your audience engaged.</p>
+        </div>
+        <div className="f">
+          <div className="fi">📊</div>
+          <h4>Know Your Audience</h4>
+          <p>Access real-time insights to understand who&apos;s attending and how your events are performing.</p>
+        </div>
+        <div className="f">
+          <div className="fi">⚙️</div>
+          <h4>Customizable Event Pages</h4>
+          <p>Easily tailor your event listings with descriptions, ticket tiers, and branding to match your vibe.</p>
+        </div>
+        <div className="f">
+          <div className="fi">🖼️</div>
+          <h4>Post-Event Galleries</h4>
+          <p>Upload and showcase event photos to drive FOMO, increase engagement, and build your brand.</p>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="cta">
+        <div className="wrap reveal">
+          <h2 className="display">Ready to host with gemm?</h2>
+          <p>Create your first event, connect with your audience, and start selling tickets in minutes—no tech skills required.</p>
+          <div className="cta-form">
+            <input type="email" placeholder="Your Work Email" aria-label="Your work email" />
+            <button className="btn btn-primary">Get started</button>
+          </div>
+          <div className="cta-sales">Not sure where to start? <a href="#">Talk to sales</a></div>
+        </div>
+      </section>
+
+      <footer>© 2026 gemm — Built for the modern generation.</footer>
+
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
+        html{scroll-behavior:smooth}
+
+        .gemm-root{
+          --bg:#050508; --bg-2:#080a10; --card:#0c0e14; --card-2:#101319;
+          --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.11);
+          --text:#f4f6fa; --muted:#8a909c; --muted-2:#5f6470;
+          --blue:#2f6bff; --blue-2:#4d8bff; --cyan:#26d3ee; --green:#22c55e; --red:#f0546a;
+          background:var(--bg); color:var(--text);
+          font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased;
+          overflow-x:hidden; min-height:100vh;
+        }
+        .gemm-root *{box-sizing:border-box;margin:0;padding:0}
+        .gemm-root .display{font-family:'Plus Jakarta Sans','Inter',sans-serif}
+        .gemm-root a{color:inherit;text-decoration:none}
+        .gemm-root .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+        /* NAV */
+        .gemm-root nav{position:sticky;top:0;z-index:50;background:rgba(5,5,8,.72);
+          backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .3s}
+        .gemm-root nav.scrolled{border-bottom-color:var(--line)}
+        .gemm-root .nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
+        .gemm-root .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18px;letter-spacing:-.02em}
+        .gemm-root .logo{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,#4d8bff,#26d3ee);
+          display:grid;place-items:center;color:#04121f;font-weight:800;font-size:15px;
+          font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 0 18px rgba(45,110,255,.45)}
+        .gemm-root .nav-links{display:flex;align-items:center;gap:30px;font-size:14px;color:var(--muted)}
+        .gemm-root .nav-links a:hover{color:var(--text)}
+        .gemm-root .nav-right{display:flex;align-items:center;gap:16px}
+        .gemm-root .btn{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;border:none;cursor:pointer;
+          border-radius:9px;padding:9px 16px;display:inline-flex;align-items:center;gap:8px;transition:.18s}
+        .gemm-root .btn-primary{background:var(--blue);color:#fff;box-shadow:0 6px 20px rgba(47,107,255,.35)}
+        .gemm-root .btn-primary:hover{background:var(--blue-2);transform:translateY(-1px)}
+        .gemm-root .btn-ghost{background:transparent;color:var(--text)}
+        .gemm-root .btn-ghost:hover{color:var(--muted)}
+        @media(max-width:760px){.gemm-root .nav-links{display:none}}
+
+        /* HERO */
+        .gemm-root .hero{text-align:center;padding:78px 0 40px;position:relative}
+        .gemm-root .hero::before{content:"";position:absolute;top:-40px;left:50%;transform:translateX(-50%);
+          width:620px;height:420px;max-width:90vw;
+          background:radial-gradient(ellipse at center,rgba(47,107,255,.20),transparent 62%);filter:blur(20px);z-index:-1}
+        .gemm-root .hero h1{font-size:clamp(40px,7vw,66px);line-height:1.02;font-weight:800;letter-spacing:-.03em;margin-bottom:22px}
+        .gemm-root .hero p{color:var(--muted);font-size:17px;line-height:1.55;max-width:430px;margin:0 auto 30px}
+        .gemm-root .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+        .gemm-root .hero-cta .btn{padding:11px 22px;font-size:15px}
+
+        /* DASHBOARD MOCKUP */
+        .gemm-root .mock-shell{margin-top:56px;position:relative}
+        .gemm-root .mock-shell::before{content:"";position:absolute;inset:-1px;border-radius:22px;
+          background:linear-gradient(180deg,rgba(77,139,255,.28),rgba(255,255,255,0) 45%);z-index:0}
+        .gemm-root .mock{position:relative;z-index:1;background:linear-gradient(180deg,#0b0d13,#070810);
+          border:1px solid var(--line);border-radius:22px;overflow:hidden;
+          box-shadow:0 40px 120px -30px rgba(0,0,0,.9);display:flex;min-height:520px}
+        .gemm-root .side{width:190px;border-right:1px solid var(--line);padding:14px 12px;flex-shrink:0;display:flex;flex-direction:column}
+        .gemm-root .org{display:flex;align-items:center;gap:9px;padding:8px;border:1px solid var(--line);border-radius:11px;margin-bottom:18px}
+        .gemm-root .org-ic{width:30px;height:30px;border-radius:8px;background:linear-gradient(150deg,#4d8bff,#2f6bff);flex-shrink:0}
+        .gemm-root .org-t{font-size:12.5px;font-weight:600;line-height:1.25}
+        .gemm-root .org-t span{display:block;font-size:10.5px;color:var(--muted-2);font-weight:400}
+        .gemm-root .chev{margin-left:auto;color:var(--muted-2);font-size:11px}
+        .gemm-root .nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted-2);padding:0 8px;margin:14px 0 7px}
+        .gemm-root .nav-label:first-child{margin-top:0}
+        .gemm-root .side-item{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:8px;font-size:12.5px;color:var(--muted);cursor:pointer}
+        .gemm-root .side-item i{width:14px;height:14px;border-radius:4px;background:currentColor;opacity:.6;flex-shrink:0;display:inline-block}
+        .gemm-root .side-item:hover{background:rgba(255,255,255,.03);color:var(--text)}
+        .gemm-root .side-item.active{background:rgba(255,255,255,.06);color:var(--text)}
+        .gemm-root .side-item.arr::after{content:"›";margin-left:auto;color:var(--muted-2)}
+        .gemm-root .side-user{margin-top:auto;display:flex;align-items:center;gap:9px;padding:8px;border:1px solid var(--line);border-radius:11px}
+        .gemm-root .side-user .av{width:28px;height:28px;border-radius:8px;background:linear-gradient(150deg,#22c55e,#16a34a);flex-shrink:0}
+        .gemm-root .side-user .t{font-size:11.5px;font-weight:600;line-height:1.2;overflow:hidden}
+        .gemm-root .side-user .t span{display:block;font-size:10px;color:var(--muted-2);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+        .gemm-root .main{flex:1;padding:16px 18px;min-width:0}
+        .gemm-root .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+        .gemm-root .crumb{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted)}
+        .gemm-root .crumb b{color:var(--text);font-weight:600}
+        .gemm-root .crumb .sq{width:15px;height:15px;border:1px solid var(--line-2);border-radius:4px;display:inline-block}
+        .gemm-root .stripe{font-size:12px;color:var(--blue-2)}
+
+        .gemm-root .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+        .gemm-root .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;position:relative}
+        .gemm-root .kpi .lb{font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:9px}
+        .gemm-root .kpi .lb .d{width:10px;height:10px;border-radius:3px;background:rgba(255,255,255,.14)}
+        .gemm-root .kpi .v{font-size:20px;font-weight:700;letter-spacing:-.02em;font-family:'Plus Jakarta Sans',sans-serif}
+        .gemm-root .kpi .s{font-size:10px;color:var(--green);margin-top:4px}
+        .gemm-root .kpi .s.red{color:var(--red)}
+        .gemm-root .kpi .s.mut{color:var(--muted-2)}
+        .gemm-root .kpi .dot-red{position:absolute;top:12px;right:12px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+
+        .gemm-root .row2{display:grid;grid-template-columns:1.55fr 1fr;gap:10px;margin-bottom:14px}
+        .gemm-root .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+        .gemm-root .panel-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+        .gemm-root .panel-h .tt{font-size:13px;font-weight:600}
+        .gemm-root .panel-h .st{font-size:10.5px;color:var(--muted-2)}
+        .gemm-root .tabs{display:flex;gap:4px}
+        .gemm-root .tabs span{font-size:9.5px;color:var(--muted-2);padding:3px 7px;border-radius:6px;cursor:pointer}
+        .gemm-root .tabs span.on{background:rgba(255,255,255,.08);color:var(--text)}
+        .gemm-root .chart{margin-top:10px}
+        .gemm-root .chart svg{width:100%;height:auto;display:block}
+        .gemm-root .xaxis{display:flex;justify-content:space-between;font-size:8.5px;color:var(--muted-2);margin-top:6px;padding:0 2px}
+
+        .gemm-root .donut-wrap{display:flex;flex-direction:column;align-items:center;margin-top:6px}
+        .gemm-root .donut{position:relative;width:120px;height:120px}
+        .gemm-root .donut .ctr{position:absolute;inset:0;display:grid;place-items:center;font-size:22px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif}
+        .gemm-root .legend{width:100%;margin-top:12px;display:flex;flex-direction:column;gap:8px}
+        .gemm-root .leg{display:flex;align-items:center;gap:8px;font-size:11px}
+        .gemm-root .leg .dt{width:8px;height:8px;border-radius:2px}
+        .gemm-root .leg .nm{color:var(--muted)}
+        .gemm-root .leg .nm b{color:var(--text);font-weight:400}
+        .gemm-root .leg .rt{margin-left:auto;color:var(--text);font-weight:600}
+        .gemm-root .leg .pc{color:var(--muted-2);width:38px;text-align:right}
+
+        .gemm-root .rowbtm{display:grid;grid-template-columns:1fr;gap:10px}
+        .gemm-root .bars{display:flex;align-items:flex-end;gap:14px;height:70px;margin-top:14px;padding:0 4px}
+        .gemm-root .bargrp{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+        .gemm-root .bar{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#4d8bff,#2f6bff)}
+        .gemm-root .btm-legend{display:flex;gap:16px;font-size:10px;color:var(--muted);margin-top:10px}
+        .gemm-root .btm-legend .dt{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:5px}
+        .gemm-root .buys{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+        .gemm-root .buy{display:flex;align-items:center;gap:9px;font-size:11px}
+        .gemm-root .buy .av{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+        .gemm-root .buy .em{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .gemm-root .buy .amt{margin-left:auto;font-weight:600}
+
+        @media(max-width:900px){
+          .gemm-root .side{display:none}
+          .gemm-root .kpis{grid-template-columns:repeat(2,1fr)}
+          .gemm-root .row2,.gemm-root .rowbtm{grid-template-columns:1fr}
+        }
+
+        /* HOSTS CARD */
+        .gemm-root .hosts-sec{margin-top:110px}
+        .gemm-root .hosts-card{position:relative;border:1px solid var(--line);border-radius:24px;overflow:hidden;
+          background:radial-gradient(120% 90% at 50% 0%,#0a0d16,#050609 62%);padding:44px 24px 0;text-align:center}
+        .gemm-root .pill{display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+          color:var(--blue-2);border:1px solid rgba(77,139,255,.35);padding:7px 15px;border-radius:100px;
+          background:rgba(47,107,255,.08);margin-bottom:22px}
+        .gemm-root .hosts-card h2{font-size:clamp(42px,8vw,84px);line-height:.94;font-weight:800;letter-spacing:-.04em}
+        .gemm-root .hosts-card h2 .fade{display:block;
+          background:linear-gradient(180deg,#e9edf5 6%,#3a4256 60%,#0a0d14 100%);
+          -webkit-background-clip:text;background-clip:text;color:transparent}
+        .gemm-root .globe-box{position:relative;height:190px;margin-top:-40px;pointer-events:none}
+        .gemm-root .globe-canvas{position:absolute;left:50%;bottom:0;transform:translateX(-50%)}
+        .gemm-root .globe-glow{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);
+          width:560px;height:150px;max-width:100%;
+          background:radial-gradient(ellipse at center,rgba(47,107,255,.30),transparent 70%);filter:blur(8px)}
+        .gemm-root .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;text-align:left;
+          max-width:760px;margin:0 auto;padding:26px 6px 44px;position:relative;z-index:2}
+        .gemm-root .cols3 h3{font-size:15px;font-weight:700;margin-bottom:9px}
+        .gemm-root .cols3 p{font-size:12.5px;color:var(--muted);line-height:1.55}
+
+        /* FEATURES 4 */
+        .gemm-root .feat4{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-top:66px}
+        .gemm-root .feat4 .fi{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:15px;
+          background:rgba(47,107,255,.12);border:1px solid rgba(77,139,255,.28);color:var(--blue-2);margin-bottom:16px}
+        .gemm-root .feat4 h4{font-size:14px;font-weight:700;margin-bottom:9px}
+        .gemm-root .feat4 p{font-size:12.5px;color:var(--muted);line-height:1.6}
+
+        /* FINAL CTA */
+        .gemm-root .cta{position:relative;margin-top:120px;padding:96px 0 110px;text-align:center;overflow:hidden}
+        .gemm-root .cta::before{content:"";position:absolute;inset:0;
+          background:
+            radial-gradient(circle at 50% 62%,rgba(47,107,255,.10),transparent 60%),
+            radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.25),transparent),
+            radial-gradient(1px 1px at 70% 22%,rgba(255,255,255,.18),transparent),
+            radial-gradient(1px 1px at 40% 72%,rgba(255,255,255,.15),transparent),
+            radial-gradient(1px 1px at 85% 55%,rgba(255,255,255,.20),transparent),
+            radial-gradient(1px 1px at 12% 66%,rgba(255,255,255,.15),transparent)}
+        .gemm-root .cta>.wrap{position:relative;z-index:1}
+        .gemm-root .cta h2{font-size:clamp(30px,5.5vw,46px);font-weight:800;letter-spacing:-.03em;margin-bottom:16px}
+        .gemm-root .cta p{color:var(--muted);font-size:15px;line-height:1.6;max-width:440px;margin:0 auto 30px}
+        .gemm-root .cta-form{display:flex;gap:8px;max-width:420px;margin:0 auto;
+          border:1px solid var(--line-2);border-radius:12px;padding:6px;background:rgba(255,255,255,.02)}
+        .gemm-root .cta-form input{flex:1;background:transparent;border:none;outline:none;color:var(--text);
+          font-family:inherit;font-size:14px;padding:8px 12px}
+        .gemm-root .cta-form input::placeholder{color:var(--muted-2)}
+        .gemm-root .cta-sales{margin-top:18px;font-size:12.5px;color:var(--muted)}
+        .gemm-root .cta-sales a{color:var(--blue-2)}
+
+        @media(max-width:900px){
+          .gemm-root .cols3{grid-template-columns:1fr;gap:22px;max-width:340px}
+          .gemm-root .feat4{grid-template-columns:repeat(2,1fr);gap:28px}
+        }
+        @media(max-width:520px){.gemm-root .feat4{grid-template-columns:1fr}}
+
+        .gemm-root footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:var(--muted-2);font-size:12.5px;background:#04060b}
+
+        .gemm-root .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+        .gemm-root .reveal.in{opacity:1;transform:none}
+        @media(prefers-reduced-motion:reduce){
+          .gemm-root .reveal{opacity:1;transform:none;transition:none}
+          html{scroll-behavior:auto}
+        }
+      `}</style>
+    </div>
   );
 }
