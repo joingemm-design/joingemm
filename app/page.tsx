@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Pt = { x: number; y: number; z: number };
 
@@ -100,6 +101,7 @@ export default function Page() {
 
   // email capture + smooth scroll
   const ctaRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const emailRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -108,7 +110,7 @@ export default function Page() {
     setTimeout(() => emailRef.current?.focus(), 500);
   };
   const submit = () => {
-    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) setSent(true);
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) router.push(`/create?email=${encodeURIComponent(email)}`);
     else emailRef.current?.focus();
   };
 
@@ -118,11 +120,11 @@ export default function Page() {
         <div className="wrap nav-inner">
           <div className="brand"><span className="logo">g</span>gemm</div>
           <div className="nav-links">
-            <a href="#">Login</a>
-            <a href="#">Book Demo</a>
+            <a href="/auth/login">Login</a>
+            <a href="/contact">Book Demo</a>
           </div>
           <div className="nav-right">
-            <button className="btn btn-primary" onClick={goToCta}>Create Event</button>
+            <button className="btn btn-primary" onClick={() => router.push("/create")}>Create Event</button>
           </div>
         </div>
       </nav>
@@ -131,8 +133,8 @@ export default function Page() {
         <h1 className="display">Your Free All-in-One<br />Ticketing platform</h1>
         <p>gemm is an all-in-one modern event dashboard built for the modern generation.</p>
         <div className="hero-cta">
-          <button className="btn btn-primary" onClick={goToCta}>Create Event</button>
-          <button className="btn btn-ghost">▦ Book Demo</button>
+          <button className="btn btn-primary" onClick={() => router.push("/create")}>Create Event</button>
+          <button className="btn btn-ghost" onClick={() => router.push("/contact")}>▦ Book Demo</button>
         </div>
 
         {/* DASHBOARD MOCKUP */}
@@ -334,7 +336,7 @@ export default function Page() {
               <button className="btn btn-primary" onClick={submit}>Get started</button>
             </div>
           )}
-          <div className="cta-sales">Not sure where to start? <a href="#">Talk to sales</a></div>
+          <div className="cta-sales">Not sure where to start? <a href="/contact">Talk to sales</a></div>
         </div>
       </section>
 
