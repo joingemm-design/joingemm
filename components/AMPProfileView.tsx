@@ -139,6 +139,7 @@ export default function AMPProfileView() {
           eventName: "Art, Mimosas & Pancakes",
           creatorUid: event.creatorUid || "Kv8RvlTzCdcmrzM9kpMQ1CWbPct2",
           customerEmail: "",
+          quantity: quantity,
         }),
       });
       const data = await res.json();
@@ -154,6 +155,7 @@ export default function AMPProfileView() {
     }
   };
 
+  const [quantity, setQuantity] = useState(1);
   const [redeemCode, setRedeemCode] = useState("");
   const [redeemName, setRedeemName] = useState("");
   const [redeemEmail, setRedeemEmail] = useState("");
@@ -350,6 +352,14 @@ export default function AMPProfileView() {
                   <div style={{ marginTop:"1.5rem", fontSize:".6rem", letterSpacing:".2em", textTransform:"uppercase", color:"rgba(242,237,228,.25)" }}>{buyingTier === t.tier ? "Loading..." : "Select →"}</div>
                 </button>
               ))}
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:".9rem", marginBottom:"1.5rem" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:"1.25rem" }}>
+                <button onClick={()=>setQuantity(q=>Math.max(1,q-1))} disabled={buyingTier!==null} style={{ width:"46px", height:"46px", background:"transparent", color:T.gold, border:"1px solid "+T.gold, fontSize:"1.4rem", cursor:buyingTier!==null?"not-allowed":"pointer", fontFamily:"'Bebas Neue',sans-serif", lineHeight:"1" }}>-</button>
+                <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"2rem", color:T.white, minWidth:"48px", textAlign:"center" }}>{quantity}</span>
+                <button onClick={()=>setQuantity(q=>Math.min(10,q+1))} disabled={buyingTier!==null} style={{ width:"46px", height:"46px", background:"transparent", color:T.gold, border:"1px solid "+T.gold, fontSize:"1.4rem", cursor:buyingTier!==null?"not-allowed":"pointer", fontFamily:"'Bebas Neue',sans-serif", lineHeight:"1" }}>+</button>
+              </div>
+              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:".9rem", color:"rgba(242,237,228,.55)", letterSpacing:".05em" }}>{quantity} {quantity===1?"ticket":"tickets"} &middot; ${(quantity*(((event.tickets && event.tickets.find((t:any)=>t.active)?.price) || 25)+3.85)).toFixed(2)}</div>
             </div>
             <button onClick={() => handleBuyTicket(event.tickets.find((t:any) => t.active) || { tier: "General Admission", price: 35 })} disabled={buyingTier !== null} style={{ display:"inline-block", padding:"1.2rem 2.5rem", background:T.gold, color:T.bg, fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.1rem", letterSpacing:".15em", textDecoration:"none", border:"none", cursor: buyingTier !== null ? "wait" : "pointer", transition:"transform .2s" }}>{buyingTier ? "LOADING..." : `GET TICKETS — ${eventDateLabel.split(",")[1]?.trim() || eventDateLabel}`}</button>
             <p style={{ fontSize:".66rem", color:"rgba(242,237,228,.2)", marginTop:"1rem", letterSpacing:".05em" }}>Tickets sold &amp; processed securely through GEMM · Valid ID required at door for 21+ session</p>

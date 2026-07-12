@@ -20,6 +20,26 @@ exports.sendOrderConfirmation = onDocumentCreated("orders/{orderId}", async (eve
     return;
   }
 
+  let evDate="TBD", evTime="", evVenue="", evAddress="";
+  try {
+    if (order.eventId) {
+      const evSnap = await db.collection("events").doc(order.eventId).get();
+      if (evSnap.exists) {
+        const ev = evSnap.data();
+        if (ev.startDate) { evDate = new Date(ev.startDate + "T00:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}); }
+        const fmt = (t) => { if(!t) return ""; if(t==="00:00") return "Midnight"; const p=t.split(":").map(Number); const ap=p[0]>=12?"PM":"AM"; const h12=p[0]%12===0?12:p[0]%12; return h12+":"+String(p[1]).padStart(2,"0")+" "+ap; };
+        const st=fmt(ev.startTime), et=fmt(ev.endTime);
+        evTime = st&&et ? st+" - "+et : (st||et||"");
+        evVenue = ev.venueName || ev.venue || "";
+        evAddress = ev.address || "";
+      }
+    }
+  } catch(e){ console.error("Event lookup for email failed:", e); }
+  const buyerName = order.customerName || [order.customerFirstName,order.customerLastName].filter(Boolean).join(" ") || "Guest";
+  const paidStr = (order.amount||0)===0 ? "Free" : "$"+((order.amount||0)/100).toFixed(2);
+  const whenLine = evTime ? evDate+" &middot; "+evTime : evDate;
+  const whereLine = evAddress ? evVenue+" &middot; "+evAddress : evVenue;
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -29,13 +49,17 @@ exports.sendOrderConfirmation = onDocumentCreated("orders/{orderId}", async (eve
     body: JSON.stringify({
       from: "GEMM <hello@joingemm.com>",
       to: order.customerEmail,
-      subject: `Order Confirmation: ${order.eventName}`,
+      subject: `Order Confirmation: ${order.eventName || "Your Event"}`,
       html: `
         <div style="background:#111;color:#fff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;border-radius:16px">
-          <h1 style="font-size:24px;font-weight:900;margin:0 0 8px">Order Confirmed: ${order.eventName}</h1>
+          <h1 style="font-size:24px;font-weight:900;margin:0 0 8px">Order Confirmed: ${order.eventName || "Your Event"}</h1>
           <p style="color:rgba(255,255,255,0.5)">Thank you for your order.</p>
-          <p><b>Ticket:</b> ${order.tickets?.[0]?.type || "General Admission"}</p>
-          <p><b>Order ID:</b> ${orderId}</p>
+          <p><b>Name:</b> ${buyerName}</p>
+          <p><b>Ticket:</b> ${order.ticketType || (order.tickets && order.tickets[0] && order.tickets[0].type) || "General Admission"}</p>
+          <p><b>When:</b> ${whenLine}</p>
+          ${whereLine ? "<p><b>Where:</b> " + whereLine + "</p>" : ""}
+          <p><b>Total:</b> ${paidStr}</p>
+          <p style="color:rgba(255,255,255,0.4);font-size:12px"><b>Order ID:</b> ${orderId}</p>
           <a href="${BASE_URL}/event-success?orderId=${orderId}" style="display:inline-block;margin-top:24px;padding:12px 24px;background:#6366f1;color:#fff;border-radius:8px;text-decoration:none;font-weight:700">View Ticket</a>
         </div>
       `,
@@ -46,6 +70,30 @@ exports.sendOrderConfirmation = onDocumentCreated("orders/{orderId}", async (eve
     console.log("Confirmation email sent:", result.id);
   } else {
     console.error("Confirmation email FAILED:", result);
+  }
+
+  if (order.eventId === "tiiChMzV9uNneyDZjcIN") {
+    const isFree = (order.amount || 0) === 0;
+    const amountStr = isFree ? "Free (comp code)" : "$" + ((order.amount || 0) / 100).toFixed(2);
+    const brockHtml = "<div style='font-family:sans-serif;padding:24px;max-width:600px'><h2 style='margin:0 0 12px'>New AMP order</h2><p><b>Name:</b> NAME</p><p><b>Email:</b> EMAIL</p><p><b>Ticket:</b> TICKET</p><p><b>Amount:</b> AMOUNT</p><p style='color:#888;font-size:12px'><b>Order ID:</b> OID</p></div>"
+      .replace("NAME", order.customerName || "-")
+      .replace("EMAIL", order.customerEmail || "-")
+      .replace("TICKET", order.ticketType || "General Admission")
+      .replace("AMOUNT", amountStr)
+      .replace("OID", orderId);
+    try {
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + process.env.RESEND_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "GEMM <hello@joingemm.com>",
+          to: "brock.seals@yahoo.com",
+          subject: "New AMP order - " + (order.customerName || "Guest") + " (" + amountStr + ")",
+          html: brockHtml,
+        }),
+      });
+      console.log("Brock notification sent for order:", orderId);
+    } catch (e) { console.error("Brock notification failed:", e); }
   }
 });
 
@@ -132,7 +180,8 @@ exports.getConnectStatus = onRequest({ cors: true }, async (req, res) => {
 // ── 5. Stripe Checkout — Create Session for Paid Tickets ────────────────
 exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
   // SECURITY: price + creator are read from Firestore. Client price is ignored.
-  const { eventId: rawEventId, ticketType, ticketId, customerEmail } = req.body;
+  const { eventId: rawEventId, ticketType, ticketId, customerEmail, quantity: rawQty } = req.body;
+    const qty = Math.min(Math.max(parseInt(rawQty, 10) || 1, 1), 10);
   try {
     // Legacy alias: the AMP page hardcodes "amp-2026" but the real doc id differs.
     const ALIASES = { "amp-2026": "tiiChMzV9uNneyDZjcIN" };
@@ -167,11 +216,11 @@ exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
       line_items: [
         {
           price_data: { currency: "usd", product_data: { name: eventName + " — " + resolvedType }, unit_amount: priceInCents },
-          quantity: 1,
+          quantity: qty,
         },
         {
           price_data: { currency: "usd", product_data: { name: "Service Fee" }, unit_amount: SERVICE_FEE_CENTS },
-          quantity: 1,
+          quantity: qty,
         },
       ],
       mode: "payment",
@@ -181,14 +230,14 @@ exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
         { key: "last_name",  label: { type: "custom", custom: "Last Name" },  type: "text", text: { minimum_length: 1, maximum_length: 50 } },
       ],
       payment_intent_data: {
-        application_fee_amount: platformFee + SERVICE_FEE_CENTS,
+        application_fee_amount: (platformFee + SERVICE_FEE_CENTS) * qty,
         transfer_data: { destination: stripeAccountId },
         metadata: { refund_policy: "request_only", eventId, creatorUid },
       },
       custom_text: { submit: { message: "All ticket sales are final and nonrefundable." } },
       success_url: BASE_URL + "/event-success?session_id={CHECKOUT_SESSION_ID}&eventId=" + eventId,
       cancel_url: BASE_URL + "/event/" + eventId,
-      metadata: { eventId, ticketType: resolvedType, creatorUid, eventName },
+      metadata: { eventId, ticketType: resolvedType, creatorUid, eventName, quantity: String(qty) },
     });
     res.json({ url: session.url });
   } catch (err) {
@@ -282,6 +331,7 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
       const fullName = (firstName && lastName) ? `${firstName} ${lastName}` : (firstName || lastName || cd.name || null);
       await db.collection("orders").doc(session.id).set({
         eventId: meta.eventId,
+        eventName: meta.eventName || "Your Event",
         ticketType: meta.ticketType,
         creatorUid: meta.creatorUid,
         customerEmail: cd.email || session.customer_email || null,

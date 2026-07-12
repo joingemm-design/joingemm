@@ -275,7 +275,7 @@ export default function EventSuccess() {
                 month: "short", day: "numeric",
                 hour: "numeric", minute: "2-digit", hour12: true,
               }),
-          total: data.total ?? 0,
+          total: data.total ?? ((data.amount ?? 0) / 100),
           customer: {
             name: data.customerName || data.customer?.name || "Guest",
             email: data.customerEmail || data.customer?.email || "",
