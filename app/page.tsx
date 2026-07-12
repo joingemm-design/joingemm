@@ -98,6 +98,20 @@ export default function Page() {
     };
   }, []);
 
+  // email capture + smooth scroll
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const goToCta = () => {
+    ctaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => emailRef.current?.focus(), 500);
+  };
+  const submit = () => {
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) setSent(true);
+    else emailRef.current?.focus();
+  };
+
   return (
     <div className="gemm-root" ref={rootRef}>
       <nav className={scrolled ? "scrolled" : ""}>
@@ -108,7 +122,7 @@ export default function Page() {
             <a href="#">Book Demo</a>
           </div>
           <div className="nav-right">
-            <button className="btn btn-primary">Create Event</button>
+            <button className="btn btn-primary" onClick={goToCta}>Create Event</button>
           </div>
         </div>
       </nav>
@@ -117,7 +131,7 @@ export default function Page() {
         <h1 className="display">Your Free All-in-One<br />Ticketing platform</h1>
         <p>gemm is an all-in-one modern event dashboard built for the modern generation.</p>
         <div className="hero-cta">
-          <button className="btn btn-primary">Create Event</button>
+          <button className="btn btn-primary" onClick={goToCta}>Create Event</button>
           <button className="btn btn-ghost">▦ Book Demo</button>
         </div>
 
@@ -301,13 +315,25 @@ export default function Page() {
 
       {/* FINAL CTA */}
       <section className="cta">
-        <div className="wrap reveal">
+        <div className="wrap reveal" ref={ctaRef}>
           <h2 className="display">Ready to host with gemm?</h2>
           <p>Create your first event, connect with your audience, and start selling tickets in minutes—no tech skills required.</p>
-          <div className="cta-form">
-            <input type="email" placeholder="Your Work Email" aria-label="Your work email" />
-            <button className="btn btn-primary">Get started</button>
-          </div>
+          {sent ? (
+            <div className="cta-done">🎉 You&apos;re on the list — check your inbox to get started.</div>
+          ) : (
+            <div className="cta-form">
+              <input
+                ref={emailRef}
+                type="email"
+                placeholder="Your Work Email"
+                aria-label="Your work email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+              />
+              <button className="btn btn-primary" onClick={submit}>Get started</button>
+            </div>
+          )}
           <div className="cta-sales">Not sure where to start? <a href="#">Talk to sales</a></div>
         </div>
       </section>
@@ -494,6 +520,12 @@ export default function Page() {
         .gemm-root .cta-form input::placeholder{color:var(--muted-2)}
         .gemm-root .cta-sales{margin-top:18px;font-size:12.5px;color:var(--muted)}
         .gemm-root .cta-sales a{color:var(--blue-2)}
+        .gemm-root .cta-done{max-width:420px;margin:0 auto;padding:16px;border-radius:12px;
+          border:1px solid rgba(77,139,255,.35);background:rgba(47,107,255,.08);color:var(--text);font-size:14px}
+        .gemm-root .kpi{transition:border-color .2s,transform .2s}
+        .gemm-root .kpi:hover{border-color:var(--line-2);transform:translateY(-2px)}
+        .gemm-root .feat4 .f{transition:transform .2s}
+        .gemm-root .feat4 .f:hover{transform:translateY(-3px)}
 
         @media(max-width:900px){
           .gemm-root .cols3{grid-template-columns:1fr;gap:22px;max-width:340px}
