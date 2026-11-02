@@ -182,7 +182,7 @@ $("couponInput").addEventListener("keydown", e => { if (e.key === "Enter") apply
 $("buy").onclick = () => {
   let url = EVENT.checkoutUrl;
   if (coupon) url += (url.includes("?") ? "&" : "?") + "prefilled_promo_code=" + encodeURIComponent(coupon);
-  window.location.href = url;
+  (window.top || window).location.href = url;
 };
 render();
 </script>
